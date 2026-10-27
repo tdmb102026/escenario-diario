@@ -806,6 +806,38 @@ function viewDiscursos(){
   ${cuerpo}
   </div>`;
 }
+/* Editar un discurso propio: título, resumen, consejo y cada parte (nombre y texto). */
+function viewEditar(id){
+  const sp=mine().find(s=>s.id===id);if(!sp)return viewDiscursos();
+  const parte=parteEdicion;
+  return viewEditarHtml(sp,parte);
+}
+function parteEdicion(p,i){return `<div class="card stack ed-parte" style="gap:8px"><div class="row" style="justify-content:space-between"><input type="text" class="ed-nom" value="${esc(p[0])}" aria-label="Nombre de la parte ${i+1}" style="flex:1"><button type="button" onclick="this.closest('.ed-parte').remove()">Quitar</button></div><textarea class="ed-txt" rows="6" aria-label="Texto de la parte ${i+1}">${esc(p[1])}</textarea></div>`}
+function viewEditarHtml(sp,parte){
+  return `<div class="stack-lg">
+  <div class="reader-head"><button class="back" onclick="location.hash='d-${sp.id}'">← Volver sin guardar</button><p class="eyebrow">Editar</p><h1>${esc(sp.titulo)}</h1></div>
+  <div class="card stack"><label for="ed-tit"><h3>Título</h3></label><input type="text" id="ed-tit" value="${esc(sp.titulo)}">
+    <label for="ed-res"><h3>De qué trata (una frase)</h3></label><input type="text" id="ed-res" value="${esc(sp.resumen||"")}">
+    <label for="ed-coach"><h3>Consejo para decirlo</h3></label><input type="text" id="ed-coach" value="${esc(sp.coach||"")}"></div>
+  <p class="muted" style="font-size:.9rem">Escribe <b>/</b> con un espacio a cada lado donde quieras hacer una pausa${sp.nivel===3?`, <b>^texto^</b> para subir, <b>~texto~</b> para bajar y <b>//</b> para un silencio largo`:""}.</p>
+  <div class="stack" id="ed-partes">${sp.partes.map(parte).join("")}</div>
+  <button type="button" style="align-self:flex-start" onclick="document.getElementById('ed-partes').insertAdjacentHTML('beforeend',parteEdicion(['Nueva parte',''],document.querySelectorAll('.ed-parte').length))">Añadir una parte</button>
+  <div class="row"><button class="btn-accent" onclick="guardarEdicion('${sp.id}')">${ICON.check}Guardar cambios</button><button onclick="location.hash='d-${sp.id}'">Cancelar</button></div>
+  <p class="hint" id="ed-err" hidden></p>
+  </div>`;
+}
+function guardarEdicion(id){
+  const v=x=>document.getElementById(x).value.trim();
+  const partes=[...document.querySelectorAll(".ed-parte")].map(e=>[e.querySelector(".ed-nom").value.trim()||"Parte",e.querySelector(".ed-txt").value.trim()]).filter(p=>p[1]);
+  const err=document.getElementById("ed-err");
+  if(!v("ed-tit")||!partes.length){err.hidden=false;err.textContent="Pon un título y al menos una parte con texto.";return}
+  const lista=store.get("mine",[]),i=lista.findIndex(s=>s.id===id);if(i<0)return;
+  lista[i]={...lista[i],titulo:v("ed-tit"),resumen:v("ed-res"),coach:v("ed-coach")||"Practícalo de pie y respeta las pausas.",partes};
+  store.set("mine",lista);
+  // Las ideas clave de "Sin leer" eran del texto anterior.
+  const pis=store.get("pistas",{});delete pis[id];store.set("pistas",pis);
+  toast("Cambios guardados");location.hash="d-"+id;
+}
 function delMine(id,b){if(b.dataset.c){store.set("mine",store.get("mine",[]).filter(s=>s.id!==id));toast("Borrado");location.hash="discursos";return}b.dataset.c=1;b.textContent="Toca otra vez para borrar";b.classList.add("rec-on")}
 function setFiltro(t){store.set("filtro",t);render()}
 
@@ -831,7 +863,7 @@ function viewDiscurso(id){
     ${voices.length>1?`<select id="voice" aria-label="Voz" style="width:auto" onchange="store.set('voice',this.value)">${voices.map(v=>`<option ${v.name===vName?"selected":""} value="${esc(v.name)}">${esc(v.name)} (${v.lang})</option>`).join("")}</select>`:""}
   </div>
   <div class="coach" id="tts-note" hidden><b>La voz no está disponible aquí</b><p>Este navegador no tiene lectura en voz alta. Instala la app Android o abre la página en Chrome:</p><div class="row"><a class="btn" href="${APK_URL}" target="_blank" rel="noopener">Descargar la app Android</a><a class="btn" href="${WEB_URL}#d-${sp.id}" target="_blank" rel="noopener">Abrir en Chrome</a></div><p class="muted" style="font-size:.9rem">Si estás en la app y no suena, revisa en Ajustes de Android → Voz que esté instalado Google Speech Services en español.</p></div>
-  ${sp.mio?`<button id="del-btn" style="align-self:flex-start" onclick="delMine('${sp.id}',this)">Borrar este discurso</button>`:""}
+  ${sp.mio?`<div class="row"><button onclick="location.hash='editar-${sp.id}'">Editar</button><button id="del-btn" onclick="delMine('${sp.id}',this)">Borrar este discurso</button></div>`:""}
   <div class="coach"><b>Consejo de entrega</b><p>${esc(sp.coach)}</p><p class="muted" style="font-size:.9rem">Cada <span class="pause">/</span> marca una pausa breve para respirar o dejar caer la idea.${sp.nivel===3?` <b class="sube">Sube</b> la energía, <i class="baja">baja</i> la voz y en <span class="pause">//</span> calla contando hasta tres.`:""}</p></div>
   <div class="stack" style="gap:4px">${sp.partes.map(p=>`<section class="seg"><span class="tag">${esc(p[0])}${p[0]==="Cierre"?" · "+esc(sp.cierre):""}</span><p>${withPauses(p[1])}</p></section>`).join("")}</div>
   <div class="card stack"><h3>Las tres rondas de hoy</h3>
@@ -2006,6 +2038,7 @@ function render(){
   let html, tab=h;
   if(h.startsWith("d-")){html=viewDiscurso(h.slice(2));tab="discursos"}
   else if(h.startsWith("evaluar-")){html=viewEvaluar(h.slice(8));tab="discursos"}
+  else if(h.startsWith("editar-")){html=viewEditar(h.slice(7));tab="discursos"}
   else html=({inicio:viewInicio,hoy:viewHoy,aprender:viewAprender,discursos:viewDiscursos,crear:viewCrear,ajustes:viewAjustes,improvisar:viewImprovisar,preguntas:viewPreguntas,calentar:viewCalentar,progreso:viewProgreso,nervios:viewNervios}[h]||viewInicio)();
   if(h==="nervios")tab="calentar"; if(h==="hoy")tab="inicio"; if(h==="improvisar"||h==="preguntas")tab="discursos";
   app.innerHTML=html;

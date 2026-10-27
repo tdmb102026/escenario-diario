@@ -28,3 +28,4 @@
 - Respuestas JSON de Claude: `IA.json` pide « » para citas (`REGLA_COMILLAS`), `leerJson` repara comillas sin escapar (`repararJson`) y reintenta una vez si aún falla.
 - "Mis discursos" (los de `ed_mine`) se ven siempre arriba en Niveles y en Inicio; antes un discurso creado de nivel 2 quedaba oculto si ibas en nivel 1. Teleprompter: "Salir" y "Calificarme".
 - Niveles tiene dos pestañas (`ed_nivTab`: niveles / mios) y un selector de nivel compacto (`.niveles-mini`); la escalera grande queda solo en Progreso.
+- Editar discursos propios: botón "Editar" en el discurso → `#editar-<id>` (`viewEditar`, `guardarEdicion`): título, resumen, consejo y partes (añadir/quitar); al guardar borra sus `ed_pistas`.
