@@ -567,10 +567,14 @@ const IA={
     if(s){const {text}=await s(mensajes,{cache:false,modelTier:rapido?"quick":"default"});return text}
     return servidor({tipo:"ia",tarea:tarea||"",mensajes:typeof mensajes==="string"?[{role:"user",content:mensajes}]:mensajes,max:rapido?700:2500});
   },
+  // Las historias traen diálogos; unas comillas sin escapar rompían el JSON ("La respuesta llegó incompleta").
+  // Por eso se piden « » para citas, se repara lo que se pueda y, si aún falla, se pide una vez más.
   async json(prompt,{tarea}={}){
+    prompt+=REGLA_COMILLAS;
     const s=await getSample();
     if(s)return s.json(prompt,{cache:false});
-    return leerJson(await this.texto(prompt,{tarea}));
+    try{return leerJson(await this.texto(prompt,{tarea}))}
+    catch(e){if(e.code!=="invalid_json")throw e;return leerJson(await this.texto(prompt,{tarea}))}
   }
 };
 async function servidor(cuerpo){
@@ -582,11 +586,29 @@ async function servidor(cuerpo){
   if(!j.ok)throw {code:j.error||"servidor",message:j.detalle||""};
   return j.texto||"";
 }
+const REGLA_COMILLAS='\n\nIMPORTANTE: el JSON debe ser válido. Dentro de los textos nunca uses comillas dobles ("); para diálogos o citas usa « ».';
 function leerJson(t){
   try{return JSON.parse(t)}catch(e){}
   const m=t.match(/```(?:json)?\s*([\s\S]*?)```/); if(m)try{return JSON.parse(m[1])}catch(e){}
-  const a=t.indexOf("{"),b=t.lastIndexOf("}"); if(a>=0&&b>a)try{return JSON.parse(t.slice(a,b+1))}catch(e){}
+  const a=t.indexOf("{"),b=t.lastIndexOf("}");
+  if(a>=0&&b>a){const c=t.slice(a,b+1);try{return JSON.parse(c)}catch(e){}try{return JSON.parse(repararJson(c))}catch(e){}}
   throw {code:"invalid_json"};
+}
+// Escapa comillas dentro de los textos: una " solo cierra el texto si después viene , : ] o }.
+function repararJson(c){
+  let o="",dentro=false;
+  for(let i=0;i<c.length;i++){
+    const ch=c[i];
+    if(dentro&&ch==="\\"){o+=ch+(c[i+1]||"");i++;continue}
+    if(ch==='"'){
+      if(!dentro){dentro=true;o+=ch;continue}
+      if(/^\s*(?:$|[:\]}]|,\s*["\[{\]])/.test(c.slice(i+1,i+40))){dentro=false;o+=ch}else o+='\\"';
+      continue;
+    }
+    if(dentro&&ch==="\n"){o+="\\n";continue}
+    o+=ch;
+  }
+  return o;
 }
 function aiErr(e){const c=e&&e.code;return ({
   sin_config:"Falta conectar la IA. Ve a Inicio → Ajustes de la IA.",
