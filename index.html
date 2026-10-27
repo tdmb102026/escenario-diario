@@ -739,6 +739,7 @@ function viewInicio(){
     </div>
   </section>
   ${rachaHtml()}
+  ${mine().length?`<a class="card row" href="#discursos" style="text-decoration:none;color:inherit;justify-content:space-between"><span><b>Mis discursos</b><br><span class="muted">${mine().length} creado${mine().length>1?"s":""} por ti</span></span><span class="chip">Ver</span></a>`:""}
   ${retoHtml()}
   ${(()=>{const n=nivelActual(),l=nivelVista(n),a=Math.min(META,aprobadas(n));return `<a class="card row" href="#discursos" onclick="store.set('nivelVer',${n})" style="text-decoration:none;color:inherit;justify-content:space-between"><span><span class="eyebrow">Tu nivel</span><br><b style="font-family:var(--f-display);font-size:1.15rem">${n}. ${l.t}</b><br><span class="muted">${n===5&&a>=META?"Completaste todos los niveles.":`${a} de ${META} prácticas con ${APRUEBA} o más para subir`}</span></span><span class="chip">${n>=4?"Practicar":"Ver nivel"}</span></a>`})()}
   <section class="card stats" aria-label="Resumen">
@@ -773,11 +774,12 @@ function viewDiscursos(){
   if(n===4)cuerpo=`<div class="card stack"><h3>Improvisación</h3><p class="muted">${l.d} Antes, lee la lección "Improvisar con la fórmula PREP" en Aprender.</p><a class="btn btn-primary" href="#improvisar" style="align-self:flex-start">Empezar a improvisar</a></div>`;
   else if(n===5)cuerpo=`<div class="card stack"><h3>Preguntas del público</h3><p class="muted">${l.d} Antes, lee la lección "Responder preguntas del público" en Aprender.</p><a class="btn btn-primary" href="#preguntas" style="align-self:flex-start">Empezar</a></div>`;
   else{
-    const lista=allSpeeches().filter(s=>(s.nivel||1)===n);
+    const lista=SPEECHES.filter(s=>(s.nivel||1)===n);
     cuerpo=`<div class="stack">${lista.map(tarjeta).join("")}</div>`;
   }
   return `<div class="stack-lg">
   <div class="section-title"><p class="eyebrow">Niveles</p><h1>Practica paso a paso</h1><p class="muted">Pasas al siguiente nivel con ${META} prácticas calificadas con ${APRUEBA} o más. Puedes volver a cualquier nivel que ya abriste.</p></div>
+  ${mine().length?`<section class="stack" id="mis-discursos"><div class="section-title"><p class="eyebrow">Creados por ti</p><h2>Mis discursos</h2></div>${mine().map(tarjeta).join("")}</section>`:""}
   ${escalera(n)}
   <div class="section-title"><p class="eyebrow">Nivel ${n}</p><h2>${l.t}</h2>${n===3?`<p class="muted">Marcas: <b class="sube">sube</b> <i class="baja">baja</i> <span class="pause">//</span> silencio largo.</p>`:""}</div>
   ${cuerpo}
@@ -793,7 +795,7 @@ function viewDiscurso(id){
   const vName=store.get("voice","");
   return `<div class="stack-lg">
   <div class="reader-head">
-    <button class="back" onclick="store.set('nivelVer',${sp.nivel||1});location.hash='discursos'">← Nivel ${sp.nivel||1}</button>
+    <button class="back" onclick="store.set('nivelVer',${sp.nivel||1});location.hash='discursos'">${sp.mio?"← Mis discursos":"← Nivel "+(sp.nivel||1)}</button>
     <p class="eyebrow">${esc(sp.kind==="historia"?(sp.tipo||"Historia"):sp.tema)} · ${sp.min} min · ${words(sp)} palabras</p>
     <h1>${esc(sp.titulo)}</h1>
   </div>
@@ -835,7 +837,8 @@ function openPrompter(id){
     <button id="p-reset">Reiniciar</button>
     <label for="p-speed">Velocidad <input id="p-speed" type="range" min="10" max="80" value="${speed}"></label>
     <span class="clock" id="p-clock">0:00</span>
-    <button id="p-close">Terminar</button></div>
+    <button id="p-salir">Salir</button>
+    <button id="p-close">Calificarme</button></div>
     <div class="prompter-text" id="p-text">${sp.partes.map(p=>`<span class="ptag">${esc(p[0])}</span>${withPauses(p[1])}`).join(" ")}</div>`;
   document.body.appendChild(el);
   const txt=el.querySelector("#p-text"), clock=el.querySelector("#p-clock"), play=el.querySelector("#p-play"), spd=el.querySelector("#p-speed");
@@ -857,6 +860,7 @@ function openPrompter(id){
   };
   el.querySelector("#p-reset").onclick=()=>{txt.scrollTop=0;pState.t=0;clock.textContent="0:00"};
   spd.oninput=()=>store.set("pspeed",spd.value);
+  el.querySelector("#p-salir").onclick=()=>{pState.running=false;cancelAnimationFrame(pState.raf);try{wake?.release()}catch(e){}el.remove()};
   el.querySelector("#p-close").onclick=()=>{
     pState.running=false;cancelAnimationFrame(pState.raf);try{wake?.release()}catch(e){}
     store.set("lastTime",{id,s:Math.round(pState.t)});

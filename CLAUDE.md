@@ -26,3 +26,4 @@
 - Dictado mide en vivo palabras por minuto y muletillas (`medirVivo`, `contarMuletillas`, `dictT0`); `medir()` también le pasa las muletillas a Claude.
 - Racha (`calcStreak`, `diasPracticados`, `ed_dias`, `ed_mejorRacha`) con fecha local; cuentan prácticas, calentamiento completo, grabación ≥10 s y retos (`marcarPractica`). Retos para perder el miedo: `RETOS` (10, uno tras otro), `ed_retos`.
 - Respuestas JSON de Claude: `IA.json` pide « » para citas (`REGLA_COMILLAS`), `leerJson` repara comillas sin escapar (`repararJson`) y reintenta una vez si aún falla.
+- "Mis discursos" (los de `ed_mine`) se ven siempre arriba en Niveles y en Inicio; antes un discurso creado de nivel 2 quedaba oculto si ibas en nivel 1. Teleprompter: "Salir" y "Calificarme".
