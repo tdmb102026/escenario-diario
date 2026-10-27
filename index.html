@@ -187,6 +187,21 @@ nav.tabs a[aria-current="page"]{color:var(--accent);background:var(--accent-soft
 .pestanas{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:999px;background:var(--surface);border:1px solid var(--line)}
 .pestanas button{border:0;border-radius:999px;min-height:40px;background:transparent;font-weight:600;color:var(--muted)}
 .pestanas button[aria-selected="true"]{background:var(--accent);color:#fff}
+.herramientas{display:flex;flex-wrap:wrap;gap:8px}
+.herramientas button{padding:8px 12px;min-height:40px;font-size:.88rem}
+.guiada-go{align-self:stretch;min-height:54px;font-size:1.05rem;justify-content:center}
+.guiada{position:fixed;inset:0;z-index:45;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+.gd-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:14px max(16px,env(safe-area-inset-right,0px)) 6px max(16px,env(safe-area-inset-left,0px))}
+.gd-x{width:44px;height:44px;border-radius:50%;padding:0;font-size:1.1rem;flex:none}
+.gd-pasos{display:flex;gap:6px;padding:0 16px 10px;border-bottom:1px solid var(--line)}
+.gd-pasos span{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;border:1.5px solid var(--line);color:var(--muted)}
+.gd-pasos span.ahora{background:var(--accent);border-color:var(--accent);color:#fff}
+.gd-pasos span.hecho{background:var(--good);border-color:var(--good);color:#fff}
+.gd-cuerpo{flex:1;overflow-y:auto;padding:16px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
+.gd-cuerpo .reader-head .back{display:none}
+.gd-bar{display:flex;justify-content:space-between;gap:10px;padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));border-top:1px solid var(--line);background:var(--surface)}
+.gd-bar button{min-height:48px;flex:1}
+.gd-bar button:disabled{opacity:.4}
 .pestanas.tres{grid-template-columns:repeat(3,1fr)}
 .ocasiones{display:flex;flex-wrap:wrap;gap:8px}
 .ocasiones button{min-height:38px;padding:6px 14px;border-radius:999px;font-size:.9rem}
@@ -705,24 +720,25 @@ let voices=[]; const synth = window.speechSynthesis;
 function loadVoices(){if(!synth)return;voices=synth.getVoices().filter(v=>/^es/i.test(v.lang))}
 if(synth){loadVoices();synth.onvoiceschanged=loadVoices}
 let speaking=null;
-function marcarParte(i){document.querySelectorAll(".seg").forEach((e,k)=>e.classList.toggle("active",k===i));document.querySelectorAll(".seg")[i]?.scrollIntoView({behavior:"smooth",block:"center"})}
+function marcarParte(i){const r=document.getElementById("guiada")||document,l=r.querySelectorAll(".seg");l.forEach((e,k)=>e.classList.toggle("active",k===i));l[i]?.scrollIntoView({behavior:"smooth",block:"center"})}
 // La app Android avisa con Voz.parte(i) al empezar cada parte y Voz.fin() al terminar.
 const Voz={parte(i){if(speaking)marcarParte(i)},fin(){if(vozCb){vozCb();return}stopSpeech()},sinVoz(){if(vozCb){vozCb();return}stopSpeech();const n=document.getElementById("tts-note");if(n)n.hidden=false}};
 // La app Android llama "window.Voz && Voz.fin()" y "window.Dictado && …": un const no queda en window, así que se publican aquí.
 window.Voz=Voz;window.Dictado=Dictado;
-function stopSpeech(){if(NATIVO&&speaking)NATIVO.callar();if(synth)synth.cancel();speaking=null;document.querySelectorAll(".seg.active").forEach(e=>e.classList.remove("active"));const b=document.getElementById("btn-listen");if(b)b.innerHTML=ICON.play+"Escuchar"}
+function stopSpeech(){const habia=!!speaking;if(NATIVO&&speaking)NATIVO.callar();if(synth)synth.cancel();speaking=null;document.querySelectorAll(".seg.active").forEach(e=>e.classList.remove("active"));botonesEscuchar(ICON.play+"Escuchar");if(habia&&guiada&&guiada.paso===1)guiadaMarcar(1)}
+function botonesEscuchar(h){document.querySelectorAll("#btn-listen,.btn-listen").forEach(b=>b.innerHTML=h)}
 function speakSpeech(sp){
   if(speaking){stopSpeech();return}
   if(NATIVO){
     const partes=[];sp.partes.forEach((p,i)=>trozos(p[1]).forEach(c=>partes.push({i,t:c})));
-    speaking=sp.id;const b=document.getElementById("btn-listen");if(b)b.innerHTML=ICON.stop+"Detener";
+    speaking=sp.id;botonesEscuchar(ICON.stop+"Detener");
     NATIVO.hablar(JSON.stringify(partes),parseFloat(store.get("rate",0.95)));return;
   }
   if(!synth||!synth.getVoices){const n=document.getElementById("tts-note");if(n){n.hidden=false;n.scrollIntoView({behavior:"smooth",block:"center"})}return}
   if(speaking){stopSpeech();return}
   const rate=parseFloat(store.get("rate",0.95));
   const vName=store.get("voice",""); const voice=voices.find(v=>v.name===vName)||voices.find(v=>/es-(MX|US|419)/i.test(v.lang))||voices[0];
-  speaking=sp.id; const b=document.getElementById("btn-listen"); if(b)b.innerHTML=ICON.stop+"Detener";
+  speaking=sp.id; botonesEscuchar(ICON.stop+"Detener");
   synth.cancel();
   sp.partes.forEach((p,i)=>{
     trozos(p[1]).forEach((chunk,j,arr)=>{
@@ -856,58 +872,108 @@ function setFiltro(t){store.set("filtro",t);render()}
 
 function viewDiscurso(id){
   const sp=findSp(id); if(!sp)return viewDiscursos();
-  const pr=pract(sp.id),paso=pr.paso,P={...PASOS_PRACT[paso-1],listo:pr.hechos.includes(paso)};
   const rate=store.get("rate",0.95);
   const vName=store.get("voice","");
+  const pr=pract(sp.id);
   return `<div class="stack-lg">
   <div class="reader-head">
     <button class="back" onclick="store.set('nivelVer',${sp.nivel||1});store.set('nivTab','${sp.mio?"mios":"niveles"}');location.hash='discursos'">${sp.mio?"← Mis discursos":"← Nivel "+(sp.nivel||1)}</button>
     <p class="eyebrow">${esc(sp.kind==="historia"?(sp.tipo||"Historia"):sp.tema)} · ${sp.min} min · ${words(sp)} palabras</p>
     <h1>${esc(sp.titulo)}</h1>
   </div>
-  ${stepper(paso,5,PASOS_PRACT.map(x=>x.t),k=>`irPasoPract('${sp.id}',${k})`,pr.hechos)}
-  <section class="card stack paso-pract">
-    <p class="eyebrow">Paso ${paso} de 5</p><h2>${P.t}</h2><p class="muted">${P.d}</p>
-    <div class="row">${P.boton(sp)}</div>
-    <div class="row" style="justify-content:space-between">${paso>1?`<button onclick="irPasoPract('${sp.id}',${paso-1})">← Anterior</button>`:"<span></span>"}${paso<5?`<button id="sig-paso" class="${P.listo?"siguiente":""}" onclick="irPasoPract('${sp.id}',${paso+1})">Siguiente paso →</button>`:""}</div>
-  </section>
+  <div class="herramientas">
+    <button class="btn-listen" onclick="speakSpeech(findSp('${sp.id}'))">${ICON.play}Escuchar</button>
+    <button onclick="openPrompter('${sp.id}')">${ICON.mic}Leer en voz alta</button>
+    <button onclick="abrirEnsayo('${sp.id}',1)">Tarjetas clave</button>
+    <button onclick="abrirEnsayo('${sp.id}',2,true)">${ICON.rec}Grabarme</button>
+    <button onclick="location.hash='evaluar-${sp.id}'">${ICON.check}Calificarme</button>
+  </div>
+  <button class="btn-accent guiada-go" onclick="abrirGuiada('${sp.id}',${pr.paso>1&&pr.paso<5?pr.paso:1})">${ICON.play}${pr.paso>1&&pr.paso<5?`Seguir la práctica guiada (paso ${pr.paso})`:"Empezar práctica guiada"}</button>
+  <p class="muted" style="font-size:.9rem;margin-top:-8px">Te lleva por los 5 pasos en orden: escuchar, leer en voz alta, tarjetas clave, grabarte y calificarte.</p>
   <div class="coach" id="tts-note" hidden><b>La voz no está disponible aquí</b><p>Este navegador no tiene lectura en voz alta. Instala la app Android o abre la página en Chrome:</p><div class="row"><a class="btn" href="${APK_URL}" target="_blank" rel="noopener">Descargar la app Android</a><a class="btn" href="${WEB_URL}#d-${sp.id}" target="_blank" rel="noopener">Abrir en Chrome</a></div><p class="muted" style="font-size:.9rem">Si estás en la app y no suena, revisa en Ajustes de Android → Voz que esté instalado Google Speech Services en español.</p></div>
-  ${paso<=2?`<div class="coach"><b>Consejo de entrega</b><p>${esc(sp.coach)}</p><p class="muted" style="font-size:.9rem">Cada <span class="pause">/</span> marca una pausa breve para respirar o dejar caer la idea.${sp.nivel===3?` <b class="sube">Sube</b> la energía, <i class="baja">baja</i> la voz y en <span class="pause">//</span> calla contando hasta tres.`:""}</p></div>
-  <div class="stack" style="gap:4px">${sp.partes.map(p=>`<section class="seg"><span class="tag">${esc(p[0])}${p[0]==="Cierre"?" · "+esc(sp.cierre):""}</span><p>${withPauses(p[1])}</p></section>`).join("")}</div>`
-  :`<details class="lesson"><summary><h3>Ver el texto completo</h3></summary><div class="lesson-body stack" style="gap:4px">${sp.partes.map(p=>`<section class="seg"><span class="tag">${esc(p[0])}</span><p>${withPauses(p[1])}</p></section>`).join("")}</div></details>`}
+  <div class="coach"><b>Consejo de entrega</b><p>${esc(sp.coach)}</p><p class="muted" style="font-size:.9rem">Cada <span class="pause">/</span> marca una pausa breve para respirar o dejar caer la idea.${sp.nivel===3?` <b class="sube">Sube</b> la energía, <i class="baja">baja</i> la voz y en <span class="pause">//</span> calla contando hasta tres.`:""}</p></div>
+  <div class="stack" style="gap:4px">${segsHtml(sp)}</div>
   <details class="lesson"><summary><h3>Más opciones</h3></summary><div class="lesson-body stack">
-    <p class="muted" style="font-size:.9rem">Ve directo a lo que quieras:</p>
-    <div class="row">
-      <button id="${paso===1?"btn-listen-x":"btn-listen"}" onclick="speakSpeech(findSp('${sp.id}'))">${ICON.play}Escuchar</button>
-      <button onclick="openPrompter('${sp.id}')">${ICON.mic}Teleprompter</button>
-      <button onclick="abrirEnsayo('${sp.id}',1)">Tarjetas clave</button>
-      <button onclick="abrirEnsayo('${sp.id}',2,true)">${ICON.rec}Grabarme</button>
-      <button onclick="location.hash='evaluar-${sp.id}'">${ICON.check}Calificarme</button>
-    </div>
     <label class="rate" for="rate">Velocidad de voz <input id="rate" type="range" min="0.7" max="1.2" step="0.05" value="${rate}" oninput="store.set('rate',this.value)"></label>
     ${voices.length>1?`<select id="voice" aria-label="Voz" style="width:auto" onchange="store.set('voice',this.value)">${voices.map(v=>`<option ${v.name===vName?"selected":""} value="${esc(v.name)}">${esc(v.name)} (${v.lang})</option>`).join("")}</select>`:""}
     ${sp.mio?`<div class="row"><button onclick="location.hash='editar-${sp.id}'">Editar</button><button id="del-btn" onclick="delMine('${sp.id}',this)">Borrar este discurso</button></div>`:""}
   </div></details>
   </div>`;
 }
-/* Practicar un discurso en 5 pasos (ed_pract = {id: {paso, hechos:[...]}}). Cada paso tiene un botón principal;
-   al terminar la herramienta (teleprompter, tarjetas, grabadora) se marca y se pasa solo al siguiente. */
+const segsHtml=sp=>sp.partes.map(p=>`<section class="seg"><span class="tag">${esc(p[0])}${p[0]==="Cierre"&&sp.cierre?" · "+esc(sp.cierre):""}</span><p>${withPauses(p[1])}</p></section>`).join("");
+
+/* ================= PRÁCTICA GUIADA =================
+   Pantalla aparte con los 5 pasos, uno a la vez, y una barra fija abajo (Anterior / Siguiente paso).
+   Cada paso arranca solo: la voz lee, el teleprompter y las tarjetas se abren encima y al tocar
+   "Listo, siguiente paso" se pasa al que sigue. La X (o el gesto de atrás) vuelve al discurso.
+   ed_pract = {id: {paso, hechos:[...]}} recuerda en qué paso ibas. */
 const PASOS_PRACT=[
- {t:"Escuchar",d:"Escúchalo una vez siguiendo el texto con la vista.",boton:sp=>`<button id="btn-listen" class="siguiente" onclick="practMarcar('${sp.id}',1);speakSpeech(findSp('${sp.id}'));this.classList.remove('siguiente');document.getElementById('sig-paso')?.classList.add('siguiente')">${ICON.play}Escuchar</button>`},
- {t:"Leer en voz alta",d:"De pie, léelo en voz alta con el teleprompter, respetando las pausas. Hazlo dos veces.",boton:sp=>`<button class="siguiente" onclick="openPrompter('${sp.id}',true)">${ICON.mic}Abrir teleprompter</button>`},
- {t:"Tarjetas clave",d:"Ves solo cómo empieza cada parte y sus palabras clave. Dilo con tus palabras.",boton:sp=>`<button class="siguiente" onclick="abrirEnsayo('${sp.id}',1,false,false,true)">Abrir tarjetas clave</button>`},
- {t:"Grabarte",d:"Graba tu voz diciéndolo solo con el comienzo de cada parte, y escúchate. Fíjate en una sola cosa para mejorar.",boton:sp=>`<button class="siguiente" onclick="abrirEnsayo('${sp.id}',2,true,false,true)">${ICON.rec}Grabarme</button>`},
- {t:"Calificarte",d:"Dilo de memoria mientras el teléfono lo escribe, y Claude te califica.",boton:sp=>`<button class="siguiente" onclick="location.hash='evaluar-${sp.id}'">${ICON.check}Calificarme</button>`}];
+ {t:"Escuchar",d:"Sigue el texto con la vista mientras la voz lo lee."},
+ {t:"Leer en voz alta",d:"De pie, léelo con el teleprompter respetando las pausas. Mejor si lo haces dos veces."},
+ {t:"Tarjetas clave",d:"Solo ves cómo empieza cada parte y sus palabras clave. Dilo con tus palabras."},
+ {t:"Grabarte",d:"Graba tu voz con solo el comienzo de cada parte y escúchate. Fíjate en una sola cosa para mejorar."},
+ {t:"Calificarte",d:"Dilo de memoria mientras el teléfono lo escribe, y Claude te califica."}];
 function pract(id){return store.get("pract",{})[id]||{paso:1,hechos:[]}}
 function practSet(id,v){const t=store.get("pract",{});t[id]=v;store.set("pract",t)}
 function practMarcar(id,n){const v=pract(id);if(!v.hechos.includes(n))v.hechos.push(n);practSet(id,v)}
-function irPasoPract(id,n){stopSpeech();const v=pract(id);v.paso=Math.max(1,Math.min(5,n));practSet(id,v);render()}
-// Al cerrar una herramienta abierta desde el paso: lo marca hecho y pasa al siguiente.
-function practTerminar(id,n){practMarcar(id,n);irPasoPract(id,n+1)}
+let guiada=null;
+function abrirGuiada(id,paso){
+  stopSpeech();stopRec();cerrarEnsayo();
+  const sp=findSp(id);if(!sp)return;
+  document.getElementById("guiada")?.remove();
+  const el=document.createElement("div");el.className="guiada";el.id="guiada";
+  el.innerHTML=`<div class="gd-top"><div><p class="eyebrow" id="gd-eb"></p><h2 id="gd-t"></h2></div><button class="gd-x" aria-label="Salir de la práctica guiada" onclick="cerrarGuiada()">✕</button></div>
+   <div class="gd-pasos" id="gd-pasos"></div>
+   <div class="gd-cuerpo" id="gd-cuerpo"></div>
+   <div class="gd-bar"><button id="gd-ant">← Anterior</button><button id="gd-sig">Siguiente paso →</button></div>`;
+  document.body.appendChild(el);history.pushState({guiada:1},"");
+  guiada={id};
+  document.getElementById("gd-ant").onclick=()=>guiadaIr(guiada.paso-1);
+  document.getElementById("gd-sig").onclick=()=>guiada.paso<5?guiadaIr(guiada.paso+1):cerrarGuiada();
+  guiadaIr(paso||1);
+}
+function guiadaIr(n){
+  if(!guiada)return;
+  stopSpeech();stopRec();clearInterval(aiInt);
+  document.getElementById("prompter")?.remove();
+  if(document.getElementById("ensayo"))cerrarEnsayo();
+  const id=guiada.id,sp=findSp(id);n=Math.max(1,Math.min(5,n));guiada.paso=n;
+  const v=pract(id);v.paso=n;practSet(id,v);
+  const P=PASOS_PRACT[n-1],$=x=>document.getElementById(x);
+  $("gd-eb").textContent=`Paso ${n} de 5`;$("gd-t").textContent=P.t;
+  $("gd-pasos").innerHTML=PASOS_PRACT.map((x,i)=>`<span class="${i+1===n?"ahora":v.hechos.includes(i+1)?"hecho":""}">${v.hechos.includes(i+1)&&i+1!==n?"✓":i+1}</span>`).join("");
+  $("gd-ant").disabled=n===1;$("gd-sig").textContent=n<5?"Siguiente paso →":"Terminar";
+  $("gd-sig").classList.toggle("siguiente",v.hechos.includes(n));
+  const c=$("gd-cuerpo");c.scrollTop=0;
+  const otraVez=(txt,fn)=>`<p class="muted">${P.d}</p><button class="btn-primary" style="align-self:flex-start" onclick="${fn}">${txt}</button>`;
+  if(n===1){
+    c.innerHTML=`<p class="muted">${P.d}</p><button class="btn-listen btn-primary" style="align-self:flex-start" onclick="speakSpeech(findSp('${id}'))">${ICON.play}Escuchar</button><div class="stack" style="gap:4px">${segsHtml(sp)}</div>`;
+    speakSpeech(sp);
+  }
+  // El teleprompter, las tarjetas y la grabadora se abren encima; si los cierras, aquí queda el botón para abrirlos otra vez.
+  else if(n===2){c.innerHTML=otraVez(ICON.mic+"Abrir el teleprompter",`openPrompter('${id}',true,true)`);setTimeout(()=>{if(guiada&&guiada.paso===2)openPrompter(id,true,true)},350)}
+  else if(n===3){c.innerHTML=otraVez("Abrir las tarjetas",`abrirEnsayo('${id}',1,false,false,true)`);setTimeout(()=>{if(guiada&&guiada.paso===3)abrirEnsayo(id,1,false,false,true)},350)}
+  else if(n===4){c.innerHTML=otraVez(ICON.rec+"Abrir la grabadora",`abrirEnsayo('${id}',2,true,false,true)`);setTimeout(()=>{if(guiada&&guiada.paso===4)abrirEnsayo(id,2,true,false,true)},350)}
+  else{c.innerHTML=viewEvaluar(id)}
+}
+function guiadaMarcar(n){if(!guiada)return;practMarcar(guiada.id,n);if(guiada.paso===n)document.getElementById("gd-sig")?.classList.add("siguiente")}
+// Al tocar "Listo, siguiente paso" en una herramienta abierta desde la práctica guiada.
+function practTerminar(id,n){practMarcar(id,n);if(guiada&&guiada.id===id)guiadaIr(n+1)}
+function cerrarGuiada(porAtras){
+  const el=document.getElementById("guiada");guiada=null;if(!el)return;
+  stopSpeech();stopRec(true);clearInterval(aiInt);cronoParar();
+  document.getElementById("prompter")?.remove();
+  if(document.getElementById("ensayo"))cerrarEnsayo(true);
+  el.remove();
+  const atras=!porAtras&&history.state?(history.state.ensayo?-2:history.state.guiada?-1:0):0;if(atras)history.go(atras);
+  if((location.hash||"").startsWith("#d-"))render();
+}
+// El gesto de atrás: si había una herramienta encima, solo se cierra ella (su estado queda debajo del de la guiada).
+window.addEventListener("popstate",()=>{if(document.getElementById("guiada")&&!(history.state&&history.state.guiada))cerrarGuiada(true)});
 
 /* Teleprompter */
 let pState=null;
-function openPrompter(id,desdePaso){
+function openPrompter(id,desdePaso,auto){
   stopSpeech();
   const sp=findSp(id);
   const el=document.createElement("div"); el.className="prompter"; el.id="prompter";
@@ -938,6 +1004,7 @@ function openPrompter(id,desdePaso){
     if(pState.running){pState.last=0;pState.raf=requestAnimationFrame(tick);try{wake=await navigator.wakeLock?.request("screen")}catch(e){}}
     else{cancelAnimationFrame(pState.raf);try{wake?.release()}catch(e){}}
   };
+  if(auto)play.onclick();
   el.querySelector("#p-reset").onclick=()=>{txt.scrollTop=0;pState.t=0;clock.textContent="0:00"};
   spd.oninput=()=>store.set("pspeed",spd.value);
   el.querySelector("#p-salir").onclick=()=>{pState.running=false;cancelAnimationFrame(pState.raf);try{wake?.release()}catch(e){}el.remove()};
@@ -2082,6 +2149,7 @@ function flujoGuardar(cual){
 /* ================= ROUTER ================= */
 function render(){
   stopSpeech(); stopRec(true); clearInterval(aiInt); cronoParar(); guiaCerrar(); cerrarEnsayo(); impFase="";
+  if(guiada||document.getElementById("guiada")){guiada=null;document.getElementById("guiada")?.remove();document.getElementById("prompter")?.remove()}
   const h=(location.hash||"#inicio").slice(1);
   let html, tab=h;
   if(h.startsWith("d-")){html=viewDiscurso(h.slice(2));tab="discursos"}
