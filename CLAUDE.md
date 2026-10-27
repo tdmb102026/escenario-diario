@@ -18,3 +18,6 @@
 - Recordatorio diario (solo app Android): `AndroidVoz.recordatorio(activo, hora, minuto)`, `recordatorioEstado()`, `practique()`; `Recordatorio.java` usa `AlarmManager.setWindow` (sin permiso de alarmas exactas), no avisa si ese día ya practicaste y se reprograma al reiniciar el teléfono.
 - Dictado: si una tanda de Google termina sin resultado final o con error, se guarda lo último oído (`ultimoParcial` en Java, `dictParcial` en la página); antes la tanda nueva borraba lo anterior.
 - La página publica `window.Voz` y `window.Dictado`: la app Android los llama como `window.Voz && Voz.fin()` (un `const` no queda en `window`).
+- Profesor: `decir()` con la voz nativa sigue solo si Android no avisa el fin (espera estimada por largo del texto). Abrir el profesor hace `history.pushState({guia:1})`: el gesto de atrás lo cierra y deja en Calentar.
+- La app Android usa `LOAD_NO_CACHE` con internet (antes mostraba la página vieja guardada) y `LOAD_CACHE_ELSE_NETWORK` sin internet.
+- Brindis y felicitaciones: lección en Aprender ("Recuerdo cuando… → eso llevó a… → por eso te deseo… → ¡salud!") y modo de Crear `ocasion` (`ed_geno`, `OCAS_RULES`, `promptOcasion`), en "Otras opciones".

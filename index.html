@@ -272,6 +272,24 @@ const LESSONS = [
   <li><b>Mirada:</b> sostén la vista con una persona durante una frase completa y luego cambia a otra zona.</li>
   <li><b>Manos:</b> déjalas visibles y a la altura del ombligo; que acompañen, no que distraigan.</li>
   <li><b>Pies:</b> plantados a la anchura de tus hombros. Muévete solo cuando cambies de idea.</li></ul>`},
+ {t:"Felicitaciones, brindis y unas palabras", b:`<p>En un cumpleaños, una boda, una despedida o cuando alguien logra algo, te pueden pedir "unas palabras" sin aviso. El secreto: <b>no felicites con adjetivos, felicita con un recuerdo</b>. "Eres una gran persona" se olvida; "Recuerdo cuando estábamos trabajando en…" se queda.</p>
+ <div class="struct">
+  <div><b>1. Atención</b> <span class="muted">(5 s)</span><br>Ponte de pie, levanta la copa o espera el silencio. "Quiero decir unas palabras para Ana."</div>
+  <div><b>2. El recuerdo</b> <span class="muted">(30 a 60 s)</span><br>Una historia corta con un momento exacto: "Recuerdo cuando estábamos tú y yo en la bodega, a las once de la noche, sacando el pedido…". Qué pasó y qué hizo esa persona.</div>
+  <div><b>3. Lo que eso dice de ella</b> <span class="muted">(10 a 20 s)</span><br>"Eso llevó a…", "Ese día entendí que tú…". De la historia sale la cualidad, sin que tengas que adornarla.</div>
+  <div><b>4. El deseo o el brindis</b> <span class="muted">(10 s)</span><br>Mira a la persona, luego a todos: "Por eso hoy te deseo… ¡Salud por Ana!"</div></div>
+ <p><b>La fórmula para recordarla:</b> <i>Recuerdo cuando… → eso llevó a… → por eso hoy te deseo… → ¡salud!</i></p>
+ <ul>
+  <li><b>Cumpleaños:</b> un recuerdo con la persona y lo que te enseñó. "Recuerdo cuando me prestaste tu carro sin preguntar para qué…"</li>
+  <li><b>Brindis de boda o aniversario:</b> un recuerdo de la pareja juntos, no de tu amistad con uno solo. Termina invitando a todos a levantar la copa.</li>
+  <li><b>Un logro (graduación, ascenso, negocio nuevo):</b> cuenta un momento del esfuerzo que nadie vio. "Yo la vi estudiar en el bus a las seis de la mañana."</li>
+  <li><b>Despedida o agradecimiento:</b> un momento en que esa persona hizo la diferencia para ti o para el grupo.</li></ul>
+ <ul>
+  <li><b>Corto gana:</b> uno a dos minutos. Nadie se queja de un brindis breve.</li>
+  <li><b>Que lo entiendan todos:</b> nada de chistes internos ni anécdotas que avergüencen.</li>
+  <li><b>La protagonista es la otra persona,</b> no tú: usa más "tú" que "yo".</li>
+  <li><b>Ten una lista mental de recuerdos</b> de la gente cercana. Cuando te pidan palabras, ya tienes la historia.</li></ul>
+ <a class="btn btn-accent" href="#crear" onclick="store.set('crearModo','ocasion')" style="align-self:flex-start">Crear un brindis o una felicitación</a>`},
 ];
 
 const SPEECHES = [
@@ -899,11 +917,11 @@ function viewCrear(){
   const modo=store.get("crearModo","flujo");
   if(modo==="flujo"||!MODOS[modo]&&modo!=="unir")return viewFlujo();
   const tabs=`<button class="back" onclick="store.set('crearModo','flujo');render()">← Volver al paso a paso</button>`;
-  const intro={discurso:"Cuéntale a Claude de qué quieres hablar. Te hará un par de preguntas y armará un discurso con gancho, cuerpo y cierre.",historia:"Claude te ayuda a sacar una historia real de tu vida: el momento, el conflicto, el giro y la lección. Luego la puedes unir a cualquier discurso.",unir:"Junta un discurso con una de tus historias. Claude te dice dónde va mejor y por qué."}[modo];
+  const intro={ocasion:"Para un cumpleaños, un brindis, una felicitación o una despedida. Claude te pregunta por un recuerdo con esa persona y arma unas palabras cortas: recuerdo cuando… eso llevó a… por eso te deseo…",discurso:"Cuéntale a Claude de qué quieres hablar. Te hará un par de preguntas y armará un discurso con gancho, cuerpo y cierre.",historia:"Claude te ayuda a sacar una historia real de tu vida: el momento, el conflicto, el giro y la lección. Luego la puedes unir a cualquier discurso.",unir:"Junta un discurso con una de tus historias. Claude te dice dónde va mejor y por qué."}[modo];
   if(modo==="unir")return `<div class="stack-lg"><div class="section-title"><p class="eyebrow">Crear</p><h1>Unir discurso e historia</h1><p class="muted">${intro}</p></div>${tabs}${viewUnir()}</div>`;
   const M=MODOS[modo],g=genState();
   return `<div class="stack-lg">
-  <div class="section-title"><p class="eyebrow">Crear</p><h1>${modo==="historia"?"Tu historia":"Tu propio discurso"}</h1><p class="muted">${intro}</p></div>
+  <div class="section-title"><p class="eyebrow">Crear</p><h1>${modo==="historia"?"Tu historia":modo==="ocasion"?"Brindis y felicitaciones":"Tu propio discurso"}</h1><p class="muted">${intro}</p></div>
   ${tabs}
   <section class="chat" id="chat">${chatHtml(g)}</section>
   <section class="card stack">
@@ -926,7 +944,7 @@ function draftHtml(d,key){
    ${d.recomendacion?`<div class="coach"><b>Por qué la historia va ahí</b><p>${esc(d.recomendacion)}</p></div>`:""}
    <div class="stack" style="gap:4px">${d.partes.map(p=>`<section class="seg"><span class="tag">${esc(p[0])}</span><p>${withPauses(p[1])}</p></section>`).join("")}</div>
    <div class="row"><button class="btn-accent" onclick="genSave('${key}')">${ICON.check}Guardar y practicar</button></div>
-   <p class="muted" style="font-size:.9rem">${key==="genu"?"¿No te convence? Toca Recomendar y unir otra vez.":`¿Quieres cambios? Díselo a Claude arriba ("hazlo más corto", "cambia el final") y toca ${d.kind==="historia"?"Armar historia":"Armar discurso"} otra vez.`}</p></div>`;
+   <p class="muted" style="font-size:.9rem">${key==="genu"?"¿No te convence? Toca Recomendar y unir otra vez.":`¿Quieres cambios? Díselo a Claude arriba ("hazlo más corto", "cambia el final") y toca ${key==="geno"?"Armar mis palabras":d.kind==="historia"?"Armar historia":"Armar discurso"} otra vez.`}</p></div>`;
 }
 function genErr(msg){const e=document.getElementById("gen-err");if(e){e.hidden=!msg;e.textContent=msg||""}}
 let genBusy=false;
@@ -953,14 +971,14 @@ async function genBuild(){
   if(!g.turns.length){genErr("Primero cuéntale a Claude de qué quieres hablar.");return}
   if(!IA.listo()){genErr(aiErr({code:"sin_config"}));return}
   const b=document.getElementById("gen-build"); b.disabled=true; genBusy=true; genErr("");
-  const esHist=modoCrear()==="historia";
-  document.getElementById("gen-draft").innerHTML=`<div class="card"><p class="muted">Claude está escribiendo tu ${esHist?"historia":"discurso"}. Puede tardar hasta un minuto…</p></div>`;
+  const esHist=modoCrear()==="historia",esOcas=modoCrear()==="ocasion";
+  document.getElementById("gen-draft").innerHTML=`<div class="card"><p class="muted">Claude está escribiendo ${esOcas?"tus palabras":esHist?"tu historia":"tu discurso"}. Puede tardar hasta un minuto…</p></div>`;
   const convo=g.turns.map(t=>(t.role==="user"?"PERSONA: ":"COACH: ")+t.content).join("\n");
   const prev=g.draft?"\n\nBORRADOR ANTERIOR (aplica los cambios que la persona pidió después de él):\n"+JSON.stringify(g.draft):"";
-  const prompt=esHist?promptHistoria(convo,prev):promptDiscurso(convo,prev);
+  const prompt=esOcas?promptOcasion(convo,prev):esHist?promptHistoria(convo,prev):promptDiscurso(convo,prev);
   try{
     const d=await IA.json(prompt,{tarea:esHist?"historia":"armar"});
-    const draft=limpiarBorrador(d,esHist?{kind:"historia",tipo:String(d.tipo||"Historia"),tema:"Historia",cierre:"Storytelling",nivel:2}:{nivel:1});
+    const draft=limpiarBorrador(d,esHist?{kind:"historia",tipo:String(d.tipo||"Historia"),tema:"Historia",cierre:"Storytelling",nivel:2}:esOcas?{tema:String(d.tema||"Brindis"),cierre:"Storytelling",nivel:2}:{nivel:1});
     const g2=genState(); g2.draft=draft; genGuardarEstado(g2);
     document.getElementById("gen-draft").innerHTML=draftHtml(draft,MODOS[modoCrear()].key);
     document.getElementById("gen-draft").scrollIntoView({behavior:"smooth",block:"start"});
@@ -1259,7 +1277,12 @@ let enGuia=false;
 function decir(t){return new Promise(res=>{
   const vel=parseFloat(store.get("rate",0.95))*(enGuia?gv():1);
   const listo=()=>{vozCb=null;res()};
-  if(NATIVO){vozCb=listo;NATIVO.hablar(JSON.stringify([{i:0,t}]),vel);return}
+  if(NATIVO){
+    // Por si el teléfono no avisa que terminó de hablar: seguir solo cuando ya debió acabar.
+    let t0=0;const fin=()=>{clearTimeout(t0);listo()};
+    t0=setTimeout(()=>{if(vozCb===fin)fin()},2000+t.length*95/vel);
+    vozCb=fin;
+    NATIVO.hablar(JSON.stringify([{i:0,t}]),vel);return}
   if(synth&&window.SpeechSynthesisUtterance){
     synth.cancel();const u=new SpeechSynthesisUtterance(t);
     const vName=store.get("voice",""),v=voices.find(x=>x.name===vName)||voices.find(x=>/es-(MX|US|419)/i.test(x.lang))||voices[0];
@@ -1398,7 +1421,7 @@ async function guiaCalentar(desde,solo){
   el.innerHTML=`<div class="guia-in"><p class="eyebrow" id="g-eb">Calentamiento guiado</p><h2 id="g-t">Ponte de pie</h2><p class="g-rep" id="g-rep"></p><p id="g-s" class="g-s">Hombros sueltos, pies a la anchura de tus hombros.</p><div class="g-n" id="g-n"></div>
    <label class="g-vel" for="g-vel">Más lento <input id="g-vel" type="range" min="0.6" max="1.5" step="0.1" value="${gv()}"> Más rápido</label>
    <div class="row" style="justify-content:center"><button id="g-pausa">Pausa</button>${solo?"":`<button id="g-skip">Siguiente ejercicio</button>`}<button id="g-close">Terminar</button></div></div>`;
-  document.body.appendChild(el);
+  document.body.appendChild(el);history.pushState({guia:1},"");
   let wake=null;try{wake=await navigator.wakeLock?.request("screen")}catch(e){}
   const $=id=>document.getElementById(id);
   const pant={texto:t=>{const e=$("g-s");if(e)e.textContent=t},num:n=>{const e=$("g-n");if(e)e.textContent=n},rep:t=>{const e=$("g-rep");if(e)e.textContent=t?"Repetición "+t:""}};
@@ -1422,13 +1445,33 @@ async function guiaCalentar(desde,solo){
   enGuia=false;try{wake?.release()}catch(e){}
 }
 
-function guiaCerrar(){enGuia=false;if(guia){guia.on=false;guia=null;callarGuia()}document.getElementById("guia")?.remove()}
+function guiaCerrar(porAtras){enGuia=false;if(guia){guia.on=false;guia=null;callarGuia()}
+  const el=document.getElementById("guia");if(!el)return;el.remove();
+  if(!porAtras&&history.state&&history.state.guia)history.back()}
+// El gesto de atrás con el profesor abierto cierra el profesor y te deja en Calentar.
+window.addEventListener("popstate",()=>{if(document.getElementById("guia"))guiaCerrar(true)});
 
 /* ================= CREAR: HISTORIA Y UNIR ================= */
 const HIST_RULES=`Eres un coach de storytelling que ayuda a una persona a sacar una historia real de su vida para usarla en sus discursos. Hablas en español de México, cercano y breve (2 a 4 frases por respuesta). La persona te habla por dictado de voz, así que su texto puede venir sin puntuación.
 Tipos de historia: transformación personal, fracaso que enseña, momento de decisión, historia de otra persona, metáfora o fábula.
 Tu trabajo: si no te dijo qué tipo quiere, sugiérele uno o dos según lo que cuente. Luego haz UNA sola pregunta a la vez, máximo cuatro en total, para sacar: el momento exacto (cuándo, dónde, quién), qué estaba en juego o qué sentía, el giro (qué pasó, qué dijo alguien o qué decidió) y qué aprendió. Pide detalles de los sentidos y alguna frase que alguien dijo. Si ya te dio algo, no lo preguntes. Cuando tengas suficiente, dile que toque "Armar historia". Si pide cambios a una historia ya armada, confirma brevemente y dile que toque "Armar historia" otra vez.`;
+const OCAS_RULES=`Eres un coach que ayuda a una persona a preparar unas palabras cortas para una ocasión especial: felicitar un cumpleaños, un brindis (boda, aniversario, fin de año), felicitar un logro, una despedida o un agradecimiento. Hablas en español de México, cercano y breve (2 a 4 frases por respuesta). La persona te habla por dictado de voz, así que su texto puede venir sin puntuación.
+La clave del método: no felicitar con adjetivos sino con un recuerdo compartido ("Recuerdo cuando estábamos…, eso llevó a…, por eso hoy te deseo…").
+Tu trabajo: haz UNA sola pregunta a la vez, máximo cuatro en total, para sacar: la ocasión y para quién es (nombre y qué relación tienen), un recuerdo concreto con esa persona (cuándo, dónde, qué pasó, qué hizo ella), qué dice ese recuerdo de ella o a qué llevó, y qué le desea. Si no se le ocurre un recuerdo, ayúdale con preguntas como "¿qué momento difícil pasaron juntos?" o "¿qué hizo por ti que no olvidas?". Si ya te dio algo, no lo preguntes. Cuando tengas suficiente, dile que toque "Armar mis palabras". Si pide cambios a unas palabras ya armadas, confirma brevemente y dile que toque "Armar mis palabras" otra vez.`;
+function promptOcasion(convo,prev){return `Escribe unas palabras cortas en primera persona, en español de México, para que esta persona las diga en voz alta en una ocasión especial (felicitación, brindis, despedida o agradecimiento). Usa SOLO lo que la persona contó en esta conversación con su coach; no inventes hechos importantes:
+
+${convo.slice(-8000)}${prev}
+
+Reglas:
+- Entre 100 y 170 palabras. Frases cortas, cálidas, fáciles de decir. Habla más de la otra persona que de ti; usa su nombre.
+- Cuatro partes: Atención (una frase para pedir la atención o levantar la copa), Recuerdo (la historia con un momento exacto, que empiece con algo como "Recuerdo cuando…"), Lo que dice de ti (a qué llevó ese momento y qué cualidad muestra, sin adjetivos vacíos), Deseo (el deseo o el brindis final; si es brindis, termina invitando a todos a levantar la copa).
+- Nada de chistes internos ni cosas que avergüencen.
+- Marca las pausas con " / " (espacio, barra, espacio) cada 5 a 15 palabras.
+
+Responde solo con JSON con esta forma:
+{"titulo":"máximo 6 palabras","tema":"Cumpleaños | Brindis | Felicitación | Despedida | Agradecimiento","resumen":"una frase","coach":"un consejo para decirlo","partes":[["Atención","..."],["Recuerdo","..."],["Lo que dice de ti","..."],["Deseo","..."]]}`}
 const MODOS={
+  ocasion:{key:"geno",rules:()=>OCAS_RULES,saludo:"¿Para quién son tus palabras y en qué ocasión? Por ejemplo: el cumpleaños de tu mamá, el brindis de una boda o la despedida de un compañero.",boton:"Armar mis palabras",ph:"Ej. Es el cumpleaños de mi socio Juan, quiero decir unas palabras en la cena…"},
   discurso:{key:"gen",rules:()=>GEN_RULES,saludo:"¿Sobre qué quieres hacer tu discurso? Cuéntame la idea como te salga, aunque sea desordenada.",boton:"Armar discurso",ph:"Ej. Quiero hablar de cómo dejar de procrastinar, para jóvenes que empiezan a trabajar…"},
   historia:{key:"genh",rules:()=>HIST_RULES,saludo:"Cuéntame un momento de tu vida que te haya cambiado, aunque sea pequeño. Si no se te ocurre, dime de qué trata tu discurso y te ayudo a encontrar uno.",boton:"Armar historia",ph:"Ej. Cuando me quedé sin trabajo y decidí aprender algo nuevo…"},
 };
@@ -1588,6 +1631,7 @@ function viewFlujo(){
   <div id="flujo-cuerpo" class="stack-lg">${cuerpo}</div>
   <details class="lesson"><summary><h3>Otras opciones</h3></summary><div class="lesson-body">
     <button onclick="if(this.dataset.c){flujoSet(flujoVacio());render()}else{this.dataset.c=1;this.textContent='Toca otra vez para borrar este discurso y empezar'}">Empezar un discurso nuevo</button>
+    <button onclick="store.set('crearModo','ocasion');render()">Brindis, felicitación o unas palabras</button>
     <button onclick="store.set('crearModo','historia');render()">Crear solo una historia</button>
     <button onclick="store.set('crearModo','unir');render()">Unir una historia que ya guardé con otro discurso</button>
   </div></details>

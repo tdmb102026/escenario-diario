@@ -5,6 +5,8 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
@@ -63,6 +65,10 @@ public class MainActivity extends Activity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setDatabaseEnabled(true);
+        // Con internet siempre baja la página nueva (si no, el WebView mostraba la versión vieja guardada).
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        NetworkInfo red = cm != null ? cm.getActiveNetworkInfo() : null;
+        s.setCacheMode(red != null && red.isConnected() ? WebSettings.LOAD_NO_CACHE : WebSettings.LOAD_CACHE_ELSE_NETWORK);
         web.addJavascriptInterface(new Puente(), "AndroidVoz");
         web.setWebViewClient(new WebViewClient() {
             @Override
