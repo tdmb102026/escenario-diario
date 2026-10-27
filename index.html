@@ -222,6 +222,34 @@ nav.tabs a[aria-current="page"]{color:var(--accent);background:var(--accent-soft
 .siguiente{background:var(--accent)!important;border-color:var(--accent)!important;color:#fff!important;box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 60%,transparent);animation:latido 1.8s ease-out infinite}
 @keyframes latido{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 55%,transparent)}70%{box-shadow:0 0 0 12px transparent}100%{box-shadow:0 0 0 0 transparent}}
 @media (prefers-reduced-motion:reduce){.siguiente{animation:none}}
+.racha{display:flex;flex-direction:column;gap:12px}
+.racha-top{display:flex;align-items:center;gap:14px}
+.racha-n{font-family:var(--f-display);font-weight:800;font-size:2.4rem;line-height:1;color:var(--accent);min-width:1.4em;text-align:center}
+.semana{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.semana span{display:flex;align-items:center;justify-content:center;aspect-ratio:1;max-height:40px;border-radius:50%;border:1.5px solid var(--line);font-size:.75rem;color:var(--muted)}
+.semana span i{font-style:normal;font-weight:700}
+.semana span.si{background:var(--accent);border-color:var(--accent);color:#fff}
+.semana span.hoy{outline:2px solid var(--spot);outline-offset:2px}
+.paso{display:flex;flex-direction:column;gap:10px}
+.paso-top{display:flex;gap:12px;align-items:flex-start}
+.paso-n{flex:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;background:var(--accent-soft);color:var(--accent)}
+.paso.ok{opacity:.7}.paso.ok .paso-n{background:var(--good);color:#fff}
+.paso.actual{border-color:var(--accent)}
+.vivo{display:flex;flex-direction:column;gap:2px;font-size:.9rem;padding:8px 12px;border-radius:10px;background:var(--accent-soft)}
+.vivo b{font-family:var(--f-display);font-size:1.1rem}.vivo b.bien{color:var(--good)}.vivo b.mal{color:var(--bad)}
+.e-paso{margin:0;padding:10px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));color:#B8C0CC;font-size:.92rem}
+.e-paso b{color:#F2B33D}
+.e-audio{padding:10px 16px;display:flex;flex-direction:column;gap:8px;color:#F4F1EC;border-bottom:1px solid #263041}
+.e-audio audio{width:100%}.e-audio p{margin:0}.e-fijate{color:#B8C0CC;font-size:.9rem}
+.ensayo .e-texto{padding-top:24px;padding-bottom:30vh}
+.oc u{display:inline-block;border-bottom:2px solid #556274;height:.8em;margin-left:1px;text-decoration:none}
+.prompter-bar button:disabled{opacity:.4}
+.prompter-bar button.rec-on{background:var(--bad);border-color:var(--bad)}
+.retos{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.retos li{display:flex;gap:8px;align-items:flex-start;color:var(--muted);font-size:.92rem}
+.retos li svg{flex:none;color:var(--good);margin-top:2px}
+.retos li.actual{color:var(--ink);font-weight:600}
+.retos li:not(.ok):not(.actual){opacity:.6}
 .g-vel{display:flex;align-items:center;gap:10px;justify-content:center;color:#B8C0CC;font-size:.9rem}
 .g-vel input{accent-color:#F2B33D;width:160px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;z-index:60;font-size:.9rem}
@@ -585,7 +613,7 @@ function stopRec(salir){if(rec){try{rec.stop()}catch(e){}rec=null}if(NATIVO&&dic
 // Google reinicia la escucha en cada pausa. Si una tanda termina sin resultado final (o en error), lo último
 // que se oyó (dictParcial) se guarda igual; si no, la tanda nueva lo borraba de la caja.
 let dictParcial="";
-function dictMostrar(){const ta=dictId&&document.getElementById(dictId);if(ta){ta.value=dictBase+dictFinal+dictParcial;ta.scrollTop=ta.scrollHeight}}
+function dictMostrar(){const ta=dictId&&document.getElementById(dictId);if(ta){ta.value=dictBase+dictFinal+dictParcial;ta.scrollTop=ta.scrollHeight;medirVivo(dictId)}}
 function tandaNueva(a,b){const wa=a.trim().split(/\s+/),wb=b.trim().split(/\s+/);return wa.length>=3&&wb.length<wa.length-1&&wa[0].toLowerCase()!==wb[0].toLowerCase()}
 const Dictado={
   parcial(t){if(dictParcial&&tandaNueva(dictParcial,t))dictFinal+=dictParcial+" ";dictParcial=t;dictMostrar()},
@@ -593,11 +621,13 @@ const Dictado={
   estado(s){if(s==="escuchando")return;if(dictParcial){dictFinal+=dictParcial+" ";dictParcial="";dictMostrar()}if(dictId)micBtnIdle(dictId);dictId=null;if(s.indexOf("error:")===0)toast(s.slice(6))}
 };
 function dictBox(id,ph,rows){return `<div class="dict"><textarea id="${id}" rows="${rows||5}" placeholder="${esc(ph)}"></textarea>
- <div class="row"><button type="button" id="${id}-mic" onclick="startRec('${id}')">${ICON.mic}Hablar</button><button type="button" onclick="document.getElementById('${id}').value=''">Borrar texto</button></div>
+ <div class="row"><button type="button" id="${id}-mic" onclick="startRec('${id}')">${ICON.mic}Hablar</button><button type="button" onclick="document.getElementById('${id}').value='';dictT0['${id}']=0;medirVivo('${id}')">Borrar texto</button></div>
+ <div class="vivo" id="${id}-vivo" hidden></div>
  <p class="hint" id="${id}-hint" hidden>Este navegador no deja usar el micrófono aquí. Toca el ícono de micrófono de tu teclado y habla: tu teléfono escribirá lo que digas. Con la app Android esto no hace falta.</p></div>`}
 function startRec(id){
   const ta=document.getElementById(id),btn=document.getElementById(id+"-mic"),hint=document.getElementById(id+"-hint");
   const fallback=()=>{rec=null;btn.classList.remove("rec-on");btn.innerHTML=ICON.mic+"Hablar";hint.hidden=false;ta.focus()};
+  if(!ta.value.trim()||!dictT0[id])dictT0[id]=Date.now();
   if(NATIVO){
     if(dictId){stopRec();return}
     dictId=id;dictBase=ta.value?ta.value.trim()+" ":"";dictFinal="";dictParcial="";
@@ -610,7 +640,7 @@ function startRec(id){
   try{
     rec=new SR();rec.lang="es-EC";rec.continuous=true;rec.interimResults=true;
     const base=ta.value?ta.value.trim()+" ":"";let failed=false;
-    rec.onresult=e=>{let t="";for(const r of e.results)t+=r[0].transcript;ta.value=base+t};
+    rec.onresult=e=>{let t="";for(const r of e.results)t+=r[0].transcript;ta.value=base+t;medirVivo(id)};
     rec.onerror=()=>{failed=true;fallback()};
     rec.onend=()=>{if(!failed){rec=null;btn.classList.remove("rec-on");btn.innerHTML=ICON.mic+"Hablar"}};
     rec.start();btn.classList.add("rec-on");btn.innerHTML=ICON.stop+"Detener";
@@ -661,13 +691,14 @@ const ICON={
  stop:'<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>',
  mic:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
  lock:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+ rec:'<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="6"/></svg>',
  check:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>'
 };
 
 /* ================= VISTAS ================= */
 function viewInicio(){
   const sp=todaySpeech(); const hist=store.get("hist",[]);
-  const streak=calcStreak(hist);
+  const streak=calcStreak();
   return `<div class="stack-lg">
   ${IA.listo()?"":`<a class="card row" href="#ajustes" style="text-decoration:none;color:inherit;justify-content:space-between"><span><b>Conecta la IA</b><br><span class="muted">Para que Claude califique y cree tus discursos.</span></span><span class="chip">Ajustes</span></a>`}
   <section class="hero">
@@ -675,20 +706,14 @@ function viewInicio(){
     <h1>${esc(sp.titulo)}</h1>
     <p>${esc(sp.resumen)}</p>
     <div class="today">
-      <button class="go" onclick="location.hash='d-${sp.id}'">${ICON.play}Empezar</button>
+      <button class="go" onclick="location.hash='hoy'">${ICON.play}${rutinaHoy().hechos.length?"Seguir con la rutina de hoy":"Practicar hoy (10 min)"}</button>
+      <button onclick="location.hash='d-${sp.id}'">Solo el discurso</button>
       <button onclick="location.hash='discursos'">Elegir otro</button>
     </div>
   </section>
+  ${rachaHtml()}
+  ${retoHtml()}
   ${(()=>{const n=nivelActual(),l=nivelVista(n),a=Math.min(META,aprobadas(n));return `<a class="card row" href="#discursos" onclick="store.set('nivelVer',${n})" style="text-decoration:none;color:inherit;justify-content:space-between"><span><span class="eyebrow">Tu nivel</span><br><b style="font-family:var(--f-display);font-size:1.15rem">${n}. ${l.t}</b><br><span class="muted">${n===5&&a>=META?"Completaste todos los niveles.":`${a} de ${META} prácticas con ${APRUEBA} o más para subir`}</span></span><span class="chip">${n>=4?"Practicar":"Ver nivel"}</span></a>`})()}
-  <section class="stack">
-    <div class="section-title"><p class="eyebrow">Rutina de 15 minutos</p><h2>Cada día, en este orden</h2></div>
-    <div class="routine">
-      <a href="#calentar"><b>5 min</b><span>Calentar con el profesor</span></a>
-      <a href="#d-${sp.id}"><b>4 min</b><span>Escuchar y leer el discurso</span></a>
-      <a href="#d-${sp.id}"><b>6 min</b><span>Practicarlo de pie y grabarte</span></a>
-      <a href="#evaluar-${sp.id}"><b>2 min</b><span>Calificarte</span></a>
-    </div>
-  </section>
   <section class="card stats" aria-label="Resumen">
     <div><b>${hist.length}</b><span>prácticas</span></div>
     <div><b>${streak}</b><span>días seguidos</span></div>
@@ -747,7 +772,9 @@ function viewDiscurso(id){
   </div>
   <div class="toolbar">
     <button id="btn-listen" class="btn-accent" onclick="speakSpeech(findSp('${sp.id}'))">${ICON.play}Escuchar</button>
-    <button onclick="openPrompter('${sp.id}')">${ICON.mic}Practicar</button>
+    <button onclick="openPrompter('${sp.id}')">${ICON.mic}Teleprompter</button>
+    <button onclick="abrirEnsayo('${sp.id}',1)">Sin leer</button>
+    <button onclick="abrirEnsayo('${sp.id}',0,true)">${ICON.rec}Grabarme</button>
     <button onclick="location.hash='evaluar-${sp.id}'">${ICON.check}Calificarme</button>
   </div>
   <div class="row">
@@ -762,7 +789,7 @@ function viewDiscurso(id){
     <ol style="margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px">
      <li>Escúchalo una vez siguiendo el texto con la vista.</li>
      <li>Léelo en voz alta dos veces, respetando las pausas.</li>
-     <li>Abre <b>Practicar</b>, ponte de pie y dilo con el teleprompter.</li>
+     <li>Toca <b>Sin leer</b>: el texto se va ocultando hasta que lo dices con pocas pistas. Grábate y escúchate.</li>
      <li>En <b>Calificarme</b>, dilo de memoria mientras tu teléfono lo escribe, y Claude te califica.</li></ol>
     <button class="btn-primary" style="align-self:flex-start" onclick="location.hash='evaluar-${sp.id}'">Ya lo practiqué, calificarme</button>
   </div>
@@ -822,6 +849,7 @@ function viewEvaluar(id){
     <button class="back" onclick="location.hash='d-${sp.id}'">← Volver al discurso</button>
     <p class="eyebrow">Autoevaluación</p><h1>${esc(sp.titulo)}</h1>
   </div>
+  ${rutinaAviso()}
   <section class="card stack" id="ai-card">
     <div class="section-title"><p class="eyebrow">Recomendado</p><h2>Califícame con Claude</h2></div>
     <ol style="margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px">
@@ -884,10 +912,11 @@ function saveEval(id){
   store.set("hist",h.slice(0,200)); marcarPractica(); toast("Práctica guardada"); location.hash="progreso";
 }
 const avg=h=>h.reduce((a,b)=>a+b.score,0)/h.length;
-function calcStreak(h){
-  const days=new Set(h.map(x=>x.date.slice(0,10))); let n=0; const d=new Date();
-  if(!days.has(d.toISOString().slice(0,10)))d.setDate(d.getDate()-1);
-  while(days.has(d.toISOString().slice(0,10))){n++;d.setDate(d.getDate()-1)}
+// Racha: cuenta los días con una práctica guardada, un calentamiento completo, una grabación o un reto (fecha del teléfono).
+function calcStreak(){
+  const days=diasPracticados(); let n=0; const d=new Date();
+  if(!days.has(diaLocal(d)))d.setDate(d.getDate()-1);
+  while(days.has(diaLocal(d))){n++;d.setDate(d.getDate()-1)}
   return n;
 }
 
@@ -900,10 +929,13 @@ function viewProgreso(){
   const weak=Object.entries(acc).map(([n,a])=>({n,v:a.reduce((x,y)=>x+y,0)/a.length})).sort((a,b)=>a.v-b.v)[0];
   return `<div class="stack-lg">
   <div class="section-title"><p class="eyebrow">Progreso</p><h1>Tu avance</h1></div>
+  ${rutinaAviso()}
+  ${rachaHtml()}
   ${escalera(0)}
-  <section class="card stats"><div><b>${h.length}</b><span>prácticas</span></div><div><b>${calcStreak(h)}</b><span>días seguidos</span></div><div><b>${avg(h.slice(0,5)).toFixed(1)}</b><span>promedio reciente /5</span></div></section>
+  <section class="card stats"><div><b>${h.length}</b><span>prácticas</span></div><div><b>${calcStreak()}</b><span>días seguidos</span></div><div><b>${avg(h.slice(0,5)).toFixed(1)}</b><span>promedio reciente /5</span></div></section>
   <section class="card stack"><h3>Últimas ${last.length} calificaciones</h3><div class="bars" role="img" aria-label="Calificaciones recientes">${last.map(x=>`<i style="height:${x.score/5*100}%" title="${x.score.toFixed(1)}"></i>`).join("")}</div></section>
   <section class="coach"><b>Para tu próxima práctica</b><p>Tu punto más bajo últimamente es <b>${weak.n}</b> (${weak.v.toFixed(1)}/5). Enfócate solo en eso la próxima vez.</p></section>
+  ${retosLista()}
   <section class="card"><h3 style="margin-bottom:6px">Historial</h3><div class="history">${h.slice(0,20).map(x=>{const sp=findSp(x.id);const d=new Date(x.date);return `<div class="h"><span class="d">${d.toLocaleDateString("es-MX",{day:"numeric",month:"short"})}</span><div class="t"><div>${esc(x.titulo||(sp?sp.titulo:x.id))}${x.kind==="ai"?' <span class="chip">Claude</span>':""}</div>${x.note?`<small class="muted">${esc(x.note)}</small>`:""}</div><span class="s">${x.score.toFixed(1)}</span></div>`}).join("")}</div></section>
   </div>`;
 }
@@ -1026,7 +1058,9 @@ function guardarAviso(activo){
   const [h,m]=(document.getElementById("av-hora").value||"19:00").split(":").map(Number);
   NATIVO.recordatorio(activo,h||0,m||0);toast(activo?`Te aviso todos los días a las ${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`:"Recordatorio desactivado");render();
 }
-function marcarPractica(){try{NATIVO&&NATIVO.practique&&NATIVO.practique()}catch(e){}}
+function marcarPractica(){
+  const d=store.get("dias",[]),h=diaLocal();if(!d.includes(h))store.set("dias",[...d,h].slice(-400));
+  try{NATIVO&&NATIVO.practique&&NATIVO.practique()}catch(e){}}
 async function guardarIA(b){
   const url=document.getElementById("ia-url").value.trim(),clave=document.getElementById("ia-clave").value.trim(),m=document.getElementById("ia-msg");
   m.hidden=false;
@@ -1072,6 +1106,192 @@ function breathe(){
   const step=()=>{ if(k>=16){bTimer=null;orb.classList.remove("big");orb.textContent="Bien";txt.textContent="Listo para hablar.";btn.innerHTML=ICON.play+"Otra vez";return}
     const p=phases[k%4]; orb.textContent=p[0]; orb.classList.toggle("big",p[1]); txt.textContent="Ronda "+(Math.floor(k/4)+1)+" de 4"; k++; bTimer=setTimeout(step,4000)};
   step();
+}
+
+/* ================= RACHA ================= */
+const diaLocal=d=>{d=d||new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+function diasPracticados(){const s=new Set(store.get("dias",[]));store.get("hist",[]).forEach(x=>s.add(diaLocal(new Date(x.date))));return s}
+function rachaHtml(){
+  const dias=diasPracticados(),n=calcStreak(),hoy=dias.has(diaLocal());
+  const mejor=Math.max(n,store.get("mejorRacha",0));if(mejor>store.get("mejorRacha",0))store.set("mejorRacha",mejor);
+  const sem=[];for(let k=6;k>=0;k--){const d=new Date();d.setDate(d.getDate()-k);sem.push(d)}
+  return `<section class="card racha"><div class="racha-top"><span class="racha-n">${n}</span><span><b>${n===1?"día seguido":"días seguidos"}</b><br><span class="muted">${hoy?"Hoy ya practicaste. ¡Bien!":n?"Practica hoy para no perder tu racha.":"Practica hoy y empieza tu racha."}${mejor>1?` Tu mejor racha: ${mejor}.`:""}</span></span></div>
+   <div class="semana">${sem.map(d=>`<span class="${dias.has(diaLocal(d))?"si":""} ${diaLocal(d)===diaLocal()?"hoy":""}"><i>${"DLMXJVS"[d.getDay()]}</i></span>`).join("")}</div></section>`;
+}
+
+/* ================= RUTINA DE HOY =================
+   Un botón en Inicio lleva por 4 pasos en orden: calentar corto, escuchar, decirlo sin leer (y grabarte), calificarte.
+   ed_hoy = {dia, sp, hechos:[...]}; "calificar" se marca solo cuando guardas una práctica hoy. */
+const RUTINA=[
+ {k:"calentar",t:"Calentar",min:"3 min",d:"Respiración, cara, labios y vocales con el profesor."},
+ {k:"escuchar",t:"Escuchar el discurso",min:"2 min",d:"Síguelo con la vista mientras la voz lo lee."},
+ {k:"sinleer",t:"Decirlo sin leer",min:"4 min",d:"El texto se va ocultando. Grábate en el último paso y escúchate."},
+ {k:"calificar",t:"Calificarte",min:"2 min",d:"Dilo de pie mientras el teléfono escribe y Claude te califica."}];
+const CALENTAR_CORTO=["Respiración diafragmática","Cara de león y cara de limón","Gimnasia de labios","Vocales exageradas"];
+function rutinaHoy(){
+  let r=store.get("hoy",null);
+  if(!r||r.dia!==diaLocal())r={dia:diaLocal(),sp:todaySpeech().id,hechos:[]};
+  if(!r.hechos.includes("calificar")&&store.get("hist",[]).some(x=>diaLocal(new Date(x.date))===r.dia))r.hechos.push("calificar");
+  return r;
+}
+function rutinaMarcar(k){const r=rutinaHoy();if(!r.hechos.includes(k))r.hechos.push(k);store.set("hoy",r)}
+function viewHoy(){
+  const r=rutinaHoy(),sp=findSp(r.sp)||todaySpeech(),sig=RUTINA.find(p=>!r.hechos.includes(p.k));
+  const accion={
+    calentar:`<button class="${sig&&sig.k==="calentar"?"siguiente":""}" onclick="hoyCalentar()">${ICON.play}Calentar con el profesor</button>`,
+    escuchar:`<button id="btn-listen" class="${sig&&sig.k==="escuchar"?"siguiente":""}" onclick="rutinaMarcar('escuchar');speakSpeech(findSp('${sp.id}'));pintarHoy()">${ICON.play}Escuchar</button>`,
+    sinleer:`<button class="${sig&&sig.k==="sinleer"?"siguiente":""}" onclick="abrirEnsayo('${sp.id}',0,false,true)">Decirlo sin leer</button>`,
+    calificar:`<button class="${sig&&sig.k==="calificar"?"siguiente":""}" onclick="location.hash='evaluar-${sp.id}'">${ICON.check}Calificarme</button>`};
+  return `<div class="stack-lg">
+  <div class="section-title"><p class="eyebrow">Rutina de hoy · unos 10 minutos</p><h1>${esc(sp.titulo)}</h1><p class="muted">Haz los pasos en orden. El botón que toca está iluminado.</p></div>
+  ${rachaHtml()}
+  <div class="stack" id="hoy-pasos">${RUTINA.map((p,i)=>{const ok=r.hechos.includes(p.k);return `<section class="card paso ${ok?"ok":""} ${sig===p?"actual":""}">
+    <div class="paso-top"><span class="paso-n">${ok?ICON.check:i+1}</span><span><b>${p.t}</b> <span class="muted">· ${p.min}</span><br><span class="muted">${p.d}</span></span></div>
+    ${p.k==="escuchar"?`<details><summary class="muted">Ver el texto</summary><div class="stack" style="gap:4px;margin-top:8px">${sp.partes.map(q=>`<section class="seg"><span class="tag">${esc(q[0])}</span><p>${withPauses(q[1])}</p></section>`).join("")}</div></details>`:""}
+    <div class="row">${accion[p.k]}</div></section>`}).join("")}</div>
+  ${sig?"":`<section class="coach"><b>¡Rutina completa!</b><p>Terminaste los cuatro pasos de hoy. Mañana te espera otro discurso.</p></section>`}
+  </div>`;
+}
+function pintarHoy(){if((location.hash||"").slice(1)!=="hoy")return;const y=window.scrollY,b=document.getElementById("btn-listen"),hablando=!!speaking;app.innerHTML=viewHoy();window.scrollTo(0,y);if(hablando){const n=document.getElementById("btn-listen");if(n)n.innerHTML=ICON.stop+"Detener"}}
+async function hoyCalentar(){
+  const todos=WARMUP.flatMap(g=>g.items),lista=CALENTAR_CORTO.map(t=>todos.findIndex(x=>x.t===t)).filter(i=>i>=0);
+  const ok=await guiaCalentar(0,false,lista);
+  if(ok){rutinaMarcar("calentar");setTimeout(()=>{guiaCerrar();pintarHoy()},1500)}
+}
+function rutinaAviso(){
+  const r=store.get("hoy",null);if(!r||r.dia!==diaLocal()||!r.hechos.length)return "";
+  const rr=rutinaHoy();if(rr.hechos.length>=RUTINA.length)return `<a class="card row" href="#hoy" style="text-decoration:none;color:inherit;justify-content:space-between"><span><b>Rutina de hoy completa</b><br><span class="muted">Los cuatro pasos listos.</span></span><span class="chip">${ICON.check}</span></a>`;
+  return `<a class="card row" href="#hoy" style="text-decoration:none;color:inherit;justify-content:space-between"><span><b>Rutina de hoy</b><br><span class="muted">${rr.hechos.length} de ${RUTINA.length} pasos</span></span><span class="chip">Volver</span></a>`;
+}
+
+/* ================= SIN LEER Y GRABADORA =================
+   El texto se oculta en 4 pasos: 0 todo, 1 media palabra sí y otra no, 2 solo primeras letras, 3 solo el inicio de cada parte.
+   La grabadora usa el micrófono de la página (en la app Android, MainActivity le da el permiso). */
+const PASOS_OCULTAR=["Todo el texto","Se ocultan algunas palabras","Solo la primera letra","Solo cómo empieza cada parte"];
+function ocultarTexto(t,n){
+  if(!n)return withPauses(t);
+  const pal=sinMarcas(t).split(/\s+/).filter(Boolean);
+  if(n===3){const ini=pal.filter(w=>!/^\/+$/.test(w)).slice(0,3).join(" ");return esc(ini)+" …"}
+  let k=0;
+  return pal.map(w=>{
+    if(/^\/+$/.test(w))return `<span class="pause">${w}</span>`;
+    k++;const m=w.match(/^([¿¡"(]*)([\wÁÉÍÓÚÜÑáéíóúüñ]+)(.*)$/);
+    if(!m||(n===1&&(k%2||m[2].length<4)))return esc(w);
+    return `${esc(m[1])}<span class="oc">${esc(m[2][0])}<u style="width:${m[2].length-1}ch"></u></span>${esc(m[3])}`;
+  }).join(" ");
+}
+let ensayo=null;
+function abrirEnsayo(id,nivel,grabar,deRutina){
+  stopSpeech();stopRec();cerrarEnsayo();
+  const sp=findSp(id);if(!sp)return;
+  ensayo={id,n:nivel||0,deRutina,mr:null,url:null,stream:null,t0:0,int:null};
+  const el=document.createElement("div");el.className="prompter ensayo";el.id="ensayo";
+  el.innerHTML=`<div class="prompter-bar">
+    <button id="e-menos">Más texto</button><button id="e-mas">Ocultar más</button>
+    <button id="e-grab">${ICON.rec}Grabarme</button><span class="clock" id="e-clock"></span>
+    <button id="e-cerrar">Terminar</button></div>
+    <p class="e-paso" id="e-paso"></p>
+    <div class="e-audio" id="e-audio" hidden></div>
+    <div class="prompter-text e-texto" id="e-texto"></div>`;
+  document.body.appendChild(el);history.pushState({ensayo:1},"");
+  const pintar=()=>{
+    document.getElementById("e-paso").innerHTML=`Paso ${ensayo.n+1} de 4: <b>${PASOS_OCULTAR[ensayo.n]}</b>. ${ensayo.n<3?"Dilo en voz alta de pie; cuando te salga sin trabarte, toca Ocultar más.":"Dilo completo con estas pistas. Si te pierdes, toca Más texto."}`;
+    document.getElementById("e-texto").innerHTML=sp.partes.map(p=>`<span class="ptag">${esc(p[0])}</span>${ocultarTexto(p[1],ensayo.n)}`).join(" ");
+    document.getElementById("e-menos").disabled=ensayo.n===0;document.getElementById("e-mas").disabled=ensayo.n===3;
+  };
+  document.getElementById("e-menos").onclick=()=>{ensayo.n=Math.max(0,ensayo.n-1);pintar()};
+  document.getElementById("e-mas").onclick=()=>{ensayo.n=Math.min(3,ensayo.n+1);pintar()};
+  document.getElementById("e-grab").onclick=grabarToggle;
+  document.getElementById("e-cerrar").onclick=()=>{const r=ensayo&&ensayo.deRutina;cerrarEnsayo();if(r){rutinaMarcar("sinleer");pintarHoy()}};
+  pintar();
+  if(grabar)document.getElementById("e-audio").hidden=false,document.getElementById("e-audio").innerHTML=`<p>Toca <b>Grabarme</b>, di el discurso de pie y luego escúchate. Incomoda, pero es lo que más enseña.</p>`;
+}
+async function grabarToggle(){
+  const b=document.getElementById("e-grab"),out=document.getElementById("e-audio"),clock=document.getElementById("e-clock");
+  if(!ensayo)return;
+  if(ensayo.mr){ensayo.mr.stop();return}
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.MediaRecorder){out.hidden=false;out.innerHTML=`<p>Aquí no se puede grabar. Usa la app Android o Chrome, o la grabadora de tu teléfono.</p>`;return}
+  let stream;try{stream=await navigator.mediaDevices.getUserMedia({audio:true})}catch(e){out.hidden=false;out.innerHTML=`<p>No hay permiso para el micrófono. Actívalo en Ajustes de Android → Apps → Escenario → Permisos.</p>`;return}
+  if(!ensayo){stream.getTracks().forEach(t=>t.stop());return}
+  if(ensayo.url){URL.revokeObjectURL(ensayo.url);ensayo.url=null}
+  const partes=[],mr=new MediaRecorder(stream);
+  ensayo.mr=mr;ensayo.stream=stream;ensayo.t0=Date.now();
+  mr.ondataavailable=e=>{if(e.data&&e.data.size)partes.push(e.data)};
+  mr.onstop=()=>{
+    stream.getTracks().forEach(t=>t.stop());clearInterval(ensayo&&ensayo.int);
+    if(!ensayo)return;
+    ensayo.mr=null;ensayo.stream=null;b.innerHTML=ICON.rec+"Grabar otra vez";b.classList.remove("rec-on");
+    const secs=Math.round((Date.now()-ensayo.t0)/1000);
+    const blob=new Blob(partes,{type:mr.mimeType||"audio/webm"});ensayo.url=URL.createObjectURL(blob);
+    if(secs>=10)marcarPractica();
+    out.hidden=false;out.innerHTML=`<p><b>Escúchate</b> (${secs} s)</p><audio controls src="${ensayo.url}"></audio>
+      <p class="e-fijate">Fíjate en: ¿dices "eh" o "este" entre frases? ¿vas muy rápido? ¿haces las pausas? ¿se te cae la voz al final de las frases? Elige una sola cosa para mejorar en la próxima grabación.</p>`;
+  };
+  mr.start();b.innerHTML=ICON.stop+"Detener";b.classList.add("rec-on");out.hidden=true;
+  ensayo.int=setInterval(()=>{const s=Math.floor((Date.now()-ensayo.t0)/1000);clock.textContent="● "+Math.floor(s/60)+":"+String(s%60).padStart(2,"0")},500);
+}
+function cerrarEnsayo(porAtras){
+  const el=document.getElementById("ensayo");if(!el)return;
+  if(ensayo){clearInterval(ensayo.int);if(ensayo.mr){ensayo.mr.onstop=null;try{ensayo.mr.stop()}catch(e){}}if(ensayo.stream)ensayo.stream.getTracks().forEach(t=>t.stop());if(ensayo.url)URL.revokeObjectURL(ensayo.url)}
+  ensayo=null;el.remove();
+  if(!porAtras&&history.state&&history.state.ensayo)history.back();
+}
+window.addEventListener("popstate",()=>{if(document.getElementById("ensayo"))cerrarEnsayo(true)});
+
+/* ================= MULETILLAS Y VELOCIDAD EN VIVO ================= */
+// Las de siempre cuentan todas; las que también sirven para unir ideas (pues, entonces, bueno…) solo si se repiten 3 veces o más.
+const MULETILLAS=["o sea","osea","eh","ehh","em","emm","mmm","este este","tipo","digamos","como que","básicamente","literal","¿no?","¿cierto?","¿me entiendes?"];
+const CONECTORES=["pues","entonces","bueno","este","verdad","y nada"];
+function contarMuletillas(texto){
+  const t=" "+texto.toLowerCase().replace(/[.,;:!¡]/g," ").replace(/\s+/g," ")+" ";
+  const cuenta=w=>{const re=new RegExp("(^|\\s)"+w.replace(/[?¿]/g,m=>"\\"+m)+"(?=\\s|$)","g");return (t.match(re)||[]).length};
+  const lista=[];
+  MULETILLAS.forEach(w=>{const n=cuenta(w);if(n)lista.push([w,n])});
+  CONECTORES.forEach(w=>{const n=cuenta(w);if(n>=3)lista.push([w,n])});
+  // Palabras repetidas seguidas: "yo yo", "que que".
+  const rep=(t.match(/(^|\s)([a-záéíóúñ]+) \2(?=\s)/g)||[]).filter(x=>![...MULETILLAS,...CONECTORES].includes(x.trim().split(" ")[0])).length;
+  if(rep)lista.push(["palabras repetidas",rep]);
+  lista.sort((a,b)=>b[1]-a[1]);
+  return {total:lista.reduce((a,b)=>a+b[1],0),lista};
+}
+const dictT0={};
+function medirVivo(id){
+  const ta=document.getElementById(id),v=document.getElementById(id+"-vivo");if(!ta||!v)return;
+  const txt=ta.value.trim();if(!txt){v.hidden=true;return}
+  const nw=txt.split(/\s+/).length,secs=dictT0[id]?(Date.now()-dictT0[id])/1000:0,ppm=secs>=10?Math.round(nw/secs*60):null;
+  const mu=contarMuletillas(txt);
+  const vel=ppm==null?`<span class="muted">Midiendo velocidad…</span>`:`<b class="${ppm<110||ppm>165?"mal":ppm>=125&&ppm<=155?"bien":""}">${ppm}</b> palabras por minuto <span class="muted">(ideal 130 a 150${ppm>165?"; ve más despacio":ppm<110?"; puedes ir un poco más rápido":""})</span>`;
+  const mul=mu.total?`<b class="${mu.total>=4?"mal":""}">${mu.total}</b> muletillas: ${mu.lista.slice(0,4).map(([w,n])=>`${esc(w)} ×${n}`).join(", ")}`:`<b class="bien">0</b> muletillas`;
+  v.hidden=false;v.innerHTML=`<div>${vel}</div><div>${mul}</div>`;
+}
+
+/* ================= RETOS PARA PERDER EL MIEDO =================
+   Uno a la vez, cada uno un poco más difícil. ed_retos = [{n, dia}]. */
+const RETOS=[
+ "Grábate diciendo el discurso del día y escúchate completo, sin juzgarte.",
+ "Dilo de pie frente al espejo, mirándote a los ojos de principio a fin.",
+ "Grábate en video con la cámara del teléfono y míralo sin sonido: fíjate en tus manos y tu postura.",
+ "Cuéntale a una persona de confianza una historia tuya de un minuto.",
+ "Dile un discurso a alguien de tu casa y pídele una cosa que le gustó y una a mejorar.",
+ "En una reunión o conversación de grupo, da tu opinión en voz alta antes que los demás.",
+ "Manda un audio o video de un minuto a un grupo contando algo que aprendiste esta semana.",
+ "Da un brindis o unas palabras en una comida o reunión, con la fórmula del recuerdo.",
+ "Presenta algo de dos minutos frente a tres personas o más (trabajo, familia o amigos).",
+ "Habla tres minutos sin texto frente a un grupo y pide que te hagan una pregunta al final."];
+function retoHtml(){
+  const hechos=store.get("retos",[]),n=hechos.length;
+  if(n>=RETOS.length)return `<section class="card stack" style="gap:6px"><p class="eyebrow">Retos</p><h3>Completaste los ${RETOS.length} retos</h3><p class="muted">Ya hablaste frente a un grupo. Sigue practicando a diario para no perderlo.</p></section>`;
+  return `<section class="card stack reto" style="gap:8px"><p class="eyebrow">Reto de la semana · ${n+1} de ${RETOS.length}</p><h3>${esc(RETOS[n])}</h3>
+   <p class="muted" style="font-size:.9rem">Tienes toda la semana. Cada reto es un poco más difícil que el anterior: así el miedo baja de a poco.</p>
+   <button class="btn-primary" style="align-self:flex-start" onclick="retoHecho(this)">${ICON.check}Lo hice</button></section>`;
+}
+function retoHecho(b){
+  if(!b.dataset.c){b.dataset.c=1;b.textContent="¿Seguro? Toca otra vez";return}
+  const h=store.get("retos",[]);h.push({n:h.length,dia:diaLocal()});store.set("retos",h);marcarPractica();toast("¡Reto cumplido!");render();
+}
+function retosLista(){
+  const n=store.get("retos",[]).length;
+  return `<section class="card stack" style="gap:6px"><h3>Retos para perder el miedo</h3><ol class="retos">${RETOS.map((r,i)=>`<li class="${i<n?"ok":i===n?"actual":""}">${i<n?ICON.check:""}<span>${esc(r)}</span></li>`).join("")}</ol></section>`;
 }
 
 /* ================= NIVELES ================= */
@@ -1129,7 +1349,8 @@ ${JSON.stringify({puntos:ej,muletillas:["este (2)"],fortaleza:"una frase concret
 }
 function medir(texto,t0){
   const nw=texto.split(/\s+/).filter(Boolean).length, secs=t0?Math.round((Date.now()-t0)/1000):null;
-  return {nw,secs,ppm:secs?Math.round(nw/secs*60):null,txt:`${nw} palabras${secs?`, ${secs} segundos, ${Math.round(nw/secs*60)} palabras por minuto`:", sin tiempo medido"}`};
+  const mu=contarMuletillas(texto),lista=mu.lista.map(([w,n])=>`"${w}" ${n}`).join(", ");
+  return {nw,secs,ppm:secs?Math.round(nw/secs*60):null,txt:`${nw} palabras${secs?`, ${secs} segundos, ${Math.round(nw/secs*60)} palabras por minuto`:", sin tiempo medido"}; muletillas contadas por la app: ${mu.total}${lista?" ("+lista+")":""}`};
 }
 // entrada: {id, titulo, nivel, extra: {criterio: nota}} — guarda la práctica y avisa si subiste de nivel
 async function calificar(out,go,prompt,m,entrada){
@@ -1411,11 +1632,12 @@ async function ejecutar(acciones,tk,x,pant){
   }
 }
 
-// desde: índice del ejercicio donde empezar; solo: hacer solo ese.
-async function guiaCalentar(desde,solo){
+// desde: índice del ejercicio donde empezar; solo: hacer solo ese; lista: índices de una versión corta (rutina de hoy).
+// Devuelve true si llegó al final sin que lo cerraras.
+async function guiaCalentar(desde,solo,lista){
   guiaCerrar();
   const tk={on:true,saltar:false,pausa:false};guia=tk;
-  const items=WARMUP.flatMap(g=>g.items.map(x=>({...x,g:g.g})));
+  const todos=WARMUP.flatMap(g=>g.items.map(x=>({...x,g:g.g}))),items=lista?lista.map(i=>todos[i]):todos;
   const ini=desde||0,fin=solo?ini+1:items.length;
   const el=document.createElement("div");el.className="guia";el.id="guia";
   el.innerHTML=`<div class="guia-in"><p class="eyebrow" id="g-eb">Calentamiento guiado</p><h2 id="g-t">Ponte de pie</h2><p class="g-rep" id="g-rep"></p><p id="g-s" class="g-s">Hombros sueltos, pies a la anchura de tus hombros.</p><div class="g-n" id="g-n"></div>
@@ -1442,7 +1664,9 @@ async function guiaCalentar(desde,solo){
   if(tk.on){$("g-t").textContent="¡Listo!";pant.rep("");pant.num("");
     const t=solo?"Muy bien. Ejercicio terminado.":"Terminaste el calentamiento. Tu cara y tu voz están despiertas. Ahora sí, a practicar tu discurso.";
     pant.texto(t);await decir(t)}
+  const completo=tk.on;if(completo&&!solo)marcarPractica();
   enGuia=false;try{wake?.release()}catch(e){}
+  return completo;
 }
 
 function guiaCerrar(porAtras){enGuia=false;if(guia){guia.on=false;guia=null;callarGuia()}
@@ -1712,13 +1936,13 @@ function flujoGuardar(cual){
 
 /* ================= ROUTER ================= */
 function render(){
-  stopSpeech(); stopRec(true); clearInterval(aiInt); cronoParar(); guiaCerrar(); impFase="";
+  stopSpeech(); stopRec(true); clearInterval(aiInt); cronoParar(); guiaCerrar(); cerrarEnsayo(); impFase="";
   const h=(location.hash||"#inicio").slice(1);
   let html, tab=h;
   if(h.startsWith("d-")){html=viewDiscurso(h.slice(2));tab="discursos"}
   else if(h.startsWith("evaluar-")){html=viewEvaluar(h.slice(8));tab="discursos"}
-  else html=({inicio:viewInicio,aprender:viewAprender,discursos:viewDiscursos,crear:viewCrear,ajustes:viewAjustes,improvisar:viewImprovisar,preguntas:viewPreguntas,calentar:viewCalentar,progreso:viewProgreso,nervios:viewNervios}[h]||viewInicio)();
-  if(h==="nervios")tab="calentar"; if(h==="improvisar"||h==="preguntas")tab="discursos";
+  else html=({inicio:viewInicio,hoy:viewHoy,aprender:viewAprender,discursos:viewDiscursos,crear:viewCrear,ajustes:viewAjustes,improvisar:viewImprovisar,preguntas:viewPreguntas,calentar:viewCalentar,progreso:viewProgreso,nervios:viewNervios}[h]||viewInicio)();
+  if(h==="nervios")tab="calentar"; if(h==="hoy")tab="inicio"; if(h==="improvisar"||h==="preguntas")tab="discursos";
   app.innerHTML=html;
   document.querySelectorAll("nav.tabs a").forEach(a=>{if(a.dataset.tab===tab)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
   window.scrollTo(0,0);

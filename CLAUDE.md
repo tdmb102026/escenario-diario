@@ -21,3 +21,7 @@
 - Profesor: `decir()` con la voz nativa sigue solo si Android no avisa el fin (espera estimada por largo del texto). Abrir el profesor hace `history.pushState({guia:1})`: el gesto de atrás lo cierra y deja en Calentar.
 - La app Android usa `LOAD_NO_CACHE` con internet (antes mostraba la página vieja guardada) y `LOAD_CACHE_ELSE_NETWORK` sin internet.
 - Brindis y felicitaciones: lección en Aprender ("Recuerdo cuando… → eso llevó a… → por eso te deseo… → ¡salud!") y modo de Crear `ocasion` (`ed_geno`, `OCAS_RULES`, `promptOcasion`), en "Otras opciones".
+- Para principiantes (2026-10-27): Inicio → "Practicar hoy" abre `#hoy` (`viewHoy`, `ed_hoy`): calentar corto (`CALENTAR_CORTO`, `guiaCalentar(0,false,lista)` devuelve si terminó), escuchar, sin leer, calificarte (se marca solo al guardar una práctica hoy).
+- "Sin leer" y "Grabarme" (`abrirEnsayo`): el texto se oculta en 4 pasos (`ocultarTexto`) y graba con `getUserMedia`/`MediaRecorder`; en Android el permiso lo da `WebChromeClient.onPermissionRequest` (APK nuevo). La grabación solo vive mientras está abierta.
+- Dictado mide en vivo palabras por minuto y muletillas (`medirVivo`, `contarMuletillas`, `dictT0`); `medir()` también le pasa las muletillas a Claude.
+- Racha (`calcStreak`, `diasPracticados`, `ed_dias`, `ed_mejorRacha`) con fecha local; cuentan prácticas, calentamiento completo, grabación ≥10 s y retos (`marcarPractica`). Retos para perder el miedo: `RETOS` (10, uno tras otro), `ed_retos`.

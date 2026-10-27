@@ -21,6 +21,8 @@ import android.speech.tts.UtteranceProgressListener;
 import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
+import android.webkit.PermissionRequest;
+import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -40,6 +42,9 @@ public class MainActivity extends Activity {
     static final String URL = "https://tdmb102026.github.io/escenario-diario/";
     private static final int PEDIR_MIC = 1;
     private static final int PEDIR_AVISOS = 2;
+    private static final int PEDIR_MIC_GRABAR = 3;
+    // La grabadora de la página (getUserMedia) pide el micrófono; se guarda mientras Android pregunta el permiso.
+    private PermissionRequest grabarPendiente;
 
     private WebView web;
     private final Handler h = new Handler(Looper.getMainLooper());
@@ -70,6 +75,19 @@ public class MainActivity extends Activity {
         NetworkInfo red = cm != null ? cm.getActiveNetworkInfo() : null;
         s.setCacheMode(red != null && red.isConnected() ? WebSettings.LOAD_NO_CACHE : WebSettings.LOAD_CACHE_ELSE_NETWORK);
         web.addJavascriptInterface(new Puente(), "AndroidVoz");
+        web.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onPermissionRequest(PermissionRequest pedido) {
+                runOnUiThread(() -> {
+                    if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                        pedido.grant(new String[]{ PermissionRequest.RESOURCE_AUDIO_CAPTURE });
+                    } else {
+                        grabarPendiente = pedido;
+                        requestPermissions(new String[]{ Manifest.permission.RECORD_AUDIO }, PEDIR_MIC_GRABAR);
+                    }
+                });
+            }
+        });
         web.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest pedido) {
@@ -269,6 +287,15 @@ public class MainActivity extends Activity {
         if (pedido == PEDIR_AVISOS) {
             if (resultados.length == 0 || resultados[0] != PackageManager.PERMISSION_GRANTED)
                 js("window.toast && toast('Sin permiso de notificaciones no puedo avisarte. Actívalo en Ajustes de Android → Apps → Escenario')");
+            return;
+        }
+        if (pedido == PEDIR_MIC_GRABAR) {
+            boolean ok = resultados.length > 0 && resultados[0] == PackageManager.PERMISSION_GRANTED;
+            if (grabarPendiente != null) {
+                if (ok) grabarPendiente.grant(new String[]{ PermissionRequest.RESOURCE_AUDIO_CAPTURE });
+                else grabarPendiente.deny();
+            }
+            grabarPendiente = null;
             return;
         }
         if (pedido != PEDIR_MIC) return;
