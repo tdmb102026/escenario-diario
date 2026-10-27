@@ -184,6 +184,13 @@ nav.tabs a[aria-current="page"]{color:var(--accent);background:var(--accent-soft
 .ai-res .pt{display:grid;grid-template-columns:1fr auto;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
 .ai-res .pt b{font-family:var(--f-display);font-variant-numeric:tabular-nums}
 .live{font-family:var(--f-display);font-weight:800;font-size:1.4rem;font-variant-numeric:tabular-nums;color:var(--accent)}
+.pestanas{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:999px;background:var(--surface);border:1px solid var(--line)}
+.pestanas button{border:0;border-radius:999px;min-height:40px;background:transparent;font-weight:600;color:var(--muted)}
+.pestanas button[aria-selected="true"]{background:var(--accent);color:#fff}
+.niveles-mini{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.niveles-mini button{aspect-ratio:1;max-height:56px;border-radius:50%;padding:0;font-family:var(--f-display);font-weight:800;font-size:1.2rem;display:flex;align-items:center;justify-content:center}
+.niveles-mini button.sel{background:var(--accent);border-color:var(--accent);color:#fff}
+.niveles-mini button.locked{opacity:.45;cursor:default}
 .ladder{display:flex;flex-direction:column;gap:8px}
 .lv{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;text-align:left;border-radius:var(--r);padding:12px 14px;width:100%;font-weight:400}
 .lv.sel{border-color:var(--accent);background:var(--accent-soft)}
@@ -242,7 +249,9 @@ nav.tabs a[aria-current="page"]{color:var(--accent);background:var(--accent-soft
 .e-audio{padding:10px 16px;display:flex;flex-direction:column;gap:8px;color:#F4F1EC;border-bottom:1px solid #263041}
 .e-audio audio{width:100%}.e-audio p{margin:0}.e-fijate{color:#B8C0CC;font-size:.9rem}
 .ensayo .e-texto{padding-top:24px;padding-bottom:30vh}
-.oc u{display:inline-block;border-bottom:2px solid #556274;height:.8em;margin-left:1px;text-decoration:none}
+.pistas{display:flex;flex-direction:column;gap:14px}
+.pista{border:1px solid #263041;border-radius:14px;padding:12px 16px;background:#121823}
+.pista .ptag{margin-top:0}.pista p{margin:.2em 0 0;font-size:clamp(1.3rem,4.5vw,1.9rem);line-height:1.35}
 .prompter-bar button:disabled{opacity:.4}
 .prompter-bar button.rec-on{background:var(--bad);border-color:var(--bad)}
 .retos{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
@@ -739,9 +748,9 @@ function viewInicio(){
     </div>
   </section>
   ${rachaHtml()}
-  ${mine().length?`<a class="card row" href="#discursos" style="text-decoration:none;color:inherit;justify-content:space-between"><span><b>Mis discursos</b><br><span class="muted">${mine().length} creado${mine().length>1?"s":""} por ti</span></span><span class="chip">Ver</span></a>`:""}
+  ${mine().length?`<a class="card row" href="#discursos" onclick="store.set('nivTab','mios')" style="text-decoration:none;color:inherit;justify-content:space-between"><span><b>Mis discursos</b><br><span class="muted">${mine().length} creado${mine().length>1?"s":""} por ti</span></span><span class="chip">Ver</span></a>`:""}
   ${retoHtml()}
-  ${(()=>{const n=nivelActual(),l=nivelVista(n),a=Math.min(META,aprobadas(n));return `<a class="card row" href="#discursos" onclick="store.set('nivelVer',${n})" style="text-decoration:none;color:inherit;justify-content:space-between"><span><span class="eyebrow">Tu nivel</span><br><b style="font-family:var(--f-display);font-size:1.15rem">${n}. ${l.t}</b><br><span class="muted">${n===5&&a>=META?"Completaste todos los niveles.":`${a} de ${META} prácticas con ${APRUEBA} o más para subir`}</span></span><span class="chip">${n>=4?"Practicar":"Ver nivel"}</span></a>`})()}
+  ${(()=>{const n=nivelActual(),l=nivelVista(n),a=Math.min(META,aprobadas(n));return `<a class="card row" href="#discursos" onclick="store.set('nivelVer',${n});store.set('nivTab','niveles')" style="text-decoration:none;color:inherit;justify-content:space-between"><span><span class="eyebrow">Tu nivel</span><br><b style="font-family:var(--f-display);font-size:1.15rem">${n}. ${l.t}</b><br><span class="muted">${n===5&&a>=META?"Completaste todos los niveles.":`${a} de ${META} prácticas con ${APRUEBA} o más para subir`}</span></span><span class="chip">${n>=4?"Practicar":"Ver nivel"}</span></a>`})()}
   <section class="card stats" aria-label="Resumen">
     <div><b>${hist.length}</b><span>prácticas</span></div>
     <div><b>${streak}</b><span>días seguidos</span></div>
@@ -777,13 +786,24 @@ function viewDiscursos(){
     const lista=SPEECHES.filter(s=>(s.nivel||1)===n);
     cuerpo=`<div class="stack">${lista.map(tarjeta).join("")}</div>`;
   }
+  // Dos pestañas para no mezclar: los niveles (con su selector compacto) y los discursos que creaste.
+  const pest=store.get("nivTab","niveles")==="mios"?"mios":"niveles",mis=mine();
+  const tabs=`<div class="pestanas" role="tablist"><button role="tab" aria-selected="${pest==="niveles"}" onclick="store.set('nivTab','niveles');render()">Niveles</button><button role="tab" aria-selected="${pest==="mios"}" onclick="store.set('nivTab','mios');render()">Mis discursos${mis.length?` (${mis.length})`:""}</button></div>`;
+  if(pest==="mios")return `<div class="stack-lg">
+  <div class="section-title"><p class="eyebrow">Practicar</p><h1>Mis discursos</h1></div>
+  ${tabs}
+  ${mis.length?`<div class="stack">${mis.map(tarjeta).join("")}</div>`:`<div class="card stack"><h3>Todavía no creaste ninguno</h3><p class="muted">En Crear, Claude te ayuda a armar tu discurso, tu historia o un brindis. Aquí aparecerán para practicarlos.</p></div>`}
+  <a class="btn btn-accent" href="#crear" onclick="store.set('crearModo','flujo')" style="align-self:flex-start">Crear un discurso nuevo</a>
+  </div>`;
+  const a=Math.min(META,aprobadas(n)),pasado=n<cur||(n===cur&&a>=META);
   return `<div class="stack-lg">
-  <div class="section-title"><p class="eyebrow">Niveles</p><h1>Practica paso a paso</h1><p class="muted">Pasas al siguiente nivel con ${META} prácticas calificadas con ${APRUEBA} o más. Puedes volver a cualquier nivel que ya abriste.</p></div>
-  ${mine().length?`<section class="stack" id="mis-discursos"><div class="section-title"><p class="eyebrow">Creados por ti</p><h2>Mis discursos</h2></div>${mine().map(tarjeta).join("")}</section>`:""}
-  ${escalera(n)}
-  <div class="section-title"><p class="eyebrow">Nivel ${n}</p><h2>${l.t}</h2>${n===3?`<p class="muted">Marcas: <b class="sube">sube</b> <i class="baja">baja</i> <span class="pause">//</span> silencio largo.</p>`:""}</div>
+  <div class="section-title"><p class="eyebrow">Practicar</p><h1>Niveles</h1></div>
+  ${tabs}
+  <div class="niveles-mini" role="group" aria-label="Elige nivel">${NIVELES.map(x=>{const abierto=x.n<=cur;return `<button class="${x.n===n?"sel":""} ${abierto?"":"locked"}" ${abierto?`onclick="verNivel(${x.n})"`:`aria-disabled="true"`} aria-label="Nivel ${x.n}${abierto?"":" bloqueado"}">${abierto?x.n:ICON.lock}</button>`}).join("")}</div>
+  <div class="card stack" style="gap:6px"><p class="eyebrow">Nivel ${n}</p><h2>${l.t}</h2><p class="muted">${l.d}</p>
+    <p style="font-size:.9rem">${pasado?`<span class="done-mark">${ICON.check} Nivel superado</span>`:`<b>${a} de ${META}</b> prácticas con ${APRUEBA} o más para pasar al siguiente nivel.`}</p>
+    ${n===3?`<p class="muted" style="font-size:.9rem">Marcas: <b class="sube">sube</b> <i class="baja">baja</i> <span class="pause">//</span> silencio largo.</p>`:""}</div>
   ${cuerpo}
-  ${n<=3?`<a class="btn btn-accent" href="#crear" onclick="store.set('crearModo','flujo')" style="align-self:flex-start">${n===2?"Crear mi historia":"Crear mi propio discurso"}</a>`:""}
   </div>`;
 }
 function delMine(id,b){if(b.dataset.c){store.set("mine",store.get("mine",[]).filter(s=>s.id!==id));toast("Borrado");location.hash="discursos";return}b.dataset.c=1;b.textContent="Toca otra vez para borrar";b.classList.add("rec-on")}
@@ -795,7 +815,7 @@ function viewDiscurso(id){
   const vName=store.get("voice","");
   return `<div class="stack-lg">
   <div class="reader-head">
-    <button class="back" onclick="store.set('nivelVer',${sp.nivel||1});location.hash='discursos'">${sp.mio?"← Mis discursos":"← Nivel "+(sp.nivel||1)}</button>
+    <button class="back" onclick="store.set('nivelVer',${sp.nivel||1});store.set('nivTab','${sp.mio?"mios":"niveles"}');location.hash='discursos'">${sp.mio?"← Mis discursos":"← Nivel "+(sp.nivel||1)}</button>
     <p class="eyebrow">${esc(sp.kind==="historia"?(sp.tipo||"Historia"):sp.tema)} · ${sp.min} min · ${words(sp)} palabras</p>
     <h1>${esc(sp.titulo)}</h1>
   </div>
@@ -818,7 +838,7 @@ function viewDiscurso(id){
     <ol style="margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px">
      <li>Escúchalo una vez siguiendo el texto con la vista.</li>
      <li>Léelo en voz alta dos veces, respetando las pausas.</li>
-     <li>Toca <b>Sin leer</b>: el texto se va ocultando hasta que lo dices con pocas pistas. Grábate y escúchate.</li>
+     <li>Toca <b>Sin leer</b>: ves solo la idea clave de cada parte y lo dices con tus palabras. Luego grábate y escúchate.</li>
      <li>En <b>Calificarme</b>, dilo de memoria mientras tu teléfono lo escribe, y Claude te califica.</li></ol>
     <button class="btn-primary" style="align-self:flex-start" onclick="location.hash='evaluar-${sp.id}'">Ya lo practiqué, calificarme</button>
   </div>
@@ -1156,7 +1176,7 @@ function rachaHtml(){
 const RUTINA=[
  {k:"calentar",t:"Calentar",min:"3 min",d:"Respiración, cara, labios y vocales con el profesor."},
  {k:"escuchar",t:"Escuchar el discurso",min:"2 min",d:"Síguelo con la vista mientras la voz lo lee."},
- {k:"sinleer",t:"Decirlo sin leer",min:"4 min",d:"El texto se va ocultando. Grábate en el último paso y escúchate."},
+ {k:"sinleer",t:"Decirlo sin leer",min:"4 min",d:"Solo con la idea clave de cada parte. Grábate al final y escúchate."},
  {k:"calificar",t:"Calificarte",min:"2 min",d:"Dilo de pie mientras el teléfono escribe y Claude te califica."}];
 const CALENTAR_CORTO=["Respiración diafragmática","Cara de león y cara de limón","Gimnasia de labios","Vocales exageradas"];
 function rutinaHoy(){
@@ -1196,20 +1216,24 @@ function rutinaAviso(){
 }
 
 /* ================= SIN LEER Y GRABADORA =================
-   El texto se oculta en 4 pasos: 0 todo, 1 media palabra sí y otra no, 2 solo primeras letras, 3 solo el inicio de cada parte.
-   La grabadora usa el micrófono de la página (en la app Android, MainActivity le da el permiso). */
-const PASOS_OCULTAR=["Todo el texto","Se ocultan algunas palabras","Solo la primera letra","Solo cómo empieza cada parte"];
-function ocultarTexto(t,n){
-  if(!n)return withPauses(t);
-  const pal=sinMarcas(t).split(/\s+/).filter(Boolean);
-  if(n===3){const ini=pal.filter(w=>!/^\/+$/.test(w)).slice(0,3).join(" ");return esc(ini)+" …"}
-  let k=0;
-  return pal.map(w=>{
-    if(/^\/+$/.test(w))return `<span class="pause">${w}</span>`;
-    k++;const m=w.match(/^([¿¡"(]*)([\wÁÉÍÓÚÜÑáéíóúüñ]+)(.*)$/);
-    if(!m||(n===1&&(k%2||m[2].length<4)))return esc(w);
-    return `${esc(m[1])}<span class="oc">${esc(m[2][0])}<u style="width:${m[2].length-1}ch"></u></span>${esc(m[3])}`;
-  }).join(" ");
+   Tres pasos: 0 texto completo, 1 solo la idea clave de cada parte (pista que escribe Claude, guardada en ed_pistas),
+   2 solo el orden de las partes. La grabadora usa el micrófono de la página (en la app Android, MainActivity da el permiso). */
+const PASOS_OCULTAR=["Texto completo","Ideas clave","Solo el orden"];
+// Mientras no hay pistas de Claude (o sin IA), la pista es el comienzo de la parte.
+const pistaSimple=t=>plain(t).split(/\s+/).slice(0,5).join(" ")+" …";
+function pistasDe(sp){return sp.pistas||store.get("pistas",{})[sp.id]||null}
+async function pedirPistas(sp){
+  if(!IA.listo())return null;
+  const guion=sp.partes.map((p,i)=>`${i+1}. ${p[0]}: ${plain(p[1])}`).join("\n");
+  const d=await IA.json(`Este es un discurso dividido en partes. Para cada parte escribe una pista corta (de 3 a 8 palabras) con su idea principal, para que la persona recuerde qué decir sin leer el texto. No copies la primera frase: resume la idea o la imagen que la representa. Si una parte tiene varios puntos (Primero, Segundo, Tercero), da una pista corta por punto separadas con " · ". Español sencillo.
+
+${guion}
+
+Responde solo con JSON: {"pistas":["pista de la parte 1","pista de la parte 2", ...]} con exactamente ${sp.partes.length} pistas, en el mismo orden.`,{tarea:"pistas"});
+  const l=Array.isArray(d&&d.pistas)?d.pistas.map(String):[];
+  if(l.length!==sp.partes.length)return null;
+  const todas=store.get("pistas",{});todas[sp.id]=l;store.set("pistas",todas);
+  return l;
 }
 let ensayo=null;
 function abrirEnsayo(id,nivel,grabar,deRutina){
@@ -1226,12 +1250,18 @@ function abrirEnsayo(id,nivel,grabar,deRutina){
     <div class="prompter-text e-texto" id="e-texto"></div>`;
   document.body.appendChild(el);history.pushState({ensayo:1},"");
   const pintar=()=>{
-    document.getElementById("e-paso").innerHTML=`Paso ${ensayo.n+1} de 4: <b>${PASOS_OCULTAR[ensayo.n]}</b>. ${ensayo.n<3?"Dilo en voz alta de pie; cuando te salga sin trabarte, toca Ocultar más.":"Dilo completo con estas pistas. Si te pierdes, toca Más texto."}`;
-    document.getElementById("e-texto").innerHTML=sp.partes.map(p=>`<span class="ptag">${esc(p[0])}</span>${ocultarTexto(p[1],ensayo.n)}`).join(" ");
-    document.getElementById("e-menos").disabled=ensayo.n===0;document.getElementById("e-mas").disabled=ensayo.n===3;
+    const pis=pistasDe(sp);
+    document.getElementById("e-paso").innerHTML=`Paso ${ensayo.n+1} de 3: <b>${PASOS_OCULTAR[ensayo.n]}</b>. ${["Léelo en voz alta de pie un par de veces. Cuando lo tengas, toca Ocultar más.","Cada tarjeta tiene la idea de esa parte. Dila con tus palabras, sin buscar las exactas.","Solo ves el orden. Si te pierdes, toca Más texto."][ensayo.n]}${ensayo.n===1&&!pis?(ensayo.cargando?" <i>Claude está escribiendo las ideas clave…</i>":IA.listo()?"":" <i>(Conecta la IA para que Claude escriba las ideas clave; por ahora ves cómo empieza cada parte.)</i>"):""}`;
+    document.getElementById("e-texto").innerHTML=ensayo.n===0?sp.partes.map(p=>`<span class="ptag">${esc(p[0])}</span>${withPauses(p[1])}`).join(" ")
+      :`<div class="pistas">${sp.partes.map((p,i)=>`<div class="pista"><span class="ptag">${i+1}. ${esc(p[0])}</span>${ensayo.n===1?`<p>${esc(pis?pis[i]:pistaSimple(p[1]))}</p>`:""}</div>`).join("")}</div>`;
+    document.getElementById("e-menos").disabled=ensayo.n===0;document.getElementById("e-mas").disabled=ensayo.n===2;
+    if(ensayo.n===1&&!pis&&!ensayo.cargando&&!ensayo.sinPistas&&IA.listo()){
+      ensayo.cargando=true;const yo=ensayo;
+      pedirPistas(sp).catch(()=>null).then(l=>{yo.cargando=false;if(!l)yo.sinPistas=true;if(ensayo===yo)pintar()});
+    }
   };
   document.getElementById("e-menos").onclick=()=>{ensayo.n=Math.max(0,ensayo.n-1);pintar()};
-  document.getElementById("e-mas").onclick=()=>{ensayo.n=Math.min(3,ensayo.n+1);pintar()};
+  document.getElementById("e-mas").onclick=()=>{ensayo.n=Math.min(2,ensayo.n+1);pintar()};
   document.getElementById("e-grab").onclick=grabarToggle;
   document.getElementById("e-cerrar").onclick=()=>{const r=ensayo&&ensayo.deRutina;cerrarEnsayo();if(r){rutinaMarcar("sinleer");pintarHoy()}};
   pintar();
