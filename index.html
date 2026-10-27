@@ -1332,7 +1332,7 @@ async function grabarToggle(){
   if(!ensayo)return;
   if(ensayo.mr){ensayo.mr.stop();return}
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.MediaRecorder){out.hidden=false;out.innerHTML=`<p>Aquí no se puede grabar. Usa la app Android o Chrome, o la grabadora de tu teléfono.</p>`;return}
-  let stream;try{stream=await navigator.mediaDevices.getUserMedia({audio:true})}catch(e){out.hidden=false;out.innerHTML=`<p>No hay permiso para el micrófono. Actívalo en Ajustes de Android → Apps → Escenario → Permisos.</p>`;return}
+  let stream;try{stream=await navigator.mediaDevices.getUserMedia({audio:true})}catch(e){out.hidden=false;out.innerHTML=`<p>No se pudo abrir el micrófono para grabar. Si es la app Android, instala el APK más nuevo y revisa en Ajustes de Android → Apps → Escenario → Permisos que el micrófono esté permitido.</p><p class="muted" style="font-size:.85rem">Detalle: ${esc((e&&(e.name+" "+e.message))||"")}</p>`;return}
   if(!ensayo){stream.getTracks().forEach(t=>t.stop());return}
   if(ensayo.url){URL.revokeObjectURL(ensayo.url);ensayo.url=null}
   const partes=[],mr=new MediaRecorder(stream);
