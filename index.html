@@ -212,6 +212,18 @@ nav.tabs a[aria-current="page"]{color:var(--accent);background:var(--accent-soft
 .g-n{font-family:var(--f-display);font-weight:800;font-size:5rem;line-height:1;color:#F2B33D;font-variant-numeric:tabular-nums;min-height:1em}
 .guia button{background:#1B2330;color:#F4F1EC;border-color:#2C3747}
 .lesson .chip{margin-left:auto}
+.pasos{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.pasos button{width:100%;flex-direction:column;gap:4px;padding:6px 2px;border-radius:12px;min-height:0;border:0;background:transparent;font-size:.68rem;font-weight:600;color:var(--muted);text-align:center;line-height:1.2}
+.pasos button:disabled{cursor:default;opacity:1}
+.pasos .pn{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--line);background:var(--surface);font-family:var(--f-display);font-size:.9rem}
+.pasos .hecho .pn{background:var(--good);border-color:var(--good);color:#fff}
+.pasos .ahora .pn{background:var(--accent);border-color:var(--accent);color:#fff}
+.pasos .ahora button{color:var(--ink)}
+.siguiente{background:var(--accent)!important;border-color:var(--accent)!important;color:#fff!important;box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 60%,transparent);animation:latido 1.8s ease-out infinite}
+@keyframes latido{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 55%,transparent)}70%{box-shadow:0 0 0 12px transparent}100%{box-shadow:0 0 0 0 transparent}}
+@media (prefers-reduced-motion:reduce){.siguiente{animation:none}}
+.g-vel{display:flex;align-items:center;gap:10px;justify-content:center;color:#B8C0CC;font-size:.9rem}
+.g-vel input{accent-color:#F2B33D;width:160px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;z-index:60;font-size:.9rem}
 </style>
 </head>
@@ -552,10 +564,15 @@ let dictId=null,dictBase="",dictFinal="";
 function micBtnIdle(id){const b=document.getElementById(id+"-mic");if(b){b.classList.remove("rec-on");b.innerHTML=ICON.mic+"Hablar"}}
 // Al detener, Android aún entrega lo último que oyó; dictId se limpia cuando avisa "detenido" (o al cambiar de pantalla).
 function stopRec(salir){if(rec){try{rec.stop()}catch(e){}rec=null}if(NATIVO&&dictId){NATIVO.detener();micBtnIdle(dictId);if(salir)dictId=null}}
+// Google reinicia la escucha en cada pausa. Si una tanda termina sin resultado final (o en error), lo último
+// que se oyó (dictParcial) se guarda igual; si no, la tanda nueva lo borraba de la caja.
+let dictParcial="";
+function dictMostrar(){const ta=dictId&&document.getElementById(dictId);if(ta){ta.value=dictBase+dictFinal+dictParcial;ta.scrollTop=ta.scrollHeight}}
+function tandaNueva(a,b){const wa=a.trim().split(/\s+/),wb=b.trim().split(/\s+/);return wa.length>=3&&wb.length<wa.length-1&&wa[0].toLowerCase()!==wb[0].toLowerCase()}
 const Dictado={
-  parcial(t){const ta=dictId&&document.getElementById(dictId);if(ta)ta.value=dictBase+dictFinal+t},
-  final(t){if(!t)return;dictFinal+=t+" ";const ta=dictId&&document.getElementById(dictId);if(ta)ta.value=dictBase+dictFinal},
-  estado(s){if(s==="escuchando")return;if(dictId)micBtnIdle(dictId);dictId=null;if(s.indexOf("error:")===0)toast(s.slice(6))}
+  parcial(t){if(dictParcial&&tandaNueva(dictParcial,t))dictFinal+=dictParcial+" ";dictParcial=t;dictMostrar()},
+  final(t){t=t||dictParcial;dictParcial="";if(t)dictFinal+=t+" ";dictMostrar()},
+  estado(s){if(s==="escuchando")return;if(dictParcial){dictFinal+=dictParcial+" ";dictParcial="";dictMostrar()}if(dictId)micBtnIdle(dictId);dictId=null;if(s.indexOf("error:")===0)toast(s.slice(6))}
 };
 function dictBox(id,ph,rows){return `<div class="dict"><textarea id="${id}" rows="${rows||5}" placeholder="${esc(ph)}"></textarea>
  <div class="row"><button type="button" id="${id}-mic" onclick="startRec('${id}')">${ICON.mic}Hablar</button><button type="button" onclick="document.getElementById('${id}').value=''">Borrar texto</button></div>
@@ -565,7 +582,7 @@ function startRec(id){
   const fallback=()=>{rec=null;btn.classList.remove("rec-on");btn.innerHTML=ICON.mic+"Hablar";hint.hidden=false;ta.focus()};
   if(NATIVO){
     if(dictId){stopRec();return}
-    dictId=id;dictBase=ta.value?ta.value.trim()+" ":"";dictFinal="";
+    dictId=id;dictBase=ta.value?ta.value.trim()+" ":"";dictFinal="";dictParcial="";
     btn.classList.add("rec-on");btn.innerHTML=ICON.stop+"Detener";hint.hidden=true;
     NATIVO.escuchar();return;
   }
@@ -692,7 +709,7 @@ function viewDiscursos(){
   ${escalera(n)}
   <div class="section-title"><p class="eyebrow">Nivel ${n}</p><h2>${l.t}</h2>${n===3?`<p class="muted">Marcas: <b class="sube">sube</b> <i class="baja">baja</i> <span class="pause">//</span> silencio largo.</p>`:""}</div>
   ${cuerpo}
-  ${n<=3?`<a class="btn btn-accent" href="#crear" onclick="store.set('crearModo','${n===2?"historia":"discurso"}')" style="align-self:flex-start">${n===2?"Crear mi historia":"Crear mi propio discurso"}</a>`:""}
+  ${n<=3?`<a class="btn btn-accent" href="#crear" onclick="store.set('crearModo','flujo')" style="align-self:flex-start">${n===2?"Crear mi historia":"Crear mi propio discurso"}</a>`:""}
   </div>`;
 }
 function delMine(id,b){if(b.dataset.c){store.set("mine",store.get("mine",[]).filter(s=>s.id!==id));toast("Borrado");location.hash="discursos";return}b.dataset.c=1;b.textContent="Toca otra vez para borrar";b.classList.add("rec-on")}
@@ -877,8 +894,9 @@ Tu trabajo en esta conversación: entender de qué quiere hablar. Haz UNA sola p
 function genState(){return store.get(MODOS[modoCrear()].key,{turns:[],draft:null})}
 function genGuardarEstado(g){store.set(MODOS[modoCrear()].key,g)}
 function viewCrear(){
-  const modo=store.get("crearModo","discurso");
-  const tabs=`<div class="modos" role="group" aria-label="Qué crear">${[["discurso","Discurso"],["historia","Historia"],["unir","Unir"]].map(([k,t])=>`<button aria-pressed="${k===modo}" onclick="store.set('crearModo','${k}');render()">${t}</button>`).join("")}</div>`;
+  const modo=store.get("crearModo","flujo");
+  if(modo==="flujo"||!MODOS[modo]&&modo!=="unir")return viewFlujo();
+  const tabs=`<button class="back" onclick="store.set('crearModo','flujo');render()">← Volver al paso a paso</button>`;
   const intro={discurso:"Cuéntale a Claude de qué quieres hablar. Te hará un par de preguntas y armará un discurso con gancho, cuerpo y cierre.",historia:"Claude te ayuda a sacar una historia real de tu vida: el momento, el conflicto, el giro y la lección. Luego la puedes unir a cualquier discurso.",unir:"Junta un discurso con una de tus historias. Claude te dice dónde va mejor y por qué."}[modo];
   if(modo==="unir")return `<div class="stack-lg"><div class="section-title"><p class="eyebrow">Crear</p><h1>Unir discurso e historia</h1><p class="muted">${intro}</p></div>${tabs}${viewUnir()}</div>`;
   const M=MODOS[modo],g=genState();
@@ -937,18 +955,7 @@ async function genBuild(){
   document.getElementById("gen-draft").innerHTML=`<div class="card"><p class="muted">Claude está escribiendo tu ${esHist?"historia":"discurso"}. Puede tardar hasta un minuto…</p></div>`;
   const convo=g.turns.map(t=>(t.role==="user"?"PERSONA: ":"COACH: ")+t.content).join("\n");
   const prev=g.draft?"\n\nBORRADOR ANTERIOR (aplica los cambios que la persona pidió después de él):\n"+JSON.stringify(g.draft):"";
-  const prompt=esHist?promptHistoria(convo,prev):`Escribe un discurso original en español de México para que esta persona lo practique en voz alta, con el estilo motivacional, enérgico y cercano de Tony Robbins, sin copiar frases suyas. Usa lo que la persona contó en esta conversación con su coach:
-
-${convo.slice(-8000)}${prev}
-
-Reglas:
-- Entre 180 y 260 palabras en total. Frases cortas, fáciles de decir en voz alta, en segunda persona ("tú" o "ustedes").
-- Cuatro partes: Gancho (pregunta incómoda, dato o frase fuerte; nunca "buenas tardes"), Presentación (por qué importa y qué ganará el público), Cuerpo (tres puntos: "Primero:", "Segundo:", "Tercero:"), Cierre (una historia breve con un momento concreto, o una pregunta final que deje pensando, y una acción).
-- Si la persona contó una historia personal, úsala en el cierre.
-- Marca las pausas con " / " (espacio, barra, espacio) cada 5 a 15 palabras.
-
-Responde solo con JSON con esta forma:
-{"titulo":"máximo 6 palabras","tema":"Autoayuda","resumen":"una frase","coach":"un consejo de entrega para practicarlo","cierre":"Pregunta o Storytelling","partes":[["Gancho","..."],["Presentación","..."],["Cuerpo","..."],["Cierre","..."]]}`;
+  const prompt=esHist?promptHistoria(convo,prev):promptDiscurso(convo,prev);
   try{
     const d=await IA.json(prompt,{tarea:esHist?"historia":"armar"});
     const draft=limpiarBorrador(d,esHist?{kind:"historia",tipo:String(d.tipo||"Historia"),tema:"Historia",cierre:"Storytelling",nivel:2}:{nivel:1});
@@ -1244,13 +1251,17 @@ function qaCalificar(){
 
 /* ================= VOZ GUÍA (calentar, improvisación, preguntas) ================= */
 let vozCb=null;
+// Velocidad del profesor (barra en el calentamiento): multiplica la voz y el ritmo de la cuenta.
+const gv=()=>parseFloat(store.get("gvel",1))||1;
+let enGuia=false;
 function decir(t){return new Promise(res=>{
+  const vel=parseFloat(store.get("rate",0.95))*(enGuia?gv():1);
   const listo=()=>{vozCb=null;res()};
-  if(NATIVO){vozCb=listo;NATIVO.hablar(JSON.stringify([{i:0,t}]),parseFloat(store.get("rate",0.95)));return}
+  if(NATIVO){vozCb=listo;NATIVO.hablar(JSON.stringify([{i:0,t}]),vel);return}
   if(synth&&window.SpeechSynthesisUtterance){
     synth.cancel();const u=new SpeechSynthesisUtterance(t);
     const vName=store.get("voice",""),v=voices.find(x=>x.name===vName)||voices.find(x=>/es-(MX|US|419)/i.test(x.lang))||voices[0];
-    u.lang=v?v.lang:"es-MX";if(v)u.voice=v;u.rate=parseFloat(store.get("rate",0.95));u.onend=listo;u.onerror=listo;vozCb=listo;synth.speak(u);return;
+    u.lang=v?v.lang:"es-MX";if(v)u.voice=v;u.rate=vel;u.onend=listo;u.onerror=listo;vozCb=listo;synth.speak(u);return;
   }
   setTimeout(res,Math.min(9000,800+t.length*60));
 })}
@@ -1351,16 +1362,16 @@ async function ejecutar(acciones,tk,x,pant){
       if(tipo==="di"){pant.texto(r[0]);pant.num("");await decir(r[0])}
       else if(tipo==="cuenta"){
         const [n,ms=1000]=r;
-        for(let k=1;k<=n;k++){await pausaGuia(tk);if(!tk.on||tk.saltar)return;pant.num(k);await Promise.all([decir(NUMEROS[k]||String(k)),esperar(ms,tk)])}
+        for(let k=1;k<=n;k++){await pausaGuia(tk);if(!tk.on||tk.saltar)return;pant.num(k);await Promise.all([decir(NUMEROS[k]||String(k)),esperar(ms/gv(),tk)])}
         pant.num("");
       }
       else if(tipo==="alterna"){
         const [pal,veces,ms=1200]=r;
-        for(let k=0;k<veces;k++){await pausaGuia(tk);if(!tk.on||tk.saltar)return;const w=pal[k%pal.length];pant.num(w);await Promise.all([decir(w),esperar(ms,tk)])}
+        for(let k=0;k<veces;k++){await pausaGuia(tk);if(!tk.on||tk.saltar)return;const w=pal[k%pal.length];pant.num(w);await Promise.all([decir(w),esperar(ms/gv(),tk)])}
         pant.num("");
       }
-      else if(tipo==="espera"){if(r[1])pant.texto(r[1]);await esperar(r[0],tk)}
-      else if(tipo==="tuTurno"){pant.texto(r[0]);pant.num("");await decir(r[0]);await esperar(1500+r[0].split(/\s+/).length*450,tk)}
+      else if(tipo==="espera"){if(r[1])pant.texto(r[1]);await esperar(r[0]/gv(),tk)}
+      else if(tipo==="tuTurno"){pant.texto(r[0]);pant.num("");await decir(r[0]);await esperar((1500+r[0].split(/\s+/).length*450)/gv(),tk)}
       else if(tipo==="repite"){
         const [veces,bloque]=r;
         for(let k=1;k<=veces;k++){
@@ -1383,6 +1394,7 @@ async function guiaCalentar(desde,solo){
   const ini=desde||0,fin=solo?ini+1:items.length;
   const el=document.createElement("div");el.className="guia";el.id="guia";
   el.innerHTML=`<div class="guia-in"><p class="eyebrow" id="g-eb">Calentamiento guiado</p><h2 id="g-t">Ponte de pie</h2><p class="g-rep" id="g-rep"></p><p id="g-s" class="g-s">Hombros sueltos, pies a la anchura de tus hombros.</p><div class="g-n" id="g-n"></div>
+   <label class="g-vel" for="g-vel">Más lento <input id="g-vel" type="range" min="0.6" max="1.5" step="0.1" value="${gv()}"> Más rápido</label>
    <div class="row" style="justify-content:center"><button id="g-pausa">Pausa</button>${solo?"":`<button id="g-skip">Siguiente ejercicio</button>`}<button id="g-close">Terminar</button></div></div>`;
   document.body.appendChild(el);
   let wake=null;try{wake=await navigator.wakeLock?.request("screen")}catch(e){}
@@ -1391,6 +1403,8 @@ async function guiaCalentar(desde,solo){
   if(!solo)$("g-skip").onclick=()=>{tk.saltar=true;tk.pausa=false;callarGuia()};
   $("g-pausa").onclick=()=>{tk.pausa=!tk.pausa;$("g-pausa").textContent=tk.pausa?"Seguir":"Pausa";if(tk.pausa)callarGuia()};
   $("g-close").onclick=()=>guiaCerrar();
+  $("g-vel").oninput=e=>store.set("gvel",e.target.value);
+  enGuia=true;
   if(!solo)await decir("Vamos a calentar la cara y la voz. Ponte de pie, con los hombros sueltos y los pies a la anchura de tus hombros.");
   for(let k=ini;k<fin&&tk.on;k++){
     const x=items[k];tk.saltar=false;
@@ -1403,10 +1417,10 @@ async function guiaCalentar(desde,solo){
   if(tk.on){$("g-t").textContent="¡Listo!";pant.rep("");pant.num("");
     const t=solo?"Muy bien. Ejercicio terminado.":"Terminaste el calentamiento. Tu cara y tu voz están despiertas. Ahora sí, a practicar tu discurso.";
     pant.texto(t);await decir(t)}
-  try{wake?.release()}catch(e){}
+  enGuia=false;try{wake?.release()}catch(e){}
 }
 
-function guiaCerrar(){if(guia){guia.on=false;guia=null;callarGuia()}document.getElementById("guia")?.remove()}
+function guiaCerrar(){enGuia=false;if(guia){guia.on=false;guia=null;callarGuia()}document.getElementById("guia")?.remove()}
 
 /* ================= CREAR: HISTORIA Y UNIR ================= */
 const HIST_RULES=`Eres un coach de storytelling que ayuda a una persona a sacar una historia real de su vida para usarla en sus discursos. Hablas en español de México, cercano y breve (2 a 4 frases por respuesta). La persona te habla por dictado de voz, así que su texto puede venir sin puntuación.
@@ -1416,7 +1430,7 @@ const MODOS={
   discurso:{key:"gen",rules:()=>GEN_RULES,saludo:"¿Sobre qué quieres hacer tu discurso? Cuéntame la idea como te salga, aunque sea desordenada.",boton:"Armar discurso",ph:"Ej. Quiero hablar de cómo dejar de procrastinar, para jóvenes que empiezan a trabajar…"},
   historia:{key:"genh",rules:()=>HIST_RULES,saludo:"Cuéntame un momento de tu vida que te haya cambiado, aunque sea pequeño. Si no se te ocurre, dime de qué trata tu discurso y te ayudo a encontrar uno.",boton:"Armar historia",ph:"Ej. Cuando me quedé sin trabajo y decidí aprender algo nuevo…"},
 };
-function modoCrear(){return store.get("crearModo","discurso")}
+function modoCrear(){const m=store.get("crearModo","flujo");return MODOS[m]?m:"discurso"}
 function promptHistoria(convo,prev){return `Escribe una historia corta en primera persona, en español de México, para que esta persona la cuente en voz alta dentro de sus discursos, con la energía cercana de Tony Robbins sin copiar frases suyas. Usa SOLO lo que la persona contó en esta conversación con su coach; no inventes hechos importantes:
 
 ${convo.slice(-8000)}${prev}
@@ -1453,19 +1467,40 @@ async function unir(){
   const sp=findSp(document.getElementById("u-sp").value),hiId=document.getElementById("u-hi").value,hi=hiId&&findSp(hiId);
   const b=document.getElementById("u-go"),out=document.getElementById("u-out");
   b.disabled=true;genBusy=true;out.innerHTML='<div class="card"><p class="muted">Claude está leyendo tu discurso…</p></div>';
-  const guion=sp.partes.map(p=>p[0]+": "+plain(p[1])).join("\n");
   try{
     if(!hi){
-      const r=await IA.json(`Eres coach de storytelling. Lee este discurso y recomienda los 2 tipos de historia personal que mejor lo harían más poderoso. Tipos: transformación personal, fracaso que enseña, momento de decisión, historia de otra persona, metáfora o fábula. Para cada uno di en qué parte iría (gancho, presentación, cuerpo o cierre), por qué en una frase, y 2 preguntas para que la persona recuerde una historia real suya. Español de México.
+      const recs=await recomendarHistoria(sp);store.set("genu",{draft:null,recs});out.innerHTML=recsHtml(recs);
+    }else{
+      const draft=await unirTextos(sp,hi);store.set("genu",{draft,recs:null});out.innerHTML=draftHtml(draft,"genu");
+    }
+  }catch(e){out.innerHTML="";genErr(aiErr(e))}
+  finally{genBusy=false;b.disabled=false}
+}
+function promptDiscurso(convo,prev){return `Escribe un discurso original en español de México para que esta persona lo practique en voz alta, con el estilo motivacional, enérgico y cercano de Tony Robbins, sin copiar frases suyas. Usa lo que la persona contó en esta conversación con su coach:
+
+${convo.slice(-8000)}${prev}
+
+Reglas:
+- Entre 180 y 260 palabras en total. Frases cortas, fáciles de decir en voz alta, en segunda persona ("tú" o "ustedes").
+- Cuatro partes: Gancho (pregunta incómoda, dato o frase fuerte; nunca "buenas tardes"), Presentación (por qué importa y qué ganará el público), Cuerpo (tres puntos: "Primero:", "Segundo:", "Tercero:"), Cierre (una historia breve con un momento concreto, o una pregunta final que deje pensando, y una acción).
+- Si la persona contó una historia personal, úsala en el cierre.
+- Marca las pausas con " / " (espacio, barra, espacio) cada 5 a 15 palabras.
+
+Responde solo con JSON con esta forma:
+{"titulo":"máximo 6 palabras","tema":"Autoayuda","resumen":"una frase","coach":"un consejo de entrega para practicarlo","cierre":"Pregunta o Storytelling","partes":[["Gancho","..."],["Presentación","..."],["Cuerpo","..."],["Cierre","..."]]}`}
+async function recomendarHistoria(sp){
+  const guion=sp.partes.map(p=>p[0]+": "+plain(p[1])).join("\n");
+  const r=await IA.json(`Eres coach de storytelling. Lee este discurso y recomienda los 2 tipos de historia personal que mejor lo harían más poderoso. Tipos: transformación personal, fracaso que enseña, momento de decisión, historia de otra persona, metáfora o fábula. Para cada uno di en qué parte iría (gancho, presentación, cuerpo o cierre), por qué en una frase, y 2 preguntas para que la persona recuerde una historia real suya. Español de México.
 
 DISCURSO "${sp.titulo}":
 ${guion}
 
 Responde solo con JSON: {"recomendaciones":[{"tipo":"","donde":"","por_que":"","preguntas":["",""]}]}`,{tarea:"recomendar"});
-      const recs=(r&&r.recomendaciones)||[];store.set("genu",{draft:null,recs});out.innerHTML=recsHtml(recs);
-    }else{
-      const historia=hi.partes.map(p=>p[0]+": "+plain(p[1])).join("\n");
-      const d=await IA.json(`Une este discurso con esta historia personal en un discurso nuevo, en español de México, con la energía de Tony Robbins sin copiar frases suyas.
+  const recs=(r&&r.recomendaciones)||[];if(!recs.length)throw {code:"invalid_json"};return recs;
+}
+async function unirTextos(sp,hi){
+  const guion=sp.partes.map(p=>p[0]+": "+plain(p[1])).join("\n"),historia=hi.partes.map(p=>p[0]+": "+plain(p[1])).join("\n");
+  const d=await IA.json(`Une este discurso con esta historia personal en un discurso nuevo, en español de México, con la energía de Tony Robbins sin copiar frases suyas.
 
 DISCURSO "${sp.titulo}":
 ${guion}
@@ -1480,16 +1515,153 @@ Reglas:
 - Marca las pausas con " / " cada 5 a 15 palabras.
 
 Responde solo con JSON: {"recomendacion":"","titulo":"máximo 6 palabras","resumen":"una frase","coach":"un consejo de entrega","cierre":"Pregunta o Storytelling","partes":[["Gancho","..."],["Presentación","..."],["Cuerpo","..."],["Cierre","..."]]}`,{tarea:"unir"});
-      const draft=limpiarBorrador(d,{tema:"Discurso + historia",nivel:2});
-      draft.recomendacion=String(d.recomendacion||"");
-      store.set("genu",{draft,recs:null});out.innerHTML=draftHtml(draft,"genu");
-    }
-  }catch(e){out.innerHTML="";genErr(aiErr(e))}
-  finally{genBusy=false;b.disabled=false}
+  const draft=limpiarBorrador(d,{tema:"Discurso + historia",nivel:2});draft.recomendacion=String(d.recomendacion||"");return draft;
 }
 function limpiarBorrador(d,extra){
   if(!d||!Array.isArray(d.partes)||d.partes.length<3||!d.titulo)throw {code:"invalid_json"};
   return Object.assign({titulo:String(d.titulo),tema:String(d.tema||"Mío"),resumen:String(d.resumen||""),coach:String(d.coach||"Practícalo de pie y respeta las pausas."),cierre:String(d.cierre||"Pregunta"),partes:d.partes.filter(p=>Array.isArray(p)&&p[1]).map(p=>[String(p[0]),String(p[1])])},extra||{});
+}
+
+/* ================= CREAR PASO A PASO =================
+   1 Tu idea (conversas con Claude) → 2 Tu discurso → 3 Tu historia (Claude recomienda qué contar y te pregunta)
+   → 4 Historia lista → 5 Discurso final unido. Solo se muestra el botón que toca, resaltado. */
+const PASOS=["Tu idea","Tu discurso","Tu historia","Historia lista","Discurso final"];
+const flujoVacio=()=>({paso:1,turnsD:[],draft:null,recs:null,turnsH:[],historia:null,final:null});
+function flujo(){return store.get("flujo",flujoVacio())}
+function flujoSet(f){store.set("flujo",f)}
+function irPaso(n){const f=flujo();f.paso=n;flujoSet(f);render()}
+function stepper(paso,max){
+  return `<ol class="pasos">${PASOS.map((t,i)=>{const n=i+1,est=n<paso?"hecho":n===paso?"ahora":"";const puede=n<paso||n<=max;
+    return `<li class="${est}"><button ${puede&&n!==paso?`onclick="irPaso(${n})"`:"disabled"} aria-current="${n===paso?"step":"false"}"><span class="pn">${n<paso?"✓":n}</span><span class="pt">${t}</span></button></li>`}).join("")}</ol>`;
+}
+function maxPaso(f){return f.final?5:f.historia?4:f.recs||f.turnsH.length?3:f.draft?2:1}
+function listoParaArmar(turns){
+  const u=turns.filter(t=>t.role==="user").length,last=turns[turns.length-1];
+  return u>=3||(last&&last.role==="assistant"&&/armar/i.test(last.content));
+}
+function chatDe(turns,saludo){
+  return (turns.length?turns:[{role:"assistant",content:saludo}]).map(t=>`<div class="msg ${t.role==="user"?"me":"cl"}">${esc(t.content)}</div>`).join("");
+}
+function vistaTexto(d){
+  return `<div class="stack" style="gap:4px">${d.partes.map(p=>`<section class="seg"><span class="tag">${esc(p[0])}</span><p>${withPauses(p[1])}</p></section>`).join("")}</div>`;
+}
+function viewFlujo(){
+  const f=flujo(),p=f.paso;
+  let cuerpo="";
+  if(p===1||p===3){
+    const turns=p===1?f.turnsD:f.turnsH, listo=listoParaArmar(turns);
+    const saludo=p===1?MODOS.discurso.saludo:(f.recs?textoRecs(f.recs):"Cuéntame una historia de tu vida que tenga que ver con tu discurso.");
+    cuerpo=`${p===3&&f.recs?`<div class="coach"><b>Claude te recomienda</b><p>${esc(f.recs.map(r=>`${r.tipo}, en ${r.donde}: ${r.por_que}`).join(" "))}</p></div>`:""}
+    <section class="chat" id="chat">${chatDe(turns,saludo)}</section>
+    <section class="card stack">
+      ${dictBox("gen-text",turns.length?"Tu respuesta…":(p===1?MODOS.discurso.ph:"Ej. Una vez, cuando tenía 20 años…"),4)}
+      <div class="row">
+        <button class="${listo?"":"siguiente"}" id="gen-send" onclick="flujoEnviar()">Enviar a Claude</button>
+        ${turns.length?`<button class="${listo?"siguiente":""}" id="gen-build" onclick="flujoArmar()">${p===1?"Armar mi discurso":"Armar mi historia"}</button>`:""}
+      </div>
+      <p class="muted" style="font-size:.88rem">${listo?`Claude ya tiene lo que necesita. Toca <b>${p===1?"Armar mi discurso":"Armar mi historia"}</b>.`:"Habla o escribe, y toca <b>Enviar a Claude</b>. Claude te hará unas preguntas."}</p>
+      <p class="hint" id="gen-err" hidden></p>
+    </section>`;
+  }else if(p===2){
+    cuerpo=`<div class="card stack"><p class="eyebrow">Tu discurso</p><h2>${esc(f.draft.titulo)}</h2><p class="muted">${esc(f.draft.resumen)}</p>${vistaTexto(f.draft)}</div>
+    <div class="card stack"><h3>¿Le agregamos una historia tuya?</h3><p class="muted">Una historia real hace que tu discurso se recuerde. Claude te dirá qué tipo de historia le va mejor y dónde ponerla.</p>
+      <button class="siguiente" style="align-self:flex-start" id="f-recs" onclick="flujoRecomendar()">Sí, recomiéndame una historia</button>
+      <div class="row"><button onclick="flujoGuardar('draft')">Guardar sin historia</button><button onclick="irPaso(1)">Cambiar algo del discurso</button></div>
+      <p class="hint" id="gen-err" hidden></p></div>`;
+  }else if(p===4){
+    cuerpo=`<div class="card stack"><p class="eyebrow">Tu historia · ${esc(f.historia.tipo||"")}</p><h2>${esc(f.historia.titulo)}</h2>${vistaTexto(f.historia)}</div>
+    <div class="card stack"><h3>Ahora la unimos a tu discurso</h3><p class="muted">Claude pone la historia en la mejor parte y ajusta el discurso para que todo se conecte.</p>
+      <button class="siguiente" style="align-self:flex-start" id="f-unir" onclick="flujoUnir()">Unir historia y discurso</button>
+      <div class="row"><button onclick="irPaso(3)">Cambiar algo de la historia</button></div>
+      <p class="hint" id="gen-err" hidden></p></div>`;
+  }else if(p===5){
+    cuerpo=`<div class="card stack"><p class="eyebrow">Discurso final</p><h2>${esc(f.final.titulo)}</h2><p class="muted">${esc(f.final.resumen)}</p>
+      ${f.final.recomendacion?`<div class="coach"><b>Dónde quedó tu historia</b><p>${esc(f.final.recomendacion)}</p></div>`:""}${vistaTexto(f.final)}</div>
+    <div class="card stack"><button class="siguiente" style="align-self:flex-start" onclick="flujoGuardar('final')">${ICON.check}Guardar y practicar</button>
+      <div class="row"><button id="f-unir" onclick="flujoUnir()">Unir de otra forma</button></div><p class="hint" id="gen-err" hidden></p></div>`;
+  }
+  return `<div class="stack-lg">
+  <div class="section-title"><p class="eyebrow">Crear · paso ${p} de 5</p><h1>${["Cuéntale tu idea a Claude","Revisa tu discurso","Encuentra tu historia","Revisa tu historia","Tu discurso con historia"][p-1]}</h1></div>
+  ${stepper(p,maxPaso(f))}
+  <div id="flujo-cuerpo" class="stack-lg">${cuerpo}</div>
+  <details class="lesson"><summary><h3>Otras opciones</h3></summary><div class="lesson-body">
+    <button onclick="if(this.dataset.c){flujoSet(flujoVacio());render()}else{this.dataset.c=1;this.textContent='Toca otra vez para borrar este discurso y empezar'}">Empezar un discurso nuevo</button>
+    <button onclick="store.set('crearModo','historia');render()">Crear solo una historia</button>
+    <button onclick="store.set('crearModo','unir');render()">Unir una historia que ya guardé con otro discurso</button>
+  </div></details>
+  </div>`;
+}
+function textoRecs(recs){
+  const r=recs[0]||{};
+  return `Para tu discurso te recomiendo una historia de tipo "${r.tipo||"momento de decisión"}", en ${r.donde||"el cierre"}. ${(r.preguntas||[]).join(" ")} Cuéntamela como te salga.`;
+}
+function cargando(msg){const c=document.getElementById("flujo-cuerpo");if(c)c.insertAdjacentHTML("beforeend",`<div class="card" id="f-carga"><p class="muted">${msg}</p></div>`)}
+function quitarCarga(){document.getElementById("f-carga")?.remove()}
+
+async function flujoEnviar(){
+  if(genBusy)return; stopRec();
+  const ta=document.getElementById("gen-text"),txt=ta.value.trim();
+  if(!txt){genErr("Primero habla o escribe algo.");return}
+  if(!IA.listo()){genErr(aiErr({code:"sin_config"}));return}
+  const f=flujo(),turns=f.paso===1?f.turnsD:f.turnsH;
+  if(f.paso===3&&!turns.length&&f.recs)turns.push({role:"assistant",content:textoRecs(f.recs)});
+  turns.push({role:"user",content:txt});flujoSet(f);ta.value="";genErr("");
+  document.getElementById("chat").innerHTML=chatDe(turns,"")+'<div class="msg cl">Pensando…</div>';
+  genBusy=true;
+  try{
+    const reglas=f.paso===1?GEN_RULES:HIST_RULES+`\n\nEl discurso de la persona se llama "${f.draft.titulo}": ${f.draft.resumen}. La historia debe conectar con esa idea.`;
+    const saludo=f.paso===1?MODOS.discurso.saludo:MODOS.historia.saludo;
+    const text=await IA.texto([{role:"user",content:reglas},{role:"assistant",content:"Entendido. "+saludo},...turns.slice(-16)],{rapido:true,tarea:"conversar"});
+    turns.push({role:"assistant",content:text});flujoSet(f);
+  }catch(e){genBusy=false;render();genErr(aiErr(e));return}
+  genBusy=false;render();
+}
+async function flujoArmar(){
+  if(genBusy)return; stopRec();
+  const f=flujo(),esHist=f.paso===3,turns=esHist?f.turnsH:f.turnsD;
+  const pend=document.getElementById("gen-text").value.trim();if(pend)turns.push({role:"user",content:pend});
+  if(!IA.listo()){genErr(aiErr({code:"sin_config"}));return}
+  genBusy=true;genErr("");document.getElementById("gen-build").disabled=true;
+  cargando(`Claude está escribiendo tu ${esHist?"historia":"discurso"}. Puede tardar hasta un minuto…`);
+  const convo=turns.map(t=>(t.role==="user"?"PERSONA: ":"COACH: ")+t.content).join("\n");
+  const prev=(esHist?f.historia:f.draft)?"\n\nBORRADOR ANTERIOR (aplica los cambios que la persona pidió después de él):\n"+JSON.stringify(esHist?f.historia:f.draft):"";
+  try{
+    if(esHist){
+      const d=await IA.json(promptHistoria(convo,prev),{tarea:"historia"});
+      f.historia=limpiarBorrador(d,{kind:"historia",tipo:String(d.tipo||"Historia"),tema:"Historia",cierre:"Storytelling",nivel:2});
+      f.final=null;f.paso=4;
+    }else{
+      const d=await IA.json(promptDiscurso(convo,prev),{tarea:"armar"});
+      f.draft=limpiarBorrador(d,{nivel:1});f.recs=null;f.turnsH=[];f.historia=null;f.final=null;f.paso=2;
+    }
+    f[esHist?"turnsH":"turnsD"]=turns;flujoSet(f);genBusy=false;render();
+  }catch(e){genBusy=false;quitarCarga();document.getElementById("gen-build").disabled=false;genErr(aiErr(e))}
+}
+async function flujoRecomendar(){
+  if(genBusy)return;
+  const f=flujo();if(f.recs){f.paso=3;flujoSet(f);render();return}
+  if(!IA.listo()){genErr(aiErr({code:"sin_config"}));return}
+  genBusy=true;document.getElementById("f-recs").disabled=true;cargando("Claude está pensando qué historia le va a tu discurso…");
+  try{
+    f.recs=await recomendarHistoria(f.draft);f.paso=3;flujoSet(f);genBusy=false;render();
+  }catch(e){genBusy=false;quitarCarga();document.getElementById("f-recs").disabled=false;genErr(aiErr(e))}
+}
+async function flujoUnir(){
+  if(genBusy)return;
+  const f=flujo();if(!IA.listo()){genErr(aiErr({code:"sin_config"}));return}
+  genBusy=true;document.getElementById("f-unir").disabled=true;cargando("Claude está uniendo tu historia con tu discurso…");
+  try{
+    f.final=await unirTextos(f.draft,f.historia);f.paso=5;flujoSet(f);genBusy=false;render();
+  }catch(e){genBusy=false;quitarCarga();document.getElementById("f-unir").disabled=false;genErr(aiErr(e))}
+}
+function flujoGuardar(cual){
+  const f=flujo(),t=Date.now();
+  const nuevos=[];
+  if(cual==="final"){nuevos.push({...f.final,id:"m"+t,mio:true});if(f.historia)nuevos.push({...f.historia,id:"m"+(t+1),mio:true})}
+  else nuevos.push({...f.draft,id:"m"+t,mio:true});
+  nuevos.forEach(x=>delete x.recomendacion);
+  store.set("mine",[...nuevos,...store.get("mine",[])]);
+  flujoSet(flujoVacio());toast(cual==="final"?"Guardados tu discurso y tu historia":"Discurso guardado");location.hash="d-"+nuevos[0].id;
 }
 
 /* ================= ROUTER ================= */

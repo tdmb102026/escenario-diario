@@ -52,6 +52,8 @@ public class MainActivity extends Activity {
     private boolean micPendiente = false;
     private int erroresSeguidos = 0;
     private boolean silenciado = false;
+    // Lo último que se oyó en esta tanda: si Google cierra sin resultado final o con error, se entrega igual.
+    private String ultimoParcial = "";
 
     @Override
     protected void onCreate(Bundle guardado) {
@@ -211,15 +213,21 @@ public class MainActivity extends Activity {
     class Oyente implements RecognitionListener {
         @Override public void onPartialResults(Bundle b) {
             String t = primero(b);
-            if (!t.isEmpty()) js("Dictado.parcial(" + JSONObject.quote(t) + ")");
+            if (!t.isEmpty()) { ultimoParcial = t; js("Dictado.parcial(" + JSONObject.quote(t) + ")"); }
         }
         @Override public void onResults(Bundle b) {
             erroresSeguidos = 0;
             String t = primero(b);
+            if (t.isEmpty()) t = ultimoParcial;
+            ultimoParcial = "";
             js("Dictado.final(" + JSONObject.quote(t) + ")");
             if (escuchando) h.postDelayed(MainActivity.this::arrancar, 100);
         }
         @Override public void onError(int e) {
+            if (!ultimoParcial.isEmpty()) {
+                js("Dictado.final(" + JSONObject.quote(ultimoParcial) + ")");
+                ultimoParcial = "";
+            }
             if (!escuchando) return;
             if (e == SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS) {
                 terminarOido();
