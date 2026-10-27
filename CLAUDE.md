@@ -29,3 +29,4 @@
 - "Mis discursos" (los de `ed_mine`) se ven siempre arriba en Niveles y en Inicio; antes un discurso creado de nivel 2 quedaba oculto si ibas en nivel 1. Teleprompter: "Salir" y "Calificarme".
 - Niveles tiene dos pestañas (`ed_nivTab`: niveles / mios) y un selector de nivel compacto (`.niveles-mini`); la escalera grande queda solo en Progreso.
 - Editar discursos propios: botón "Editar" en el discurso → `#editar-<id>` (`viewEditar`, `guardarEdicion`): título, resumen, consejo y partes (añadir/quitar); al guardar borra sus `ed_pistas`.
+- Crear tiene pestañas arriba (`crearTabs`): Discurso (paso a paso), Ocasiones (`ocasion`, chips `OCASIONES`), Historia. Bajo el borrador, botones "¿Lo mejoramos?" (`mejorarBorrador`, `PEDIDOS`). Enviar usa `vaciarDict(id)`: corta el dictado de esa caja para que Android no la vuelva a llenar.

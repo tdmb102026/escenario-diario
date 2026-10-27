@@ -187,6 +187,10 @@ nav.tabs a[aria-current="page"]{color:var(--accent);background:var(--accent-soft
 .pestanas{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:999px;background:var(--surface);border:1px solid var(--line)}
 .pestanas button{border:0;border-radius:999px;min-height:40px;background:transparent;font-weight:600;color:var(--muted)}
 .pestanas button[aria-selected="true"]{background:var(--accent);color:#fff}
+.pestanas.tres{grid-template-columns:repeat(3,1fr)}
+.ocasiones{display:flex;flex-wrap:wrap;gap:8px}
+.ocasiones button{min-height:38px;padding:6px 14px;border-radius:999px;font-size:.9rem}
+.ocasiones button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
 .niveles-mini{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
 .niveles-mini button{aspect-ratio:1;max-height:56px;border-radius:50%;padding:0;font-family:var(--f-display);font-weight:800;font-size:1.2rem;display:flex;align-items:center;justify-content:center}
 .niveles-mini button.sel{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -656,8 +660,16 @@ const Dictado={
   final(t){t=t||dictParcial;dictParcial="";if(t)dictFinal+=t+" ";dictMostrar()},
   estado(s){if(s==="escuchando")return;if(dictParcial){dictFinal+=dictParcial+" ";dictParcial="";dictMostrar()}if(dictId)micBtnIdle(dictId);dictId=null;if(s.indexOf("error:")===0)toast(s.slice(6))}
 };
+// Deja la caja vacía y corta el dictado de esa caja: si no, Android seguía escribiendo lo anterior después de Enviar.
+function vaciarDict(id){
+  if(dictId===id){if(NATIVO){NATIVO.detener();micBtnIdle(id)}dictId=null}
+  if(rec){rec.onresult=null;rec.onend=null;try{rec.stop()}catch(e){}rec=null;micBtnIdle(id)}
+  dictBase=dictFinal=dictParcial="";const ta=document.getElementById(id);if(ta)ta.value="";dictT0[id]=0;medirVivo(id);
+}
+// Borrar texto sin cortar el dictado si está escuchando.
+function borrarDict(id){if(dictId===id){dictBase=dictFinal=dictParcial=""}const ta=document.getElementById(id);if(ta)ta.value="";dictT0[id]=0;medirVivo(id)}
 function dictBox(id,ph,rows){return `<div class="dict"><textarea id="${id}" rows="${rows||5}" placeholder="${esc(ph)}"></textarea>
- <div class="row"><button type="button" id="${id}-mic" onclick="startRec('${id}')">${ICON.mic}Hablar</button><button type="button" onclick="document.getElementById('${id}').value='';dictT0['${id}']=0;medirVivo('${id}')">Borrar texto</button></div>
+ <div class="row"><button type="button" id="${id}-mic" onclick="startRec('${id}')">${ICON.mic}Hablar</button><button type="button" onclick="borrarDict('${id}')">Borrar texto</button></div>
  <div class="vivo" id="${id}-vivo" hidden></div>
  <p class="hint" id="${id}-hint" hidden>Este navegador no deja usar el micrófono aquí. Toca el ícono de micrófono de tu teclado y habla: tu teléfono escribirá lo que digas. Con la app Android esto no hace falta.</p></div>`}
 function startRec(id){
@@ -1028,16 +1040,23 @@ const GEN_RULES=`Eres un coach de oratoria que ayuda a una persona a crear su pr
 Tu trabajo en esta conversación: entender de qué quiere hablar. Haz UNA sola pregunta a la vez, máximo tres preguntas en total, entre estas: el mensaje central o la idea que quiere dejar, quién es su público, y una historia o experiencia personal que pueda usar en el cierre. Si ya te dio algo, no lo preguntes. Cuando ya tengas suficiente, dile que toque el botón "Armar discurso". Si te pide cambios a un discurso ya armado, confirma brevemente qué vas a cambiar y dile que toque "Armar discurso" otra vez.`;
 function genState(){return store.get(MODOS[modoCrear()].key,{turns:[],draft:null})}
 function genGuardarEstado(g){store.set(MODOS[modoCrear()].key,g)}
+const OCASIONES=["Cumpleaños","Brindis","Boda o aniversario","Felicitar un logro","Despedida o jubilación","Agradecimiento","Bienvenida","Palabras de despedida en un funeral"];
+function crearTabs(modo){
+  const t=[["flujo","Discurso"],["ocasion","Ocasiones"],["historia","Historia"]];
+  return `<div class="pestanas tres" role="tablist">${t.map(([k,n])=>`<button role="tab" aria-selected="${modo===k}" onclick="store.set('crearModo','${k}');render()">${n}</button>`).join("")}</div>`;
+}
+function elegirOcasion(o){const ta=document.getElementById("gen-text");if(!ta)return;ta.value=o+". Es para ";ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);document.querySelectorAll(".ocasiones button").forEach(b=>b.setAttribute("aria-pressed",b.textContent===o))}
 function viewCrear(){
   const modo=store.get("crearModo","flujo");
   if(modo==="flujo"||!MODOS[modo]&&modo!=="unir")return viewFlujo();
-  const tabs=`<button class="back" onclick="store.set('crearModo','flujo');render()">← Volver al paso a paso</button>`;
+  const tabs=modo==="unir"?`<button class="back" onclick="store.set('crearModo','flujo');render()">← Volver al paso a paso</button>`:crearTabs(modo);
   const intro={ocasion:"Para un cumpleaños, un brindis, una felicitación o una despedida. Claude te pregunta por un recuerdo con esa persona y arma unas palabras cortas: recuerdo cuando… eso llevó a… por eso te deseo…",discurso:"Cuéntale a Claude de qué quieres hablar. Te hará un par de preguntas y armará un discurso con gancho, cuerpo y cierre.",historia:"Claude te ayuda a sacar una historia real de tu vida: el momento, el conflicto, el giro y la lección. Luego la puedes unir a cualquier discurso.",unir:"Junta un discurso con una de tus historias. Claude te dice dónde va mejor y por qué."}[modo];
   if(modo==="unir")return `<div class="stack-lg"><div class="section-title"><p class="eyebrow">Crear</p><h1>Unir discurso e historia</h1><p class="muted">${intro}</p></div>${tabs}${viewUnir()}</div>`;
   const M=MODOS[modo],g=genState();
   return `<div class="stack-lg">
-  <div class="section-title"><p class="eyebrow">Crear</p><h1>${modo==="historia"?"Tu historia":modo==="ocasion"?"Brindis y felicitaciones":"Tu propio discurso"}</h1><p class="muted">${intro}</p></div>
+  <div class="section-title"><p class="eyebrow">Crear</p><h1>${modo==="historia"?"Tu historia":modo==="ocasion"?"Palabras para una ocasión":"Tu propio discurso"}</h1><p class="muted">${intro}</p></div>
   ${tabs}
+  ${modo==="ocasion"&&!g.turns.length?`<div class="stack" style="gap:8px"><p class="eyebrow">¿Para qué ocasión?</p><div class="ocasiones">${OCASIONES.map(o=>`<button type="button" aria-pressed="false" onclick="elegirOcasion('${o}')">${o}</button>`).join("")}</div></div>`:""}
   <section class="chat" id="chat">${chatHtml(g)}</section>
   <section class="card stack">
     ${dictBox("gen-text",g.turns.length?"Tu respuesta…":M.ph,4)}
@@ -1058,8 +1077,17 @@ function draftHtml(d,key){
   return `<div class="card stack"><p class="eyebrow">Borrador · ${esc(d.kind==="historia"?(d.tipo||"Historia"):d.tema)}</p><h2>${esc(d.titulo)}</h2><p class="muted">${esc(d.resumen)}</p>
    ${d.recomendacion?`<div class="coach"><b>Por qué la historia va ahí</b><p>${esc(d.recomendacion)}</p></div>`:""}
    <div class="stack" style="gap:4px">${d.partes.map(p=>`<section class="seg"><span class="tag">${esc(p[0])}</span><p>${withPauses(p[1])}</p></section>`).join("")}</div>
+   ${key==="genu"?"":`<div class="stack" style="gap:8px"><p class="eyebrow">¿Lo mejoramos?</p><div class="ocasiones">${(key==="geno"?["Más corto","Más emotivo","Más formal","Con un toque de humor","Más sencillo de decir"]:["Más corto","Más emotivo","Más formal","Más sencillo de decir","Otro final"]).map(m=>`<button type="button" onclick="mejorarBorrador('${m}')">${m}</button>`).join("")}<button type="button" onclick="const t=document.getElementById('gen-text');t.focus();t.scrollIntoView({behavior:'smooth',block:'center'})">Otro cambio…</button></div></div>`}
    <div class="row"><button class="btn-accent" onclick="genSave('${key}')">${ICON.check}Guardar y practicar</button></div>
    <p class="muted" style="font-size:.9rem">${key==="genu"?"¿No te convence? Toca Recomendar y unir otra vez.":`¿Quieres cambios? Díselo a Claude arriba ("hazlo más corto", "cambia el final") y toca ${key==="geno"?"Armar mis palabras":d.kind==="historia"?"Armar historia":"Armar discurso"} otra vez.`}</p></div>`;
+}
+// Botones rápidos bajo el borrador: el pedido entra a la conversación y Claude vuelve a armarlo.
+const PEDIDOS={"Más corto":"Hazlo más corto, más o menos la mitad.","Más emotivo":"Hazlo más emotivo, que toque el corazón.","Más formal":"Hazlo más formal y elegante.","Con un toque de humor":"Ponle un toque de humor suave, sin burlarte de nadie.","Más sencillo de decir":"Usa palabras más sencillas y frases más cortas, fáciles de decir en voz alta.","Otro final":"Cámbiale el final por uno más fuerte."};
+function mejorarBorrador(m){
+  if(genBusy)return;
+  const g=genState();g.turns.push({role:"user",content:PEDIDOS[m]||m});genGuardarEstado(g);
+  const c=document.getElementById("chat");if(c)c.innerHTML=chatHtml(g);
+  genBuild();
 }
 function genErr(msg){const e=document.getElementById("gen-err");if(e){e.hidden=!msg;e.textContent=msg||""}}
 let genBusy=false;
@@ -1067,7 +1095,7 @@ async function genSend(){
   if(genBusy)return; stopRec();
   const ta=document.getElementById("gen-text"),txt=ta.value.trim(); if(!txt)return;
   if(!IA.listo()){genErr(aiErr({code:"sin_config"}));return}
-  const g=genState(); g.turns.push({role:"user",content:txt}); genGuardarEstado(g); ta.value=""; genErr("");
+  const g=genState(); g.turns.push({role:"user",content:txt}); genGuardarEstado(g); vaciarDict("gen-text"); genErr("");
   const chat=document.getElementById("chat"); chat.innerHTML=chatHtml(g)+'<div class="msg cl" id="gen-live">Pensando…</div>';
   document.getElementById("gen-build").disabled=false;
   genBusy=true;
@@ -1082,7 +1110,7 @@ async function genSend(){
 async function genBuild(){
   if(genBusy)return; stopRec();
   const pending=document.getElementById("gen-text").value.trim();
-  const g=genState(); if(pending){g.turns.push({role:"user",content:pending});genGuardarEstado(g);document.getElementById("gen-text").value="";document.getElementById("chat").innerHTML=chatHtml(g)}
+  const g=genState(); if(pending){g.turns.push({role:"user",content:pending});genGuardarEstado(g);vaciarDict("gen-text");document.getElementById("chat").innerHTML=chatHtml(g)}
   if(!g.turns.length){genErr("Primero cuéntale a Claude de qué quieres hablar.");return}
   if(!IA.listo()){genErr(aiErr({code:"sin_config"}));return}
   const b=document.getElementById("gen-build"); b.disabled=true; genBusy=true; genErr("");
@@ -1512,7 +1540,7 @@ function viewImprovisar(){
 }
 async function impEmpezar(){
   const f=document.getElementById("imp-fase"),ta=document.getElementById("imp-text");
-  ta.value="";impFase="pensar";impT=0;impT0=0;document.getElementById("imp-otro").disabled=true;
+  vaciarDict("imp-text");impFase="pensar";impT=0;impT0=0;document.getElementById("imp-otro").disabled=true;
   f.textContent="Piensa: ¿cuál es tu punto? ¿Qué ejemplo vas a contar?";
   decir("Tu tema es: "+impTema+". Tienes treinta segundos para pensar.");
   cronoIniciar("imp-clock",30,()=>{
@@ -1569,7 +1597,7 @@ DISCURSO "${sp.titulo}":
 ${sp.partes.map(p=>plain(p[1])).join("\n")}`,{rapido:true,tarea:"pregunta"});
     qaPregunta=t.trim().replace(/^["«]|["»]$/g,"");
     document.getElementById("qa-qt").textContent=qaPregunta;
-    document.getElementById("qa-q").hidden=false;document.getElementById("qa-resp").hidden=false;document.getElementById("qa-res").innerHTML="";document.getElementById("qa-text").value="";
+    document.getElementById("qa-q").hidden=false;document.getElementById("qa-resp").hidden=false;document.getElementById("qa-res").innerHTML="";vaciarDict("qa-text");
     decir(qaPregunta);
   }catch(x){e.hidden=false;e.textContent=aiErr(x)}
   finally{b.disabled=false;b.textContent="Otra pregunta"}
@@ -1772,7 +1800,7 @@ window.addEventListener("popstate",()=>{if(document.getElementById("guia"))guiaC
 const HIST_RULES=`Eres un coach de storytelling que ayuda a una persona a sacar una historia real de su vida para usarla en sus discursos. Hablas en español de México, cercano y breve (2 a 4 frases por respuesta). La persona te habla por dictado de voz, así que su texto puede venir sin puntuación.
 Tipos de historia: transformación personal, fracaso que enseña, momento de decisión, historia de otra persona, metáfora o fábula.
 Tu trabajo: si no te dijo qué tipo quiere, sugiérele uno o dos según lo que cuente. Luego haz UNA sola pregunta a la vez, máximo cuatro en total, para sacar: el momento exacto (cuándo, dónde, quién), qué estaba en juego o qué sentía, el giro (qué pasó, qué dijo alguien o qué decidió) y qué aprendió. Pide detalles de los sentidos y alguna frase que alguien dijo. Si ya te dio algo, no lo preguntes. Cuando tengas suficiente, dile que toque "Armar historia". Si pide cambios a una historia ya armada, confirma brevemente y dile que toque "Armar historia" otra vez.`;
-const OCAS_RULES=`Eres un coach que ayuda a una persona a preparar unas palabras cortas para una ocasión especial: felicitar un cumpleaños, un brindis (boda, aniversario, fin de año), felicitar un logro, una despedida o un agradecimiento. Hablas en español de México, cercano y breve (2 a 4 frases por respuesta). La persona te habla por dictado de voz, así que su texto puede venir sin puntuación.
+const OCAS_RULES=`Eres un coach que ayuda a una persona a preparar unas palabras cortas para una ocasión especial: felicitar un cumpleaños, un brindis (boda, aniversario, fin de año), felicitar un logro, una despedida o jubilación, un agradecimiento, una bienvenida o unas palabras en un funeral (ahí con respeto y calma, sin brindis ni bromas). Hablas en español de México, cercano y breve (2 a 4 frases por respuesta). La persona te habla por dictado de voz, así que su texto puede venir sin puntuación.
 La clave del método: no felicitar con adjetivos sino con un recuerdo compartido ("Recuerdo cuando estábamos…, eso llevó a…, por eso hoy te deseo…").
 Tu trabajo: haz UNA sola pregunta a la vez, máximo cuatro en total, para sacar: la ocasión y para quién es (nombre y qué relación tienen), un recuerdo concreto con esa persona (cuándo, dónde, qué pasó, qué hizo ella), qué dice ese recuerdo de ella o a qué llevó, y qué le desea. Si no se le ocurre un recuerdo, ayúdale con preguntas como "¿qué momento difícil pasaron juntos?" o "¿qué hizo por ti que no olvidas?". Si ya te dio algo, no lo preguntes. Cuando tengas suficiente, dile que toque "Armar mis palabras". Si pide cambios a unas palabras ya armadas, confirma brevemente y dile que toque "Armar mis palabras" otra vez.`;
 function promptOcasion(convo,prev){return `Escribe unas palabras cortas en primera persona, en español de México, para que esta persona las diga en voz alta en una ocasión especial (felicitación, brindis, despedida o agradecimiento). Usa SOLO lo que la persona contó en esta conversación con su coach; no inventes hechos importantes:
@@ -1781,14 +1809,14 @@ ${convo.slice(-8000)}${prev}
 
 Reglas:
 - Entre 100 y 170 palabras. Frases cortas, cálidas, fáciles de decir. Habla más de la otra persona que de ti; usa su nombre.
-- Cuatro partes: Atención (una frase para pedir la atención o levantar la copa), Recuerdo (la historia con un momento exacto, que empiece con algo como "Recuerdo cuando…"), Lo que dice de ti (a qué llevó ese momento y qué cualidad muestra, sin adjetivos vacíos), Deseo (el deseo o el brindis final; si es brindis, termina invitando a todos a levantar la copa).
+- Cuatro partes: Atención (una frase para pedir la atención o levantar la copa), Recuerdo (la historia con un momento exacto, que empiece con algo como "Recuerdo cuando…"), Lo que dice de ti (a qué llevó ese momento y qué cualidad muestra, sin adjetivos vacíos), Deseo (el deseo o el brindis final; si es brindis, termina invitando a todos a levantar la copa; si es un funeral, cierra con una despedida serena en lugar de un brindis).
 - Nada de chistes internos ni cosas que avergüencen.
 - Marca las pausas con " / " (espacio, barra, espacio) cada 5 a 15 palabras.
 
 Responde solo con JSON con esta forma:
-{"titulo":"máximo 6 palabras","tema":"Cumpleaños | Brindis | Felicitación | Despedida | Agradecimiento","resumen":"una frase","coach":"un consejo para decirlo","partes":[["Atención","..."],["Recuerdo","..."],["Lo que dice de ti","..."],["Deseo","..."]]}`}
+{"titulo":"máximo 6 palabras","tema":"Cumpleaños | Brindis | Boda | Felicitación | Despedida | Agradecimiento | Bienvenida | Funeral","resumen":"una frase","coach":"un consejo para decirlo","partes":[["Atención","..."],["Recuerdo","..."],["Lo que dice de ti","..."],["Deseo","..."]]}`}
 const MODOS={
-  ocasion:{key:"geno",rules:()=>OCAS_RULES,saludo:"¿Para quién son tus palabras y en qué ocasión? Por ejemplo: el cumpleaños de tu mamá, el brindis de una boda o la despedida de un compañero.",boton:"Armar mis palabras",ph:"Ej. Es el cumpleaños de mi socio Juan, quiero decir unas palabras en la cena…"},
+  ocasion:{key:"geno",rules:()=>OCAS_RULES,saludo:"Elige la ocasión arriba y cuéntame para quién son tus palabras. Por ejemplo: el cumpleaños de tu mamá, el brindis de una boda o la despedida de un compañero.",boton:"Armar mis palabras",ph:"Ej. Es el cumpleaños de mi socio Juan, quiero decir unas palabras en la cena…"},
   discurso:{key:"gen",rules:()=>GEN_RULES,saludo:"¿Sobre qué quieres hacer tu discurso? Cuéntame la idea como te salga, aunque sea desordenada.",boton:"Armar discurso",ph:"Ej. Quiero hablar de cómo dejar de procrastinar, para jóvenes que empiezan a trabajar…"},
   historia:{key:"genh",rules:()=>HIST_RULES,saludo:"Cuéntame un momento de tu vida que te haya cambiado, aunque sea pequeño. Si no se te ocurre, dime de qué trata tu discurso y te ayudo a encontrar uno.",boton:"Armar historia",ph:"Ej. Cuando me quedé sin trabajo y decidí aprender algo nuevo…"},
 };
@@ -1947,13 +1975,12 @@ function viewFlujo(){
       <div class="row"><button id="f-unir" onclick="flujoUnir()">Unir de otra forma</button></div><p class="hint" id="gen-err" hidden></p></div>`;
   }
   return `<div class="stack-lg">
+  ${crearTabs("flujo")}
   <div class="section-title"><p class="eyebrow">Crear · paso ${p} de 5</p><h1>${["Cuéntale tu idea a Claude","Revisa tu discurso","Encuentra tu historia","Revisa tu historia","Tu discurso con historia"][p-1]}</h1></div>
   ${stepper(p,maxPaso(f))}
   <div id="flujo-cuerpo" class="stack-lg">${cuerpo}</div>
   <details class="lesson"><summary><h3>Otras opciones</h3></summary><div class="lesson-body">
     <button onclick="if(this.dataset.c){flujoSet(flujoVacio());render()}else{this.dataset.c=1;this.textContent='Toca otra vez para borrar este discurso y empezar'}">Empezar un discurso nuevo</button>
-    <button onclick="store.set('crearModo','ocasion');render()">Brindis, felicitación o unas palabras</button>
-    <button onclick="store.set('crearModo','historia');render()">Crear solo una historia</button>
     <button onclick="store.set('crearModo','unir');render()">Unir una historia que ya guardé con otro discurso</button>
   </div></details>
   </div>`;
@@ -1972,7 +1999,7 @@ async function flujoEnviar(){
   if(!IA.listo()){genErr(aiErr({code:"sin_config"}));return}
   const f=flujo(),turns=f.paso===1?f.turnsD:f.turnsH;
   if(f.paso===3&&!turns.length&&f.recs)turns.push({role:"assistant",content:textoRecs(f.recs)});
-  turns.push({role:"user",content:txt});flujoSet(f);ta.value="";genErr("");
+  turns.push({role:"user",content:txt});flujoSet(f);vaciarDict("gen-text");genErr("");
   document.getElementById("chat").innerHTML=chatDe(turns,"")+'<div class="msg cl">Pensando…</div>';
   genBusy=true;
   try{
