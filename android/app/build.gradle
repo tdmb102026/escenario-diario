@@ -1,0 +1,37 @@
+plugins {
+    id "com.android.application"
+}
+
+android {
+    namespace "io.github.tdmb102026.escenario"
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "io.github.tdmb102026.escenario"
+        minSdk 29
+        targetSdk 35
+        // GitHub pone el número de compilación, así cada APK nuevo se instala encima del anterior.
+        versionCode = Integer.parseInt(System.getenv("GITHUB_RUN_NUMBER") ?: "1")
+        versionName = "1.0." + (System.getenv("GITHUB_RUN_NUMBER") ?: "0")
+    }
+
+    // Firma fija (la clave de depuración estándar de Android, que es pública) para que las
+    // actualizaciones se instalen sobre la versión anterior. Sirve para instalar a mano, no para Play Store.
+    signingConfigs {
+        fija {
+            storeFile file("debug.keystore")
+            storePassword "android"
+            keyAlias "androiddebugkey"
+            keyPassword "android"
+        }
+    }
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.fija
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

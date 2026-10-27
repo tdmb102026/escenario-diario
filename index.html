@@ -1,0 +1,925 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Escenario Diario</title>
+<meta name="theme-color" content="#141B26">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+[hidden]{display:none!important}
+img{max-width:100%}
+body{margin:0}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+/* Layout: app de una columna para móvil, barra de pestañas fija abajo, foco tipo "luz de escenario" sobre el contenido activo */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#141B26; --muted:#5A6576; --line:#DCE1E8;
+  --accent:#B4590F; --accent-soft:#FBEBDD; --spot:#F2B33D; --good:#2E7D4F; --bad:#B23A3A;
+  --f-display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --f-body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-read:"Source Serif 4", Georgia, "Times New Roman", serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F141C; --surface:#18202B; --ink:#EEF1F5; --muted:#9AA5B5; --line:#2A3443;
+  --accent:#F0A35A; --accent-soft:#2E2318; --spot:#F2B33D; --good:#5CC48A; --bad:#EA7A7A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F141C; --surface:#18202B; --ink:#EEF1F5; --muted:#9AA5B5; --line:#2A3443;
+  --accent:#F0A35A; --accent-soft:#2E2318; --spot:#F2B33D; --good:#5CC48A; --bad:#EA7A7A; color-scheme:dark}
+
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+main{max-width:680px;margin:0 auto;padding-block:20px 120px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:2rem;font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.4rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:700}
+p{margin:0}
+.eyebrow{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--accent)}
+.muted{color:var(--muted)}
+.stack{display:flex;flex-direction:column;gap:14px}
+.stack-lg{display:flex;flex-direction:column;gap:28px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+button,.btn{font:inherit;font-weight:600;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 16px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;text-decoration:none;min-height:44px}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--spot);outline-offset:2px}
+.btn-primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn-accent{background:var(--accent);color:#fff;border-color:var(--accent)}
+:root[data-theme="dark"] .btn-accent{color:#1A1006}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn-accent{color:#1A1006}}
+button:disabled{opacity:.45;cursor:default}
+.chip{display:inline-block;font-size:.75rem;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+
+/* Hero */
+.hero{position:relative;overflow:hidden;border-radius:20px;background:var(--ink);color:var(--bg);padding:26px 20px 22px}
+.hero::before{content:"";position:absolute;inset:-40% -10% auto auto;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,var(--spot) 0%,transparent 65%);opacity:.35;pointer-events:none}
+.hero h1{position:relative;color:var(--bg)}
+.hero p{position:relative;color:var(--bg);opacity:.85;margin-top:8px;max-width:46ch}
+.hero .eyebrow{color:var(--spot);position:relative}
+.today{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;position:relative}
+.today button{background:transparent;color:var(--bg);border-color:color-mix(in srgb,var(--bg) 35%,transparent)}
+.today button.go{background:var(--spot);color:#1A1006;border-color:var(--spot)}
+
+/* Rutina */
+.routine{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;counter-reset:r}
+.routine a{display:flex;flex-direction:column;gap:2px;padding:12px 10px;border-radius:12px;background:var(--surface);border:1px solid var(--line);text-decoration:none;color:var(--ink);font-size:.82rem;min-width:0}
+.routine a b{font-family:var(--f-display);font-size:1.05rem}
+.routine a span{color:var(--muted)}
+@media (max-width:440px){.routine{grid-template-columns:repeat(2,1fr)}}
+
+/* Lecciones */
+details.lesson{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+details.lesson summary{list-style:none;cursor:pointer;padding:16px 18px;display:flex;gap:12px;align-items:baseline}
+details.lesson summary::-webkit-details-marker{display:none}
+details.lesson summary .n{font-family:var(--f-display);font-weight:800;color:var(--accent);min-width:1.6em}
+details.lesson summary h3{flex:1}
+details.lesson summary::after{content:"+";font-weight:700;color:var(--muted)}
+details.lesson[open] summary::after{content:"–"}
+.lesson-body{padding:0 18px 18px 18px;display:flex;flex-direction:column;gap:10px}
+.lesson-body ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px}
+
+/* Estructura visual */
+.struct{display:flex;flex-direction:column;gap:0;border-left:3px solid var(--line);margin-left:6px}
+.struct div{padding:8px 0 8px 16px;position:relative}
+.struct div::before{content:"";position:absolute;left:-8px;top:15px;width:13px;height:13px;border-radius:50%;background:var(--surface);border:3px solid var(--accent)}
+.struct b{font-family:var(--f-display)}
+
+/* Biblioteca */
+.speech-card{display:flex;flex-direction:column;gap:8px;text-align:left;width:100%;border-radius:var(--r);padding:18px;align-items:stretch}
+.speech-card:hover{border-color:var(--accent)}
+.speech-card .meta{display:flex;gap:8px;flex-wrap:wrap;font-size:.8rem;color:var(--muted);font-weight:500}
+.speech-card h3{font-size:1.2rem}
+.speech-card p{font-weight:400;color:var(--muted)}
+.done-mark{color:var(--good);font-weight:700}
+
+/* Lector */
+.reader-head{display:flex;flex-direction:column;gap:8px}
+.toolbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:10px 0;display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.toolbar button{padding:8px 12px;min-height:40px;font-size:.88rem}
+.seg{margin:0;display:flex;flex-direction:column;gap:6px;padding:14px 0 14px 16px;border-left:3px solid var(--line);transition:border-color .2s, background .2s}
+.seg .tag{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--muted)}
+.seg p{font-family:var(--f-read);font-size:1.18rem;line-height:1.7;max-width:62ch}
+.seg.active{border-left-color:var(--spot);background:linear-gradient(90deg,var(--accent-soft),transparent 80%)}
+.seg.active .tag{color:var(--accent)}
+.pause{color:var(--accent);font-weight:600;padding:0 2px}
+.coach{background:var(--accent-soft);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.coach b{color:var(--accent)}
+.rate{display:flex;align-items:center;gap:10px;font-size:.9rem;color:var(--muted)}
+.rate input{accent-color:var(--accent)}
+
+/* Teleprompter */
+.prompter{position:fixed;inset:0;z-index:50;background:#0B0E13;color:#F4F1EC;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.prompter-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid #263040}
+.prompter-bar button{background:#1B2330;color:#F4F1EC;border-color:#2C3747;min-height:40px;padding:8px 14px}
+.prompter-bar .clock{font-family:var(--f-display);font-weight:700;font-size:1.3rem;font-variant-numeric:tabular-nums;margin-left:auto;color:#F2B33D}
+.prompter-text{flex:1;overflow-y:auto;padding:40vh max(20px,env(safe-area-inset-right,0px)) 60vh max(20px,env(safe-area-inset-left,0px));font-family:var(--f-read);font-size:clamp(1.5rem,5vw,2.3rem);line-height:1.6;max-width:900px;margin:0 auto;width:100%}
+.prompter-text .ptag{display:block;font-family:var(--f-body);font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:#F2B33D;margin-top:1.4em}
+.prompter-text .pause{color:#F2B33D}
+.prompter-bar label{font-size:.85rem;display:flex;gap:6px;align-items:center;color:#B8C0CC}
+.prompter-bar input{accent-color:#F2B33D;width:90px}
+
+/* Evaluación */
+.crit{display:flex;flex-direction:column;gap:8px;padding:14px 0;border-bottom:1px solid var(--line)}
+.crit:last-child{border-bottom:0}
+.crit .q{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.crit .q small{color:var(--muted)}
+.scale{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.scale button{justify-content:center;padding:8px 0;border-radius:10px;min-height:42px}
+.scale button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.score-big{font-family:var(--f-display);font-size:3rem;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+textarea,input[type=text],select{font:inherit;width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg);color:var(--ink)}
+.history{display:flex;flex-direction:column;gap:0}
+.history .h{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.history .h:last-child{border-bottom:0}
+.history .h .d{font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.history .h .t{min-width:0}
+.history .h .s{font-family:var(--f-display);font-weight:800;font-variant-numeric:tabular-nums}
+.bars{display:flex;align-items:flex-end;gap:6px;height:90px;padding-top:6px}
+.bars i{flex:1;background:var(--accent);border-radius:4px 4px 0 0;min-height:4px;opacity:.85}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stats div{display:flex;flex-direction:column;gap:2px}
+.stats b{font-family:var(--f-display);font-size:1.6rem;font-variant-numeric:tabular-nums}
+.stats span{font-size:.8rem;color:var(--muted)}
+
+/* Ejercicios */
+.ex{display:flex;flex-direction:column;gap:10px}
+.ex .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.ex .dur{font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ex ol{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px}
+.ex .tw{font-family:var(--f-read);font-style:italic;background:var(--accent-soft);padding:10px 12px;border-radius:10px}
+.runner{position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:20;padding:0 max(12px,env(safe-area-inset-right,0px)) 10px max(12px,env(safe-area-inset-left,0px))}
+.runner .in{max-width:680px;margin:0 auto;background:var(--ink);color:var(--bg);border-radius:16px;padding:14px 16px;display:flex;gap:14px;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.runner .tm{font-family:var(--f-display);font-weight:800;font-size:1.8rem;font-variant-numeric:tabular-nums;color:var(--spot)}
+.runner .lbl{flex:1;min-width:0;font-size:.92rem}
+.runner button{background:transparent;color:var(--bg);border-color:color-mix(in srgb,var(--bg) 35%,transparent);min-height:40px}
+
+/* Respiración */
+.breath{display:flex;flex-direction:column;align-items:center;gap:14px;padding:10px 0}
+.orb{width:150px;height:150px;border-radius:50%;background:radial-gradient(circle at 40% 35%,var(--spot),var(--accent));transform:scale(.6);transition:transform 4s ease-in-out;display:grid;place-items:center;color:#1A1006;font-weight:700;font-family:var(--f-display);max-width:100%}
+.orb.big{transform:scale(1)}
+@media (prefers-reduced-motion:reduce){.orb{transition:none}}
+
+/* Tabs */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--surface);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
+nav.tabs .in{max-width:680px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr);gap:2px}
+nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:10px;text-decoration:none;color:var(--muted);font-size:.68rem;font-weight:600;min-width:0}
+nav.tabs a svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav.tabs a[aria-current="page"]{color:var(--accent);background:var(--accent-soft)}
+.section-title{display:flex;flex-direction:column;gap:6px}
+.back{align-self:flex-start;padding:6px 12px;min-height:36px;font-size:.9rem}
+.dict{display:flex;flex-direction:column;gap:8px}
+.dict textarea{font-family:var(--f-read);font-size:1.05rem;line-height:1.6}
+.dict .hint{font-size:.88rem;color:var(--accent);background:var(--accent-soft);padding:8px 12px;border-radius:10px}
+.rec-on{background:var(--bad)!important;border-color:var(--bad)!important;color:#fff!important}
+.chat{display:flex;flex-direction:column;gap:10px}
+.msg{max-width:88%;padding:10px 14px;border-radius:16px;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.me{align-self:flex-end;background:var(--ink);color:var(--bg);border-bottom-right-radius:4px}
+.msg.cl{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px}
+.ai-res{display:flex;flex-direction:column;gap:10px}
+.ai-res .pt{display:grid;grid-template-columns:1fr auto;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
+.ai-res .pt b{font-family:var(--f-display);font-variant-numeric:tabular-nums}
+.live{font-family:var(--f-display);font-weight:800;font-size:1.4rem;font-variant-numeric:tabular-nums;color:var(--accent)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;z-index:60;font-size:.9rem}
+</style>
+</head>
+<body>
+<main id="app" aria-live="polite"></main>
+
+<nav class="tabs" aria-label="Secciones">
+  <div class="in">
+    <a href="#inicio" data-tab="inicio"><svg viewBox="0 0 24 24"><path d="M12 3v4M5.6 5.6l2.8 2.8M18.4 5.6l-2.8 2.8"/><path d="M6 21h12l-2-9H8z"/></svg>Inicio</a>
+    <a href="#aprender" data-tab="aprender"><svg viewBox="0 0 24 24"><path d="M4 5h7a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4z"/><path d="M20 5h-7"/><path d="M20 5v13h-7"/></svg>Aprender</a>
+    <a href="#discursos" data-tab="discursos"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Discursos</a>
+    <a href="#crear" data-tab="crear"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg>Crear</a>
+    <a href="#calentar" data-tab="calentar"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M9 10h.01M15 10h.01M9 15c1.5 1.3 4.5 1.3 6 0"/></svg>Calentar</a>
+    <a href="#progreso" data-tab="progreso"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Progreso</a>
+  </div>
+</nav>
+
+<script>
+/* ================= CONTENIDO ================= */
+const LESSONS = [
+ {t:"Qué es un discurso que funciona", b:`<p>Un buen discurso corto no busca decirlo todo. Busca que el público <b>sienta una cosa, entienda una idea y haga una acción</b>. Si alguien sale recordando una sola frase tuya, ganaste.</p>
+ <ul><li><b>Una idea central</b>, que quepa en una frase de 12 palabras o menos.</li><li><b>Un público concreto</b>: ¿quién te escucha y qué le duele o qué quiere?</li><li><b>Una acción final</b>: lo que quieres que hagan al salir.</li></ul>`},
+ {t:"La estructura: gancho, presentación, cuerpo y cierre", b:`<div class="struct">
+  <div><b>Gancho</b> <span class="muted">(10 a 20 s)</span><br>Rompe la inercia: una pregunta incómoda, un dato, una escena o una frase fuerte. Nunca empieces con "buenas tardes, hoy les voy a hablar de...".</div>
+  <div><b>Presentación</b> <span class="muted">(15 a 30 s)</span><br>Quién eres para hablar de esto y qué van a ganar si te escuchan. Es la promesa.</div>
+  <div><b>Cuerpo</b> <span class="muted">(1 a 3 min)</span><br>Tres puntos como máximo. Cada punto: idea, ejemplo o historia, y una frase que lo resuma.</div>
+  <div><b>Cierre</b> <span class="muted">(20 a 40 s)</span><br>Vuelve al gancho, remata con una historia o una pregunta que se queden pensando, y pide una acción concreta.</div></div>`},
+ {t:"Cómo escribir tu propio discurso", b:`<ul>
+  <li><b>Empieza por el final.</b> Escribe primero la frase de cierre; todo lo demás debe llevar hacia ella.</li>
+  <li><b>Escribe como hablas.</b> Frases cortas. Palabras de todos los días. Si no lo dirías en una plática, bórralo.</li>
+  <li><b>Usa la regla de tres.</b> Tres puntos, tres ejemplos, tres palabras. El cerebro recuerda en grupos de tres.</li>
+  <li><b>Cuenta historias con un momento exacto.</b> "Era martes, 6 de la mañana, y yo estaba..." pesa más que "una vez me pasó...".</li>
+  <li><b>Habla en segunda persona.</b> "Tú" conecta más que "la gente".</li>
+  <li><b>Lee en voz alta y corta.</b> Cada vez que te trabes al leer, simplifica esa frase.</li></ul>`},
+ {t:"Cómo preparar y ensayar", b:`<ul>
+  <li><b>No memorices palabra por palabra.</b> Memoriza el gancho, el cierre y el orden de los puntos. Lo de en medio, cuéntalo.</li>
+  <li><b>Marca las pausas.</b> En esta app verás <span class="pause">/</span> donde conviene respirar o dejar que la idea caiga.</li>
+  <li><b>Ensaya en tres rondas:</b> 1) lee en voz alta, 2) dilo mirando el texto solo de vez en cuando, 3) dilo de pie, sin texto, como si hubiera público.</li>
+  <li><b>Grábate.</b> Escucharte es incómodo y por eso funciona. Busca muletillas, velocidad y volumen.</li>
+  <li><b>Practica de pie.</b> Tu cuerpo aprende la postura junto con las palabras.</li></ul>`},
+ {t:"Voz, cuerpo y mirada", b:`<ul>
+  <li><b>Volumen:</b> habla para la última fila, no para la primera.</li>
+  <li><b>Velocidad:</b> lo normal son unas 130 a 150 palabras por minuto. Con nervios subimos a 180; baja a propósito.</li>
+  <li><b>Pausa:</b> el silencio antes de una idea importante la hace sonar importante.</li>
+  <li><b>Mirada:</b> sostén la vista con una persona durante una frase completa y luego cambia a otra zona.</li>
+  <li><b>Manos:</b> déjalas visibles y a la altura del ombligo; que acompañen, no que distraigan.</li>
+  <li><b>Pies:</b> plantados a la anchura de tus hombros. Muévete solo cuando cambies de idea.</li></ul>`},
+];
+
+const SPEECHES = [
+ {id:"estado", titulo:"Tu estado decide tu día", tema:"Autoayuda", min:2.5, cierre:"Pregunta",
+  resumen:"Cómo el cuerpo cambia la emoción en segundos, y por qué no tienes que esperar a sentirte bien para actuar bien.",
+  coach:"Haz el cambio de postura de verdad mientras lo dices. El público copia lo que haces, no lo que dices.",
+  partes:[
+   ["Gancho","¿Alguna vez has notado que el mismo problema se ve imposible a las once de la noche / y manejable a las nueve de la mañana? / El problema no cambió. / Cambiaste tú."],
+   ["Presentación","Durante años pensé que primero tenía que sentirme motivado para después actuar. / Hoy quiero mostrarles que funciona al revés, / y que pueden comprobarlo en los próximos treinta segundos."],
+   ["Cuerpo","Primero: la emoción se crea en el cuerpo. / Si caminas con los hombros caídos, la mirada al piso y la respiración corta, / tu cerebro concluye que algo va mal. / Segundo: el cuerpo se puede mover a propósito. / Ahora mismo, endereza la espalda, / levanta la barbilla, / respira profundo, / y sonríe aunque no tengas ganas. / Sientan la diferencia. / Tercero: lo que repites se vuelve tu forma normal de estar. / Si cada mañana eliges una postura de fuerza, / en pocas semanas ya no tendrás que elegirla. / Será quien eres."],
+   ["Cierre","Así que no esperen a que llegue la motivación. / Muévanse, y la motivación los va a alcanzar. / Les dejo una pregunta para mañana temprano: / antes de revisar el teléfono, / ¿en qué postura vas a decidir empezar tu día?"]]},
+ {id:"preguntas", titulo:"Las preguntas que te haces", tema:"Subconsciente", min:2.5, cierre:"Storytelling",
+  resumen:"Tu mente siempre responde lo que le preguntas. Cambia la pregunta y cambias lo que encuentras.",
+  coach:"Diferencia con la voz las dos preguntas: la vieja en tono bajo y cansado, la nueva con energía y curiosidad.",
+  partes:[
+   ["Gancho","Tu mente es el buscador más poderoso que existe. / Y el problema es que siempre encuentra lo que le pides."],
+   ["Presentación","Si le preguntas por qué todo te sale mal, / te va a dar una lista larga y muy convincente. / Hoy quiero enseñarles a cambiar la pregunta, / porque cambiar la pregunta cambia la respuesta."],
+   ["Cuerpo","Primero: tu subconsciente no discute las preguntas, solo las responde. / \"¿Por qué siempre me pasa esto?\" da por hecho que siempre te pasa. / Segundo: las preguntas que te sirven buscan recursos, no culpables. / En lugar de \"¿por qué yo?\", prueba \"¿qué puedo aprender de esto?\" / o \"¿qué es lo que sí está en mis manos hoy?\" / Tercero: haz de la pregunta un hábito. / Escribe tres preguntas poderosas y léelas cada mañana. / Tu mente se pasará el día buscando las respuestas."],
+   ["Cierre","Conocí a una mujer que perdió su empleo a los cincuenta años. / Las primeras semanas se preguntaba cada noche: / \"¿quién me va a contratar a mi edad?\" / Y cada noche encontraba razones para rendirse. / Un día cambió la pregunta: / \"¿quién necesita justo lo que yo sé hacer?\" / Tres meses después abrió su propio taller. / Misma mujer, misma edad, / distinta pregunta. / ¿Cuál es la tuya?"]]},
+ {id:"decision", titulo:"Una decisión de verdad", tema:"Autoayuda", min:2, cierre:"Pregunta",
+  resumen:"La diferencia entre querer algo y decidirlo: cortar cualquier otra posibilidad y dar el primer paso hoy.",
+  coach:"Golpea con la voz la palabra \"decidir\". Haz una pausa larga antes de la pregunta final.",
+  partes:[
+   ["Gancho","La palabra decidir viene del latín y significa cortar. / Cortar cualquier otra opción."],
+   ["Presentación","Todos hemos dicho \"este año sí\". / Y todos sabemos cómo termina eso. / Hoy quiero hablar de la diferencia entre desear algo / y decidirlo de verdad."],
+   ["Cuerpo","Primero: un deseo deja la puerta abierta. / \"Me gustaría\", \"voy a intentar\", \"a ver si\". / Una decisión la cierra. / Segundo: una decisión de verdad se nota porque viene con una acción inmediata. / Si decides ponerte en forma y no haces nada en las siguientes veinticuatro horas, / todavía no decidiste. / Tercero: los momentos de decisión dan forma a tu destino. / No son los años los que te cambian, / son los segundos en que dices \"ya basta\"."],
+   ["Cierre","No necesitas tener todo el plan. / Necesitas cortar la retirada y dar un paso. / Uno solo. / Hoy. / Entonces te pregunto: / ¿qué vas a decidir antes de dormir esta noche, / y cuál es la primera acción que lo demuestra?"]]},
+ {id:"programa", titulo:"El programa que corre en silencio", tema:"Subconsciente", min:3, cierre:"Storytelling",
+  resumen:"Las creencias que aprendiste de niño funcionan como un piloto automático. Puedes reescribirlas.",
+  coach:"Cuenta la historia del elefante con calma y en tono bajo; sube la energía solo en la última frase.",
+  partes:[
+   ["Gancho","El noventa por ciento de lo que hiciste hoy / lo hiciste sin pensarlo. / Entonces, ¿quién estaba manejando?"],
+   ["Presentación","Lo que manejaba era tu subconsciente, / un programa instalado con miles de repeticiones desde que eras niño. / Hoy veremos cómo detectarlo / y cómo empezar a reescribirlo."],
+   ["Cuerpo","Primero: tus creencias son reglas que aprendiste, no verdades. / \"No soy bueno para hablar\", \"el dinero es difícil\", \"yo soy así\". / Alguien te las dijo, y las repetiste hasta que sonaron a ti. / Segundo: el programa se descubre en tus reacciones automáticas. / Lo que dices sin pensar cuando te equivocas / es la voz del programa. / Tercero: se reescribe igual que se escribió, con repetición y emoción. / Una nueva frase, dicha con convicción, / todos los días, / acompañada de una pequeña prueba de que es verdad."],
+   ["Cierre","Cuando un elefante es pequeño, lo atan a una estaca con una cuerda delgada. / Tira y tira, y no puede soltarse. / Un día deja de intentarlo. / Años después, ese elefante pesa cinco toneladas / y sigue atado a la misma cuerda delgada. / No lo detiene la cuerda. / Lo detiene el recuerdo. / Revisa tus cuerdas. / Probablemente ya eres más fuerte que todas."]]},
+ {id:"miedo", titulo:"El miedo como combustible", tema:"Autoayuda", min:2, cierre:"Storytelling",
+  resumen:"Miedo y emoción se sienten igual en el cuerpo. Ponerle otro nombre cambia lo que haces con él.",
+  coach:"Este discurso es perfecto para cuando estés nervioso: practícalo antes de una presentación real.",
+  partes:[
+   ["Gancho","Corazón acelerado, / manos sudando, / mariposas en el estómago. / ¿Es miedo, / o es emoción?"],
+   ["Presentación","Tu cuerpo no sabe la diferencia. / La que decide el nombre es tu mente. / Y el nombre que le pongas decide si te paralizas / o si das un salto."],
+   ["Cuerpo","Primero: el miedo es energía. / Tu cuerpo se está preparando para algo importante. / Eso es una buena señal. / Segundo: cámbiale el nombre. / En lugar de decir \"estoy nervioso\", di en voz alta \"estoy emocionado\". / Suena simple, y funciona, porque le das a tu mente una dirección. / Tercero: usa esa energía en los primeros diez segundos. / Entra con paso firme, / mira al público / y lanza tu primera frase con fuerza. / El impulso hará el resto."],
+   ["Cierre","La primera vez que hablé frente a doscientas personas, / me temblaban tanto las rodillas que puse las manos sobre el atril para que nadie lo notara. / Respiré, / me dije \"estoy emocionado\", / y dije la primera frase. / Al terminar, una señora se acercó y me dijo: / \"se notaba tu pasión\". / No era pasión. / Era miedo, / bien usado."]]},
+ {id:"identidad", titulo:"Quién crees que eres", tema:"Supraconciencia", min:3, cierre:"Pregunta",
+  resumen:"Siempre actúas de acuerdo con tu identidad. Para cambiar resultados, cambia primero quién dices que eres.",
+  coach:"Mira a una persona distinta en cada \"yo soy\". Pausa completa antes de la pregunta final.",
+  partes:[
+   ["Gancho","Hay una fuerza más poderosa que tu disciplina, / más que tu motivación / y más que cualquier plan. / Es la historia que te cuentas sobre quién eres."],
+   ["Presentación","Siempre vas a actuar de acuerdo con esa historia. / Si cambias la historia, / tus acciones cambian solas. / Veamos cómo."],
+   ["Cuerpo","Primero: escucha tus \"yo soy\". / \"Yo soy desordenado\", \"yo soy tímido\", \"yo soy así\". / Cada \"yo soy\" es una orden para tu sistema nervioso. / Segundo: elige una identidad por encima de la que tienes. / No \"quiero hablar en público\", sino \"soy alguien que comunica con claridad\". / Tercero: aliméntala con evidencia diaria. / Cada vez que practicas, aunque sean cinco minutos, / le estás dando a esa identidad una prueba de que es real. / Y una identidad con pruebas / es imposible de discutir."],
+   ["Cierre","Hoy terminas este ejercicio siendo un poco más esa persona que dijiste que serías. / No porque lo deseaste, / sino porque lo practicaste. / Así que dime: / si mañana actuaras como la mejor versión de ti, / ¿qué sería lo primero que haría distinto?"]]},
+ {id:"gratitud", titulo:"Diez minutos que cambian el día", tema:"Supraconciencia", min:2.5, cierre:"Storytelling",
+  resumen:"Un ritual mañanero de respiración, gratitud y visualización para entrar al día en el estado correcto.",
+  coach:"Habla más lento de lo que crees necesario. Es un discurso para calmar, no para empujar.",
+  partes:[
+   ["Gancho","Es imposible sentir miedo y gratitud al mismo tiempo. / Inténtalo. / No se puede."],
+   ["Presentación","Esa sencilla verdad es la base de un ritual de diez minutos / que hago cada mañana / y que quiero regalarles hoy."],
+   ["Cuerpo","Primero: respira. / Tres minutos de respiraciones profundas, / inhalando por la nariz y soltando el aire con fuerza. / Despiertas el cuerpo antes que la mente. / Segundo: agradece. / Tres minutos pensando en tres momentos concretos por los que estás agradecido. / No cosas, momentos: / una risa, un abrazo, una mañana tranquila. / Tercero: visualiza. / Tres minutos viendo con detalle tu día saliendo bien, / como si ya hubiera pasado. / El minuto que sobra, / úsalo para sonreír."],
+   ["Cierre","Una amiga empezó este ritual la semana más dura de su vida. / Tenía a su papá en el hospital / y un trabajo que no podía soltar. / Me dijo que el ritual no arregló nada de eso. / Pero cada mañana, durante diez minutos, / volvía a ser ella misma. / Y desde ahí / pudo con todo lo demás."]]},
+ {id:"cinco", titulo:"Cinco segundos de valentía", tema:"Autoayuda", min:1.5, cierre:"Pregunta",
+  resumen:"Discurso exprés: entre la idea y la acción hay una ventana corta. Si la dejas pasar, gana la duda.",
+  coach:"Ideal para el primer día. Corto, rítmico y con energía alta de principio a fin.",
+  partes:[
+   ["Gancho","Cinco, / cuatro, / tres, / dos, / uno. / Eso es todo lo que necesitas para cambiar tu vida."],
+   ["Presentación","Entre que tienes una buena idea y la duda la mata, / pasan unos cinco segundos. / Hoy vamos a ganarle esos segundos a la duda."],
+   ["Cuerpo","Cuando sientas el impulso de levantar la mano, / de llamar a esa persona, / de empezar el ejercicio, / cuenta hacia atrás desde cinco / y muévete al llegar a uno. / No pienses. / Muévete. / La cuenta corta el diálogo interno / y le da a tu cuerpo una orden clara."],
+   ["Cierre","Esta semana vas a tener al menos un momento en el que tu corazón diga \"hazlo\" / y tu cabeza diga \"mejor no\". / Cuando llegue ese momento, / ¿vas a contar / o vas a esperar?"]]},
+];
+
+const WARMUP = [
+ {g:"Respiración y cuerpo", items:[
+  {t:"Respiración diafragmática", s:60, d:"Base de una voz firme y de la calma.", steps:["Pon una mano en el abdomen y otra en el pecho.","Inhala por la nariz en 4 tiempos inflando solo el abdomen.","Suelta el aire por la boca en 6 tiempos con una \"sss\" suave.","Repite 6 veces sin mover los hombros."]},
+  {t:"Cuello y hombros sueltos", s:45, d:"La tensión del cuello aprieta la voz.", steps:["Lleva la oreja derecha al hombro, 5 segundos, y cambia.","Gira los hombros hacia atrás 5 veces, despacio.","Deja caer la cabeza al pecho y haz medios círculos de lado a lado."]}]},
+ {g:"Rostro y articulación", items:[
+  {t:"Masaje de mandíbula", s:40, d:"Libera el músculo masetero, el que más se tensa con nervios.", steps:["Coloca las yemas de los dedos debajo de los pómulos.","Haz círculos firmes mientras abres la boca poco a poco.","Deja caer la mandíbula relajada, como si bostezaras."]},
+  {t:"Cara de león y cara de limón", s:30, d:"Despierta todos los músculos del rostro.", steps:["León: abre ojos y boca al máximo y saca la lengua hacia la barbilla.","Limón: aprieta toda la cara hacia la nariz.","Alterna 5 veces, 3 segundos en cada posición."]},
+  {t:"Gimnasia de labios", s:40, d:"Labios ágiles, consonantes claras.", steps:["Beso exagerado hacia adelante y sonrisa amplia hacia atrás, 10 veces.","Vibra los labios como un motor (brrrr) 10 segundos.","Lleva los labios en círculos con la boca cerrada, 5 por lado."]},
+  {t:"Lengua en movimiento", s:40, d:"La lengua es el músculo principal de la dicción.", steps:["Recorre el interior de las mejillas en círculos, 5 por lado.","Toca con la punta la comisura derecha e izquierda rápido, 10 veces.","Chasquea la lengua contra el paladar 10 veces."]},
+  {t:"Lápiz entre los dientes", s:60, d:"El ejercicio clásico de dicción.", steps:["Sujeta un lápiz o bolígrafo horizontal entre los dientes, sin morder fuerte.","Lee en voz alta el gancho de tu discurso del día, exagerando cada sílaba.","Quita el lápiz y repítelo: notarás la claridad."]}]},
+ {g:"Voz", items:[
+  {t:"Sirena y resonancia", s:40, d:"Calienta las cuerdas vocales sin forzarlas.", steps:["Con la boca cerrada di \"mmm\" y siente la vibración en los labios.","Sube y baja el tono como una sirena 5 veces.","Abre a \"mmm-aaa\" proyectando hacia una pared lejana."]},
+  {t:"Vocales exageradas", s:30, d:"Abre espacio en la boca.", steps:["Di A, E, I, O, U muy despacio, exagerando la forma de la boca.","Repite al revés: U, O, I, E, A.","Hazlo 3 veces subiendo el volumen cada vez."]},
+  {t:"Trabalenguas", s:60, d:"Primero lento y perfecto, luego más rápido.", tw:["Tres tristes tigres tragaban trigo en un trigal.","Pablito clavó un clavito; ¿qué clavito clavó Pablito?","El cielo está enladrillado; ¿quién lo desenladrillará? El desenladrillador que lo desenladrille, buen desenladrillador será.","Erre con erre cigarro, erre con erre barril; rápido ruedan los carros cargados de azúcar del ferrocarril."], steps:["Dilo 3 veces lento, articulando cada letra.","Dilo 3 veces a velocidad normal.","Dilo 1 vez rápido, sin perder claridad."]}]}
+];
+
+const NERVES = [
+ {t:"Sube al escenario y templa la espalda", b:"Antes de decir la primera palabra, planta los pies a la anchura de los hombros, endereza la columna como si un hilo te jalara desde la coronilla, abre el pecho y baja los hombros. Quédate así dos segundos mirando al público. Esa pausa te da control y al público le dice que estás seguro."},
+ {t:"Postura de poder dos minutos antes", b:"En un lugar privado, abre los brazos en V o pon las manos en la cintura con el pecho abierto durante dos minutos. Muchas personas sienten más seguridad y menos tensión después de hacerlo."},
+ {t:"Respira cuadrado", b:"Inhala 4 segundos, sostén 4, exhala 4, sostén 4. Tres o cuatro rondas bajan el ritmo del corazón. Más abajo tienes una guía animada."},
+ {t:"Llámalo emoción", b:"Di en voz baja \"estoy emocionado\" en lugar de \"estoy nervioso\". Tu cuerpo ya está activado; solo le das una dirección."},
+ {t:"Domina tu primera frase", b:"Memoriza el gancho palabra por palabra. Los primeros 10 segundos son los más difíciles; si los dices bien, el resto fluye."},
+ {t:"Busca caras amables", b:"Ubica a dos o tres personas que asienten o sonríen y empieza hablándoles a ellas. Luego amplía la mirada al resto."},
+ {t:"Sacude la energía", b:"Antes de entrar, sacude manos y piernas 10 segundos, como un atleta. La adrenalina necesita salir por algún lado."},
+ {t:"Ten agua cerca", b:"Los nervios secan la boca. Un sorbo también te regala una pausa natural para ordenar ideas."},
+];
+
+const CRITERIA = [
+ ["Gancho","¿Abrí con fuerza, sin \"buenas tardes, hoy les voy a hablar de...\"?"],
+ ["Claridad","¿Se entendió cada palabra? ¿Pronuncié los finales?"],
+ ["Ritmo y pausas","¿Respeté las pausas y evité correr?"],
+ ["Volumen y energía","¿Mi voz llenaba el espacio y tenía variaciones?"],
+ ["Muletillas","¿Evité \"este\", \"eh\", \"o sea\", \"bueno\"? (5 = ninguna)"],
+ ["Postura y mirada","¿Espalda recta, pies firmes, mirada al frente?"],
+ ["Cierre","¿El final se sintió como final y dejó una pregunta o historia clara?"],
+];
+
+/* ================= ESTADO ================= */
+const store = {
+  get(k,d){try{const v=localStorage.getItem("ed_"+k);return v?JSON.parse(v):d}catch(e){return d}},
+  set(k,v){try{localStorage.setItem("ed_"+k,JSON.stringify(v))}catch(e){}}
+};
+const app = document.getElementById("app");
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+const withPauses = s => esc(s).replace(/ \/ ?/g,' <span class="pause">/</span> ');
+const plain = s => s.replace(/ \/ ?/g,", ").replace(/\/\s*$/,"");
+const words = sp => sp.partes.map(p=>plain(p[1])).join(" ").split(/\s+/).length;
+const setMin=s=>{s.min=Math.max(1,Math.round(words(s)/120*2)/2);return s};
+SPEECHES.forEach(setMin);
+const mine=()=>store.get("mine",[]).map(setMin);
+const allSpeeches=()=>[...mine(),...SPEECHES];
+const findSp=id=>allSpeeches().find(s=>s.id===id);
+const WEB_URL="https://tdmb102026.github.io/escenario-diario/";
+const APK_URL="https://github.com/tdmb102026/escenario-diario/releases/download/apk/escenario.apk";
+
+/* ================= IA =================
+   En el teléfono la IA va por tu servidor (Apps Script hoy, Railway mañana) con tu clave de API:
+   la app manda { clave, tipo: "probar" | "ia", tarea, mensajes, max } y recibe { ok, texto }.
+   Si la página se abre como artefacto dentro de Claude, usa la cuenta de Claude de quien la mira. */
+async function getSample(){try{return window.claude?await window.claude.use("sample"):null}catch(e){return null}}
+const IA={
+  conf(){return store.get("ia",{url:"",clave:""})},
+  listo(){const c=this.conf();return !!(window.claude||(c.url&&c.clave))},
+  async texto(mensajes,{rapido,tarea}={}){
+    const s=await getSample();
+    if(s){const {text}=await s(mensajes,{cache:false,modelTier:rapido?"quick":"default"});return text}
+    return servidor({tipo:"ia",tarea:tarea||"",mensajes:typeof mensajes==="string"?[{role:"user",content:mensajes}]:mensajes,max:rapido?700:2500});
+  },
+  async json(prompt,{tarea}={}){
+    const s=await getSample();
+    if(s)return s.json(prompt,{cache:false});
+    return leerJson(await this.texto(prompt,{tarea}));
+  }
+};
+async function servidor(cuerpo){
+  const c=IA.conf(); if(!c.url||!c.clave)throw {code:"sin_config"};
+  let r,j;
+  try{r=await fetch(c.url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({clave:c.clave,...cuerpo})})}catch(e){throw {code:"sin_red"}}
+  // Si el Apps Script no está publicado para "Cualquier persona", Google responde con una página en vez de JSON.
+  try{j=await r.json()}catch(e){throw {code:"no_json"}}
+  if(!j.ok)throw {code:j.error||"servidor",message:j.detalle||""};
+  return j.texto||"";
+}
+function leerJson(t){
+  try{return JSON.parse(t)}catch(e){}
+  const m=t.match(/```(?:json)?\s*([\s\S]*?)```/); if(m)try{return JSON.parse(m[1])}catch(e){}
+  const a=t.indexOf("{"),b=t.lastIndexOf("}"); if(a>=0&&b>a)try{return JSON.parse(t.slice(a,b+1))}catch(e){}
+  throw {code:"invalid_json"};
+}
+function aiErr(e){const c=e&&e.code;return ({
+  sin_config:"Falta conectar la IA. Ve a Inicio → Ajustes de la IA.",
+  "contraseña":"La contraseña de la app no coincide con la del servidor. Revísala en Ajustes de la IA.",
+  "sin-clave-api":"El servidor todavía no tiene tu clave de Anthropic. Guárdala desde el menú de la hoja.",
+  "clave-api":"Anthropic rechazó la clave de API. Crea una nueva y guárdala desde el menú de la hoja.",
+  saldo:"Se acabó el saldo de tu API de Anthropic. Recarga en console.anthropic.com → Billing.",
+  sin_red:"No hay internet. Conéctate y vuelve a intentarlo.",
+  no_json:"El servidor no respondió bien. Revisa que el Apps Script esté publicado para \"Cualquier persona\".",
+  not_granted:"No diste permiso para usar Claude en esta página.",
+  rate_limited:"Demasiadas solicitudes por ahora. Espera un momento y vuelve a intentarlo.",
+  session_expired:"Tu sesión de Claude expiró. Vuelve a iniciar sesión.",
+  invalid_json:"La respuesta llegó incompleta. Toca el botón otra vez."
+})[c]||"No se pudo conectar con la IA. Intenta de nuevo."}
+
+/* Dictado: usa el reconocimiento de voz si existe; si no, el micrófono del teclado */
+let rec=null;
+// En la app Android, AndroidVoz escucha con el reconocimiento de Google sin ventanita y sin cortarse en las pausas.
+const NATIVO=window.AndroidVoz||null;
+let dictId=null,dictBase="",dictFinal="";
+function micBtnIdle(id){const b=document.getElementById(id+"-mic");if(b){b.classList.remove("rec-on");b.innerHTML=ICON.mic+"Hablar"}}
+// Al detener, Android aún entrega lo último que oyó; dictId se limpia cuando avisa "detenido" (o al cambiar de pantalla).
+function stopRec(salir){if(rec){try{rec.stop()}catch(e){}rec=null}if(NATIVO&&dictId){NATIVO.detener();micBtnIdle(dictId);if(salir)dictId=null}}
+const Dictado={
+  parcial(t){const ta=dictId&&document.getElementById(dictId);if(ta)ta.value=dictBase+dictFinal+t},
+  final(t){if(!t)return;dictFinal+=t+" ";const ta=dictId&&document.getElementById(dictId);if(ta)ta.value=dictBase+dictFinal},
+  estado(s){if(s==="escuchando")return;if(dictId)micBtnIdle(dictId);dictId=null;if(s.indexOf("error:")===0)toast(s.slice(6))}
+};
+function dictBox(id,ph,rows){return `<div class="dict"><textarea id="${id}" rows="${rows||5}" placeholder="${esc(ph)}"></textarea>
+ <div class="row"><button type="button" id="${id}-mic" onclick="startRec('${id}')">${ICON.mic}Hablar</button><button type="button" onclick="document.getElementById('${id}').value=''">Borrar texto</button></div>
+ <p class="hint" id="${id}-hint" hidden>Este navegador no deja usar el micrófono aquí. Toca el ícono de micrófono de tu teclado y habla: tu teléfono escribirá lo que digas. Con la app Android esto no hace falta.</p></div>`}
+function startRec(id){
+  const ta=document.getElementById(id),btn=document.getElementById(id+"-mic"),hint=document.getElementById(id+"-hint");
+  const fallback=()=>{rec=null;btn.classList.remove("rec-on");btn.innerHTML=ICON.mic+"Hablar";hint.hidden=false;ta.focus()};
+  if(NATIVO){
+    if(dictId){stopRec();return}
+    dictId=id;dictBase=ta.value?ta.value.trim()+" ":"";dictFinal="";
+    btn.classList.add("rec-on");btn.innerHTML=ICON.stop+"Detener";hint.hidden=true;
+    NATIVO.escuchar();return;
+  }
+  if(rec){rec.stop();return}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){fallback();return}
+  try{
+    rec=new SR();rec.lang="es-EC";rec.continuous=true;rec.interimResults=true;
+    const base=ta.value?ta.value.trim()+" ":"";let failed=false;
+    rec.onresult=e=>{let t="";for(const r of e.results)t+=r[0].transcript;ta.value=base+t};
+    rec.onerror=()=>{failed=true;fallback()};
+    rec.onend=()=>{if(!failed){rec=null;btn.classList.remove("rec-on");btn.innerHTML=ICON.mic+"Hablar"}};
+    rec.start();btn.classList.add("rec-on");btn.innerHTML=ICON.stop+"Detener";
+  }catch(e){fallback()}
+}
+function toast(msg){const t=document.createElement("div");t.className="toast";t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
+function todaySpeech(){const d=new Date();const n=Math.floor((d-new Date(d.getFullYear(),0,0))/864e5);return SPEECHES[n%SPEECHES.length]}
+function practicedIds(){return new Set(store.get("hist",[]).map(h=>h.id))}
+
+/* ================= VOZ ================= */
+let voices=[]; const synth = window.speechSynthesis;
+function loadVoices(){if(!synth)return;voices=synth.getVoices().filter(v=>/^es/i.test(v.lang))}
+if(synth){loadVoices();synth.onvoiceschanged=loadVoices}
+let speaking=null;
+function marcarParte(i){document.querySelectorAll(".seg").forEach((e,k)=>e.classList.toggle("active",k===i));document.querySelectorAll(".seg")[i]?.scrollIntoView({behavior:"smooth",block:"center"})}
+// La app Android avisa con Voz.parte(i) al empezar cada parte y Voz.fin() al terminar.
+const Voz={parte(i){if(speaking)marcarParte(i)},fin(){stopSpeech()},sinVoz(){stopSpeech();const n=document.getElementById("tts-note");if(n)n.hidden=false}};
+function stopSpeech(){if(NATIVO&&speaking)NATIVO.callar();if(synth)synth.cancel();speaking=null;document.querySelectorAll(".seg.active").forEach(e=>e.classList.remove("active"));const b=document.getElementById("btn-listen");if(b)b.innerHTML=ICON.play+"Escuchar"}
+function speakSpeech(sp){
+  if(speaking){stopSpeech();return}
+  if(NATIVO){
+    const partes=[];sp.partes.forEach((p,i)=>p[1].split(" / ").forEach(c=>partes.push({i,t:c.replace(/\/\s*$/,"")})));
+    speaking=sp.id;const b=document.getElementById("btn-listen");if(b)b.innerHTML=ICON.stop+"Detener";
+    NATIVO.hablar(JSON.stringify(partes),parseFloat(store.get("rate",0.95)));return;
+  }
+  if(!synth||!synth.getVoices){const n=document.getElementById("tts-note");if(n){n.hidden=false;n.scrollIntoView({behavior:"smooth",block:"center"})}return}
+  if(speaking){stopSpeech();return}
+  const rate=parseFloat(store.get("rate",0.95));
+  const vName=store.get("voice",""); const voice=voices.find(v=>v.name===vName)||voices.find(v=>/es-(MX|US|419)/i.test(v.lang))||voices[0];
+  speaking=sp.id; const b=document.getElementById("btn-listen"); if(b)b.innerHTML=ICON.stop+"Detener";
+  synth.cancel();
+  sp.partes.forEach((p,i)=>{
+    p[1].split(" / ").forEach((chunk,j,arr)=>{
+      const u=new SpeechSynthesisUtterance(chunk.replace(/\/\s*$/,""));
+      u.lang=voice?voice.lang:"es-MX"; if(voice)u.voice=voice; u.rate=rate;
+      if(j===0)u.onstart=()=>marcarParte(i);
+      if(i===sp.partes.length-1&&j===arr.length-1)u.onend=()=>stopSpeech();
+      synth.speak(u);
+    });
+  });
+}
+
+const ICON={
+ play:'<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg>',
+ stop:'<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>',
+ mic:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+ check:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>'
+};
+
+/* ================= VISTAS ================= */
+function viewInicio(){
+  const sp=todaySpeech(); const hist=store.get("hist",[]);
+  const streak=calcStreak(hist);
+  return `<div class="stack-lg">
+  ${IA.listo()?"":`<a class="card row" href="#ajustes" style="text-decoration:none;color:inherit;justify-content:space-between"><span><b>Conecta la IA</b><br><span class="muted">Para que Claude califique y cree tus discursos.</span></span><span class="chip">Ajustes</span></a>`}
+  <section class="hero">
+    <p class="eyebrow">Discurso del día</p>
+    <h1>${esc(sp.titulo)}</h1>
+    <p>${esc(sp.resumen)}</p>
+    <div class="today">
+      <button class="go" onclick="location.hash='d-${sp.id}'">${ICON.play}Empezar</button>
+      <button onclick="location.hash='discursos'">Elegir otro</button>
+    </div>
+  </section>
+  <section class="stack">
+    <div class="section-title"><p class="eyebrow">Rutina de 15 minutos</p><h2>Cada día, en este orden</h2></div>
+    <div class="routine">
+      <a href="#calentar"><b>3 min</b><span>Calentar rostro y voz</span></a>
+      <a href="#d-${sp.id}"><b>4 min</b><span>Escuchar y leer el discurso</span></a>
+      <a href="#d-${sp.id}"><b>6 min</b><span>Practicarlo de pie y grabarte</span></a>
+      <a href="#evaluar-${sp.id}"><b>2 min</b><span>Calificarte</span></a>
+    </div>
+  </section>
+  <section class="card stats" aria-label="Resumen">
+    <div><b>${hist.length}</b><span>prácticas</span></div>
+    <div><b>${streak}</b><span>días seguidos</span></div>
+    <div><b>${hist.length?avg(hist.slice(0,5)).toFixed(1):"–"}</b><span>promedio reciente /5</span></div>
+  </section>
+  ${IA.listo()&&!window.claude?`<a href="#ajustes" class="muted" style="font-size:.9rem">Ajustes de la IA</a>`:""}
+  <section class="stack">
+    <div class="section-title"><p class="eyebrow">Contra los nervios</p><h2>Antes de subir al escenario</h2></div>
+    ${NERVES.slice(0,2).map(n=>`<div class="card stack" style="gap:6px"><h3>${esc(n.t)}</h3><p class="muted">${esc(n.b)}</p></div>`).join("")}
+    <a class="btn" href="#nervios" style="align-self:flex-start">Ver todos los tips y respiración guiada</a>
+  </section>
+  </div>`;
+}
+
+function viewAprender(){
+  return `<div class="stack-lg">
+  <div class="section-title"><p class="eyebrow">Introducción</p><h1>Cómo se construye un discurso</h1><p class="muted">Lo básico para escribir, preparar y dar un discurso corto. Léelo una vez completo y vuelve cuando lo necesites.</p></div>
+  <div class="stack">${LESSONS.map((l,i)=>`<details class="lesson" ${i<2?"open":""}><summary><span class="n">${i+1}</span><h3>${esc(l.t)}</h3></summary><div class="lesson-body">${l.b}</div></details>`).join("")}</div>
+  <div class="card stack"><h3>Ahora pruébalo</h3><p class="muted">Cada discurso de la biblioteca está marcado por partes para que veas la estructura en acción.</p><a class="btn btn-primary" href="#discursos" style="align-self:flex-start">Ir a los discursos</a></div>
+  </div>`;
+}
+
+function viewDiscursos(){
+  const SPEECHES=allSpeeches();
+  const done=practicedIds();
+  const temas=["Todos",...(mine().length?["Míos"]:[]),...new Set(SPEECHES.filter(s=>!s.mio).map(s=>s.tema))];
+  const f=store.get("filtro","Todos");
+  const list=SPEECHES.filter(s=>f==="Todos"||(f==="Míos"?s.mio:s.tema===f));
+  return `<div class="stack-lg">
+  <div class="section-title"><p class="eyebrow">Biblioteca</p><h1>Discursos para practicar</h1><p class="muted">Textos originales de autoayuda, subconsciente y supraconciencia, en el estilo motivacional de Tony Robbins. Duran entre 1 y 3 minutos.</p></div>
+  <a class="btn btn-accent" href="#crear" style="align-self:flex-start">Crear mi propio discurso</a>
+  <div class="row" role="group" aria-label="Filtrar por tema">${temas.map(t=>`<button class="${t===f?"btn-primary":""}" onclick="setFiltro('${t}')">${t}</button>`).join("")}</div>
+  <div class="stack">${list.map(s=>`<button class="speech-card card" onclick="location.hash='d-${s.id}'">
+     <div class="meta">${s.mio?'<span class="chip">Mío</span>':""}<span class="chip">${esc(s.tema)}</span><span>${s.min} min</span><span>Cierre: ${s.cierre}</span>${done.has(s.id)?`<span class="done-mark">${ICON.check} practicado</span>`:""}</div>
+     <h3>${esc(s.titulo)}</h3><p>${esc(s.resumen)}</p></button>`).join("")}</div>
+  </div>`;
+}
+function delMine(id,b){if(b.dataset.c){store.set("mine",store.get("mine",[]).filter(s=>s.id!==id));toast("Discurso borrado");location.hash="discursos";return}b.dataset.c=1;b.textContent="Toca otra vez para borrar";b.classList.add("rec-on")}
+function setFiltro(t){store.set("filtro",t);render()}
+
+function viewDiscurso(id){
+  const sp=findSp(id); if(!sp)return viewDiscursos();
+  const rate=store.get("rate",0.95);
+  const vName=store.get("voice","");
+  return `<div class="stack-lg">
+  <div class="reader-head">
+    <button class="back" onclick="location.hash='discursos'">← Biblioteca</button>
+    <p class="eyebrow">${sp.tema} · ${sp.min} min · ${words(sp)} palabras</p>
+    <h1>${esc(sp.titulo)}</h1>
+  </div>
+  <div class="toolbar">
+    <button id="btn-listen" class="btn-accent" onclick="speakSpeech(findSp('${sp.id}'))">${ICON.play}Escuchar</button>
+    <button onclick="openPrompter('${sp.id}')">${ICON.mic}Practicar</button>
+    <button onclick="location.hash='evaluar-${sp.id}'">${ICON.check}Calificarme</button>
+  </div>
+  <div class="row">
+    <label class="rate" for="rate">Velocidad de voz <input id="rate" type="range" min="0.7" max="1.2" step="0.05" value="${rate}" oninput="store.set('rate',this.value)"></label>
+    ${voices.length>1?`<select id="voice" aria-label="Voz" style="width:auto" onchange="store.set('voice',this.value)">${voices.map(v=>`<option ${v.name===vName?"selected":""} value="${esc(v.name)}">${esc(v.name)} (${v.lang})</option>`).join("")}</select>`:""}
+  </div>
+  <div class="coach" id="tts-note" hidden><b>La voz no está disponible aquí</b><p>Este navegador no tiene lectura en voz alta. Instala la app Android o abre la página en Chrome:</p><div class="row"><a class="btn" href="${APK_URL}" target="_blank" rel="noopener">Descargar la app Android</a><a class="btn" href="${WEB_URL}#d-${sp.id}" target="_blank" rel="noopener">Abrir en Chrome</a></div><p class="muted" style="font-size:.9rem">Si estás en la app y no suena, revisa en Ajustes de Android → Voz que esté instalado Google Speech Services en español.</p></div>
+  ${sp.mio?`<button id="del-btn" style="align-self:flex-start" onclick="delMine('${sp.id}',this)">Borrar este discurso</button>`:""}
+  <div class="coach"><b>Consejo de entrega</b><p>${esc(sp.coach)}</p><p class="muted" style="font-size:.9rem">Cada <span class="pause">/</span> marca una pausa breve para respirar o dejar caer la idea.</p></div>
+  <div class="stack" style="gap:4px">${sp.partes.map(p=>`<section class="seg"><span class="tag">${esc(p[0])}${p[0]==="Cierre"?" · "+esc(sp.cierre):""}</span><p>${withPauses(p[1])}</p></section>`).join("")}</div>
+  <div class="card stack"><h3>Las tres rondas de hoy</h3>
+    <ol style="margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px">
+     <li>Escúchalo una vez siguiendo el texto con la vista.</li>
+     <li>Léelo en voz alta dos veces, respetando las pausas.</li>
+     <li>Abre <b>Practicar</b>, ponte de pie y dilo con el teleprompter.</li>
+     <li>En <b>Calificarme</b>, dilo de memoria mientras tu teléfono lo escribe, y Claude te califica.</li></ol>
+    <button class="btn-primary" style="align-self:flex-start" onclick="location.hash='evaluar-${sp.id}'">Ya lo practiqué, calificarme</button>
+  </div>
+  </div>`;
+}
+
+/* Teleprompter */
+let pState=null;
+function openPrompter(id){
+  stopSpeech();
+  const sp=findSp(id);
+  const el=document.createElement("div"); el.className="prompter"; el.id="prompter";
+  const speed=store.get("pspeed",30);
+  el.innerHTML=`<div class="prompter-bar">
+    <button id="p-play">${ICON.play}Iniciar</button>
+    <button id="p-reset">Reiniciar</button>
+    <label for="p-speed">Velocidad <input id="p-speed" type="range" min="10" max="80" value="${speed}"></label>
+    <span class="clock" id="p-clock">0:00</span>
+    <button id="p-close">Terminar</button></div>
+    <div class="prompter-text" id="p-text">${sp.partes.map(p=>`<span class="ptag">${esc(p[0])}</span>${withPauses(p[1])}`).join(" ")}</div>`;
+  document.body.appendChild(el);
+  const txt=el.querySelector("#p-text"), clock=el.querySelector("#p-clock"), play=el.querySelector("#p-play"), spd=el.querySelector("#p-speed");
+  let wake=null;
+  pState={running:false,t:0,last:0,acc:0,raf:0};
+  function tick(ts){
+    if(!pState.running)return;
+    const dt=pState.last?(ts-pState.last)/1000:0; pState.last=ts;
+    pState.t+=dt; pState.acc+=dt*parseFloat(spd.value);
+    if(pState.acc>=1){const px=Math.floor(pState.acc);txt.scrollTop+=px;pState.acc-=px}
+    const s=Math.floor(pState.t); clock.textContent=Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
+    pState.raf=requestAnimationFrame(tick);
+  }
+  play.onclick=async()=>{
+    pState.running=!pState.running;
+    play.innerHTML=pState.running?ICON.stop+"Pausa":ICON.play+"Seguir";
+    if(pState.running){pState.last=0;pState.raf=requestAnimationFrame(tick);try{wake=await navigator.wakeLock?.request("screen")}catch(e){}}
+    else{cancelAnimationFrame(pState.raf);try{wake?.release()}catch(e){}}
+  };
+  el.querySelector("#p-reset").onclick=()=>{txt.scrollTop=0;pState.t=0;clock.textContent="0:00"};
+  spd.oninput=()=>store.set("pspeed",spd.value);
+  el.querySelector("#p-close").onclick=()=>{
+    pState.running=false;cancelAnimationFrame(pState.raf);try{wake?.release()}catch(e){}
+    store.set("lastTime",{id,s:Math.round(pState.t)});
+    el.remove(); location.hash="evaluar-"+id;
+  };
+}
+
+/* Evaluación */
+let evalScores={};
+function viewEvaluar(id){
+  const sp=findSp(id); if(!sp)return viewDiscursos();
+  evalScores={};
+  const lt=store.get("lastTime",null);
+  const secs=lt&&lt.id===id?lt.s:"";
+  return `<div class="stack-lg">
+  <div class="reader-head">
+    <button class="back" onclick="location.hash='d-${sp.id}'">← Volver al discurso</button>
+    <p class="eyebrow">Autoevaluación</p><h1>${esc(sp.titulo)}</h1>
+  </div>
+  <section class="card stack" id="ai-card">
+    <div class="section-title"><p class="eyebrow">Recomendado</p><h2>Califícame con Claude</h2></div>
+    <ol style="margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px">
+      <li>Toca <b>Empezar</b> para iniciar el cronómetro.</li>
+      <li>Toca <b>Hablar</b> (o el micrófono de tu teclado) y di el discurso de pie, con tus palabras.</li>
+      <li>Toca <b>Terminar y calificar</b>. Claude evalúa solo lo que dijiste.</li></ol>
+    <div class="row"><button class="btn-primary" id="ai-start" onclick="aiStart()">${ICON.play}Empezar</button><span class="live" id="ai-clock">0:00</span></div>
+    ${dictBox("ai-text","Aquí aparecerá lo que digas…",6)}
+    <button class="btn-accent" id="ai-go" style="align-self:flex-start" onclick="aiGrade('${sp.id}')">${ICON.check}Terminar y calificar</button>
+    <div class="ai-res" id="ai-res" aria-live="polite"></div>
+  </section>
+  <div class="section-title"><p class="eyebrow">Otra opción</p><h2>Califícate tú mismo</h2><p class="muted">Si te grabaste con la grabadora del teléfono, escúchate y califica cada punto del 1 al 5.</p></div>
+  <div class="card">${CRITERIA.map((c,i)=>`<div class="crit"><div class="q"><h3>${c[0]}</h3></div><small class="muted">${esc(c[1])}</small>
+     <div class="scale" role="group" aria-label="${c[0]}">${[1,2,3,4,5].map(n=>`<button aria-pressed="false" data-c="${i}" data-n="${n}" onclick="pick(${i},${n})">${n}</button>`).join("")}</div></div>`).join("")}</div>
+  <div class="card stack">
+    <label for="ev-time"><h3>Duración (segundos)</h3></label>
+    <input id="ev-time" type="text" inputmode="numeric" value="${secs}" placeholder="Ej. 150">
+    <p class="muted" style="font-size:.9rem">Meta para este discurso: unos ${Math.round(sp.min*60)} segundos. Si tardaste mucho menos, probablemente corriste.</p>
+    <label for="ev-note"><h3>Una cosa a mejorar mañana</h3></label>
+    <textarea id="ev-note" rows="2" placeholder="Ej. hacer pausa antes de la pregunta final"></textarea>
+  </div>
+  <div class="card row" style="justify-content:space-between">
+    <div><p class="eyebrow">Tu calificación</p><p class="score-big" id="ev-score">–</p></div>
+    <button class="btn-accent" id="ev-save" disabled onclick="saveEval('${id}')">Guardar práctica</button>
+  </div></div>`;
+}
+let aiT0=0,aiInt=null,aiCtl=null;
+function aiStart(){
+  aiT0=Date.now();clearInterval(aiInt);
+  const c=document.getElementById("ai-clock");
+  aiInt=setInterval(()=>{const s=Math.floor((Date.now()-aiT0)/1000);if(c)c.textContent=Math.floor(s/60)+":"+String(s%60).padStart(2,"0")},500);
+  document.getElementById("ai-start").innerHTML=ICON.play+"Reiniciar";
+  startRec("ai-text");
+}
+async function aiGrade(id){
+  const sp=findSp(id),out=document.getElementById("ai-res"),go=document.getElementById("ai-go");
+  stopRec();
+  const said=document.getElementById("ai-text").value.trim();
+  if(said.split(/\s+/).length<15){out.innerHTML='<p class="hint" style="color:var(--bad)">Necesito al menos unas frases de tu discurso para calificarte. Di el discurso mientras el texto se escribe arriba.</p>';return}
+  const secs=aiT0?Math.round((Date.now()-aiT0)/1000):null; clearInterval(aiInt);
+  const nw=said.split(/\s+/).length, ppm=secs?Math.round(nw/secs*60):null;
+  if(!IA.listo()){out.innerHTML='<p class="hint">Falta conectar la IA. <a href="#ajustes">Ve a Ajustes de la IA</a> o usa la autoevaluación de abajo.</p>';return}
+  go.disabled=true; out.innerHTML='<p class="muted">Claude está revisando tu discurso…</p>';
+  const guion=sp.partes.map(p=>p[0]+": "+plain(p[1])).join("\n");
+  const prompt=`Eres un coach de oratoria exigente pero motivador, que habla en español de México. Una persona practicó un discurso en voz alta y su teléfono transcribió lo que dijo. Evalúa SOLO lo que dijo, comparándolo con el guion. La transcripción automática no tiene puntuación confiable: no penalices puntuación ni ortografía.
+
+GUION ORIGINAL ("${sp.titulo}"):
+${guion}
+
+TRANSCRIPCIÓN DE LO QUE DIJO:
+${said.slice(0,6000)}
+
+DATOS: ${nw} palabras${secs?`, ${secs} segundos, ${ppm} palabras por minuto (ideal 130 a 150)`:", sin tiempo medido"}.
+
+Califica de 1 a 5 cada punto:
+- Gancho: ¿abrió con fuerza, con el gancho del guion o uno equivalente?
+- Estructura: ¿siguió gancho, presentación, cuerpo y cierre en orden, aunque parafrasee?
+- Claridad: ¿las frases son completas y la idea central se entiende?
+- Ritmo: según las palabras por minuto (si no hay tiempo, califica 3).
+- Muletillas: cuenta "este", "eh", "em", "mmm", "o sea", "bueno", "pues", "entonces" usadas como relleno. 5 = ninguna.
+- Cierre: ¿remató con la pregunta o la historia final?
+
+Responde solo con JSON con esta forma:
+{"puntos":{"Gancho":4,"Estructura":3,"Claridad":4,"Ritmo":3,"Muletillas":5,"Cierre":2},"muletillas":["este (2)"],"fortaleza":"una frase concreta","mejorar":"una frase concreta citando lo que dijo","consejo":"una acción concreta para el próximo ensayo"}`;
+  try{
+    const r=await IA.json(prompt,{tarea:"calificar"});
+    const pts=r&&r.puntos||{}; const names=Object.keys(pts).filter(k=>Number(pts[k])>=1);
+    if(!names.length)throw {code:"invalid_json"};
+    names.forEach(k=>pts[k]=Math.min(5,Math.max(1,Math.round(Number(pts[k])))));
+    const score=names.reduce((a,k)=>a+pts[k],0)/names.length;
+    const h=store.get("hist",[]);
+    h.unshift({id,date:new Date().toISOString(),kind:"ai",crit:pts,score,secs,note:String(r.consejo||"")});
+    store.set("hist",h.slice(0,200));
+    out.innerHTML=`<div class="row" style="justify-content:space-between"><div><p class="eyebrow">Calificación de Claude</p><p class="score-big">${score.toFixed(1)}</p></div><p class="muted" style="font-size:.9rem">${nw} palabras${secs?` · ${secs} s · ${ppm} ppm`:""}</p></div>
+      <div>${names.map(k=>`<div class="pt"><span>${esc(k)}</span><b>${pts[k]}/5</b></div>`).join("")}</div>
+      ${Array.isArray(r.muletillas)&&r.muletillas.length?`<p><b>Muletillas:</b> ${esc(r.muletillas.join(", "))}</p>`:""}
+      <p><b>Lo que hiciste bien:</b> ${esc(r.fortaleza||"")}</p>
+      <p><b>A mejorar:</b> ${esc(r.mejorar||"")}</p>
+      <div class="coach"><b>Para tu próximo ensayo</b><p>${esc(r.consejo||"")}</p></div>
+      <p class="muted" style="font-size:.88rem">Guardado en tu progreso.</p>`;
+  }catch(e){out.innerHTML=`<p class="hint" style="color:var(--bad)">${esc(aiErr(e))}</p>`}
+  finally{go.disabled=false}
+}
+function pick(i,n){
+  evalScores[i]=n;
+  document.querySelectorAll(`.scale button[data-c="${i}"]`).forEach(b=>b.setAttribute("aria-pressed",b.dataset.n==n));
+  const vals=Object.values(evalScores);
+  document.getElementById("ev-score").textContent=(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);
+  document.getElementById("ev-save").disabled=vals.length<CRITERIA.length;
+}
+function saveEval(id){
+  const vals=CRITERIA.map((_,i)=>evalScores[i]);
+  const h=store.get("hist",[]);
+  h.unshift({id,date:new Date().toISOString(),scores:vals,score:vals.reduce((a,b)=>a+b,0)/vals.length,
+    secs:parseInt(document.getElementById("ev-time").value)||null,note:document.getElementById("ev-note").value.trim()});
+  store.set("hist",h.slice(0,200)); toast("Práctica guardada"); location.hash="progreso";
+}
+const avg=h=>h.reduce((a,b)=>a+b.score,0)/h.length;
+function calcStreak(h){
+  const days=new Set(h.map(x=>x.date.slice(0,10))); let n=0; const d=new Date();
+  if(!days.has(d.toISOString().slice(0,10)))d.setDate(d.getDate()-1);
+  while(days.has(d.toISOString().slice(0,10))){n++;d.setDate(d.getDate()-1)}
+  return n;
+}
+
+function viewProgreso(){
+  const h=store.get("hist",[]);
+  if(!h.length)return `<div class="stack-lg"><div class="section-title"><p class="eyebrow">Progreso</p><h1>Tu avance</h1></div>
+   <div class="card stack"><h3>Aún no hay prácticas guardadas</h3><p class="muted">Practica un discurso, califícate y aquí verás tu promedio, tu racha de días y en qué criterio mejoras más. Todo se guarda solo en este teléfono.</p><a class="btn btn-primary" href="#d-${todaySpeech().id}" style="align-self:flex-start">Practicar el discurso del día</a></div></div>`;
+  const last=h.slice(0,14).reverse();
+  const acc={};h.slice(0,5).forEach(x=>{const m=x.kind==="ai"?x.crit:Object.fromEntries(CRITERIA.map((c,i)=>[c[0],x.scores[i]]));for(const k in m)(acc[k]=acc[k]||[]).push(m[k])});
+  const weak=Object.entries(acc).map(([n,a])=>({n,v:a.reduce((x,y)=>x+y,0)/a.length})).sort((a,b)=>a.v-b.v)[0];
+  return `<div class="stack-lg">
+  <div class="section-title"><p class="eyebrow">Progreso</p><h1>Tu avance</h1></div>
+  <section class="card stats"><div><b>${h.length}</b><span>prácticas</span></div><div><b>${calcStreak(h)}</b><span>días seguidos</span></div><div><b>${avg(h.slice(0,5)).toFixed(1)}</b><span>promedio reciente /5</span></div></section>
+  <section class="card stack"><h3>Últimas ${last.length} calificaciones</h3><div class="bars" role="img" aria-label="Calificaciones recientes">${last.map(x=>`<i style="height:${x.score/5*100}%" title="${x.score.toFixed(1)}"></i>`).join("")}</div></section>
+  <section class="coach"><b>Para tu próxima práctica</b><p>Tu punto más bajo últimamente es <b>${weak.n}</b> (${weak.v.toFixed(1)}/5). Enfócate solo en eso la próxima vez.</p></section>
+  <section class="card"><h3 style="margin-bottom:6px">Historial</h3><div class="history">${h.slice(0,20).map(x=>{const sp=findSp(x.id);const d=new Date(x.date);return `<div class="h"><span class="d">${d.toLocaleDateString("es-MX",{day:"numeric",month:"short"})}</span><div class="t"><div>${esc(sp?sp.titulo:x.id)}${x.kind==="ai"?' <span class="chip">Claude</span>':""}</div>${x.note?`<small class="muted">${esc(x.note)}</small>`:""}</div><span class="s">${x.score.toFixed(1)}</span></div>`}).join("")}</div></section>
+  </div>`;
+}
+
+/* Crear discurso con Claude */
+const GEN_RULES=`Eres un coach de oratoria que ayuda a una persona a crear su propio discurso corto (1 a 3 minutos), con el estilo motivacional y enérgico de Tony Robbins, pero con ideas y palabras originales. Hablas en español de México, cercano y breve (2 a 4 frases por respuesta). La persona te habla por dictado de voz, así que su texto puede venir sin puntuación.
+Tu trabajo en esta conversación: entender de qué quiere hablar. Haz UNA sola pregunta a la vez, máximo tres preguntas en total, entre estas: el mensaje central o la idea que quiere dejar, quién es su público, y una historia o experiencia personal que pueda usar en el cierre. Si ya te dio algo, no lo preguntes. Cuando ya tengas suficiente, dile que toque el botón "Armar discurso". Si te pide cambios a un discurso ya armado, confirma brevemente qué vas a cambiar y dile que toque "Armar discurso" otra vez.`;
+function genState(){return store.get("gen",{turns:[],draft:null})}
+function viewCrear(){
+  const g=genState();
+  return `<div class="stack-lg">
+  <div class="section-title"><p class="eyebrow">Crear</p><h1>Tu propio discurso</h1><p class="muted">Cuéntale a Claude de qué quieres hablar. Te hará un par de preguntas y armará un discurso con gancho, cuerpo y cierre, listo para practicar.</p></div>
+  <section class="chat" id="chat">${chatHtml(g)}</section>
+  <section class="card stack">
+    ${dictBox("gen-text",g.turns.length?"Tu respuesta…":"Ej. Quiero hablar de cómo dejar de procrastinar, para jóvenes que empiezan a trabajar…",4)}
+    <div class="row"><button class="btn-primary" id="gen-send" onclick="genSend()">Enviar</button>
+    <button class="btn-accent" id="gen-build" onclick="genBuild()">Armar discurso</button>
+    ${g.turns.length?`<button onclick="genReset(this)">Empezar de nuevo</button>`:""}</div>
+    <p class="hint" id="gen-err" hidden></p>
+  </section>
+  <section id="gen-draft">${draftHtml(g.draft)}</section>
+  </div>`;
+}
+function chatHtml(g){
+  if(!g.turns.length)return `<div class="msg cl">¿Sobre qué quieres hacer tu discurso? Cuéntame la idea como te salga, aunque sea desordenada.</div>`;
+  return g.turns.map(t=>`<div class="msg ${t.role==="user"?"me":"cl"}">${esc(t.content)}</div>`).join("");
+}
+function draftHtml(d){
+  if(!d)return "";
+  return `<div class="card stack"><p class="eyebrow">Borrador · ${esc(d.tema)}</p><h2>${esc(d.titulo)}</h2><p class="muted">${esc(d.resumen)}</p>
+   <div class="stack" style="gap:4px">${d.partes.map(p=>`<section class="seg"><span class="tag">${esc(p[0])}</span><p>${withPauses(p[1])}</p></section>`).join("")}</div>
+   <div class="row"><button class="btn-accent" onclick="genSave()">${ICON.check}Guardar y practicar</button></div>
+   <p class="muted" style="font-size:.9rem">¿Quieres cambios? Díselo a Claude arriba ("hazlo más corto", "cambia la historia del cierre") y toca Armar discurso otra vez.</p></div>`;
+}
+function genErr(msg){const e=document.getElementById("gen-err");if(e){e.hidden=!msg;e.textContent=msg||""}}
+let genBusy=false;
+async function genSend(){
+  if(genBusy)return; stopRec();
+  const ta=document.getElementById("gen-text"),txt=ta.value.trim(); if(!txt)return;
+  if(!IA.listo()){genErr(aiErr({code:"sin_config"}));return}
+  const g=genState(); g.turns.push({role:"user",content:txt}); store.set("gen",g); ta.value=""; genErr("");
+  const chat=document.getElementById("chat"); chat.innerHTML=chatHtml(g)+'<div class="msg cl" id="gen-live">Pensando…</div>';
+  document.getElementById("gen-build").disabled=false;
+  genBusy=true;
+  try{
+    const turns=g.turns.slice(-16);
+    const text=await IA.texto([{role:"user",content:GEN_RULES},{role:"assistant",content:"Entendido. ¿Sobre qué quieres hacer tu discurso?"},...turns],{rapido:true,tarea:"conversar"});
+    g.turns.push({role:"assistant",content:text}); store.set("gen",g);
+  }catch(e){genErr(aiErr(e))}
+  finally{genBusy=false;const c=document.getElementById("chat");if(c)c.innerHTML=chatHtml(genState())}
+}
+async function genBuild(){
+  if(genBusy)return; stopRec();
+  const pending=document.getElementById("gen-text").value.trim();
+  const g=genState(); if(pending){g.turns.push({role:"user",content:pending});store.set("gen",g);document.getElementById("gen-text").value="";document.getElementById("chat").innerHTML=chatHtml(g)}
+  if(!g.turns.length){genErr("Primero cuéntale a Claude de qué quieres hablar.");return}
+  if(!IA.listo()){genErr(aiErr({code:"sin_config"}));return}
+  const b=document.getElementById("gen-build"); b.disabled=true; genBusy=true; genErr("");
+  document.getElementById("gen-draft").innerHTML='<div class="card"><p class="muted">Claude está escribiendo tu discurso. Puede tardar hasta un minuto…</p></div>';
+  const convo=g.turns.map(t=>(t.role==="user"?"PERSONA: ":"COACH: ")+t.content).join("\n");
+  const prev=g.draft?"\n\nBORRADOR ANTERIOR (aplica los cambios que la persona pidió después de él):\n"+JSON.stringify(g.draft):"";
+  const prompt=`Escribe un discurso original en español de México para que esta persona lo practique en voz alta, con el estilo motivacional, enérgico y cercano de Tony Robbins, sin copiar frases suyas. Usa lo que la persona contó en esta conversación con su coach:
+
+${convo.slice(-8000)}${prev}
+
+Reglas:
+- Entre 180 y 260 palabras en total. Frases cortas, fáciles de decir en voz alta, en segunda persona ("tú" o "ustedes").
+- Cuatro partes: Gancho (pregunta incómoda, dato o frase fuerte; nunca "buenas tardes"), Presentación (por qué importa y qué ganará el público), Cuerpo (tres puntos: "Primero:", "Segundo:", "Tercero:"), Cierre (una historia breve con un momento concreto, o una pregunta final que deje pensando, y una acción).
+- Si la persona contó una historia personal, úsala en el cierre.
+- Marca las pausas con " / " (espacio, barra, espacio) cada 5 a 15 palabras.
+
+Responde solo con JSON con esta forma:
+{"titulo":"máximo 6 palabras","tema":"Autoayuda","resumen":"una frase","coach":"un consejo de entrega para practicarlo","cierre":"Pregunta o Storytelling","partes":[["Gancho","..."],["Presentación","..."],["Cuerpo","..."],["Cierre","..."]]}`;
+  try{
+    const d=await IA.json(prompt,{tarea:"armar"});
+    if(!d||!Array.isArray(d.partes)||d.partes.length<3||!d.titulo)throw {code:"invalid_json"};
+    const draft={titulo:String(d.titulo),tema:String(d.tema||"Mío"),resumen:String(d.resumen||""),coach:String(d.coach||"Practícalo de pie y respeta las pausas."),cierre:String(d.cierre||"Pregunta"),partes:d.partes.filter(p=>Array.isArray(p)&&p[1]).map(p=>[String(p[0]),String(p[1])])};
+    const g2=genState(); g2.draft=draft; store.set("gen",g2);
+    document.getElementById("gen-draft").innerHTML=draftHtml(draft);
+    document.getElementById("gen-draft").scrollIntoView({behavior:"smooth",block:"start"});
+  }catch(e){document.getElementById("gen-draft").innerHTML="";genErr(aiErr(e))}
+  finally{genBusy=false;b.disabled=false}
+}
+function genSave(){
+  const g=genState(); if(!g.draft)return;
+  const sp={...g.draft,id:"m"+Date.now(),mio:true};
+  store.set("mine",[sp,...store.get("mine",[])]);
+  store.set("gen",{turns:[],draft:null});
+  toast("Guardado en tu biblioteca"); location.hash="d-"+sp.id;
+}
+function genReset(b){if(!b.dataset.c){b.dataset.c=1;b.textContent="Toca otra vez para borrar la conversación";return}store.set("gen",{turns:[],draft:null});render()}
+
+function viewAjustes(){
+  const c=IA.conf();
+  return `<div class="stack-lg">
+  <button class="back" onclick="location.hash='inicio'">← Inicio</button>
+  <div class="section-title"><p class="eyebrow">Ajustes</p><h1>Conectar la IA</h1><p class="muted">La calificación y la creación de discursos usan Claude a través de tu servidor, con tu clave de API. Los pasos para preparar el servidor están en el repositorio, en <b>ia-servidor/LEEME.md</b>.</p></div>
+  <section class="card stack">
+    <label for="ia-url"><h3>Enlace del servidor</h3></label>
+    <input id="ia-url" type="text" inputmode="url" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec" value="${esc(c.url)}">
+    <label for="ia-clave"><h3>Contraseña de la app</h3></label>
+    <input id="ia-clave" type="text" autocomplete="off" placeholder="La que guardaste en la hoja" value="${esc(c.clave)}">
+    <button class="btn-primary" style="align-self:flex-start" onclick="guardarIA(this)">Guardar y probar</button>
+    <p class="hint" id="ia-msg" hidden></p>
+  </section>
+  ${NATIVO?"":`<section class="card stack"><h3>App Android</h3><p class="muted">Con la app Android funcionan la voz que lee los discursos y el micrófono que no se corta en las pausas.</p><a class="btn" href="${APK_URL}" target="_blank" rel="noopener" style="align-self:flex-start">Descargar escenario.apk</a></section>`}
+  </div>`;
+}
+async function guardarIA(b){
+  const url=document.getElementById("ia-url").value.trim(),clave=document.getElementById("ia-clave").value.trim(),m=document.getElementById("ia-msg");
+  m.hidden=false;
+  if(!/^https:\/\/script\.google\.com\/.+\/exec$/.test(url)&&!/^https:\/\/[^/]+\.up\.railway\.app\//.test(url)){m.textContent="El enlace debe terminar en /exec (el de tu Apps Script).";return}
+  if(clave.length<6){m.textContent="La contraseña tiene al menos 6 letras o números.";return}
+  store.set("ia",{url,clave});b.disabled=true;m.textContent="Probando…";
+  try{await servidor({tipo:"probar"});m.textContent="Listo. La IA está conectada.";toast("IA conectada")}
+  catch(e){m.textContent=aiErr(e)}
+  finally{b.disabled=false}
+}
+
+function viewCalentar(){
+  return `<div class="stack-lg">
+  <div class="section-title"><p class="eyebrow">Calentamiento</p><h1>Rostro, boca y voz</h1><p class="muted">Unos 7 minutos en total. Haz al menos la parte de rostro y articulación antes de cada práctica. Toca <b>Iniciar</b> para seguir el tiempo.</p></div>
+  ${WARMUP.map(g=>`<section class="stack"><h2>${g.g}</h2>${g.items.map(x=>`<div class="card ex"><div class="top"><h3>${esc(x.t)}</h3><span class="dur">${x.s} s</span></div><p class="muted">${esc(x.d)}</p><ol>${x.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol>${x.tw?x.tw.map(t=>`<p class="tw">${esc(t)}</p>`).join(""):""}<button style="align-self:flex-start" onclick="runTimer('${esc(x.t)}',${x.s})">${ICON.play}Iniciar ${x.s} s</button></div>`).join("")}</section>`).join("")}
+  <a class="btn" href="#nervios" style="align-self:flex-start">Tips para los nervios</a>
+  </div>`;
+}
+let tInt=null;
+function runTimer(label,s){
+  clearInterval(tInt); document.getElementById("runner")?.remove();
+  const r=document.createElement("div"); r.className="runner"; r.id="runner";
+  r.innerHTML=`<div class="in"><span class="tm" id="r-t">${s}</span><span class="lbl">${label}</span><button onclick="clearInterval(tInt);this.closest('.runner').remove()">Cerrar</button></div>`;
+  document.body.appendChild(r); let left=s;
+  tInt=setInterval(()=>{left--;const t=document.getElementById("r-t");if(t)t.textContent=left;if(left<=0){clearInterval(tInt);if(t)t.textContent="✓";try{navigator.vibrate?.(200)}catch(e){}setTimeout(()=>r.remove(),1500)}},1000);
+}
+
+function viewNervios(){
+  return `<div class="stack-lg">
+  <div class="section-title"><p class="eyebrow">Nervios</p><h1>Para subir al escenario tranquilo</h1><p class="muted">Los nervios no se quitan; se usan. Esto es lo que más ayuda.</p></div>
+  <section class="card breath"><h3>Respiración cuadrada</h3><div class="orb" id="orb">Listo</div><p class="muted" id="orb-txt">4 rondas, unos 64 segundos.</p><button class="btn-accent" id="orb-btn" onclick="breathe()">${ICON.play}Empezar</button></section>
+  <div class="stack">${NERVES.map((n,i)=>`<details class="lesson" ${i===0?"open":""}><summary><span class="n">${i+1}</span><h3>${esc(n.t)}</h3></summary><div class="lesson-body"><p>${esc(n.b)}</p></div></details>`).join("")}</div>
+  </div>`;
+}
+let bTimer=null;
+function breathe(){
+  const orb=document.getElementById("orb"),txt=document.getElementById("orb-txt"),btn=document.getElementById("orb-btn");
+  if(bTimer){clearTimeout(bTimer);bTimer=null;orb.classList.remove("big");orb.textContent="Listo";btn.innerHTML=ICON.play+"Empezar";return}
+  btn.innerHTML=ICON.stop+"Detener";
+  const phases=[["Inhala",true],["Sostén",true],["Exhala",false],["Sostén",false]]; let k=0;
+  const step=()=>{ if(k>=16){bTimer=null;orb.classList.remove("big");orb.textContent="Bien";txt.textContent="Listo para hablar.";btn.innerHTML=ICON.play+"Otra vez";return}
+    const p=phases[k%4]; orb.textContent=p[0]; orb.classList.toggle("big",p[1]); txt.textContent="Ronda "+(Math.floor(k/4)+1)+" de 4"; k++; bTimer=setTimeout(step,4000)};
+  step();
+}
+
+/* ================= ROUTER ================= */
+function render(){
+  stopSpeech(); stopRec(true); clearInterval(aiInt);
+  const h=(location.hash||"#inicio").slice(1);
+  let html, tab=h;
+  if(h.startsWith("d-")){html=viewDiscurso(h.slice(2));tab="discursos"}
+  else if(h.startsWith("evaluar-")){html=viewEvaluar(h.slice(8));tab="discursos"}
+  else html=({inicio:viewInicio,aprender:viewAprender,discursos:viewDiscursos,crear:viewCrear,ajustes:viewAjustes,calentar:viewCalentar,progreso:viewProgreso,nervios:viewNervios}[h]||viewInicio)();
+  if(h==="nervios")tab="calentar"; if(h==="ajustes")tab="inicio";
+  app.innerHTML=html;
+  document.querySelectorAll("nav.tabs a").forEach(a=>{if(a.dataset.tab===tab)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
+  window.scrollTo(0,0);
+}
+window.addEventListener("hashchange",render);
+render();
+</script>
+</body>
+</html>
