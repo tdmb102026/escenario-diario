@@ -184,6 +184,33 @@ nav.tabs a[aria-current="page"]{color:var(--accent);background:var(--accent-soft
 .ai-res .pt{display:grid;grid-template-columns:1fr auto;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
 .ai-res .pt b{font-family:var(--f-display);font-variant-numeric:tabular-nums}
 .live{font-family:var(--f-display);font-weight:800;font-size:1.4rem;font-variant-numeric:tabular-nums;color:var(--accent)}
+.ladder{display:flex;flex-direction:column;gap:8px}
+.lv{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;text-align:left;border-radius:var(--r);padding:12px 14px;width:100%;font-weight:400}
+.lv.sel{border-color:var(--accent);background:var(--accent-soft)}
+.lv.locked{opacity:.55;cursor:default}
+.lv-n{font-family:var(--f-display);font-weight:800;font-size:1.4rem;color:var(--accent);min-width:1.2em;text-align:center}
+.lv-t{display:flex;flex-direction:column;min-width:0}
+.lv-t small{color:var(--muted);font-size:.82rem}
+.lv .chip,.lv .done-mark,.lv .muted{font-size:.75rem;white-space:nowrap;display:inline-flex;gap:4px;align-items:center}
+.levelup{background:var(--ink);color:var(--bg);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:8px}
+.levelup h2{color:var(--bg)}.levelup .eyebrow{color:var(--spot)}
+.levelup .btn-primary{background:var(--spot);color:#1A1006;border-color:var(--spot);align-self:flex-start}
+.sube{color:var(--accent);font-weight:700}
+.sube::before{content:"↑";font-size:.75em;margin-right:2px;vertical-align:super}
+.baja{color:var(--muted);font-style:italic}
+.baja::before{content:"↓";font-size:.75em;margin-right:2px;vertical-align:super;font-style:normal}
+.prompter-text .sube{color:#F2B33D}.prompter-text .baja{color:#9AA5B5}
+.tema{font-family:var(--f-read);font-size:1.35rem;line-height:1.4}
+.modos{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px}
+.modos button{border:0;justify-content:center;min-height:40px;padding:6px 8px}
+.modos button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.guia{position:fixed;inset:0;z-index:55;background:#0B0E13;color:#F4F1EC;display:flex;align-items:center;justify-content:center;padding:max(24px,env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) max(24px,env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px))}
+.guia-in{max-width:560px;width:100%;display:flex;flex-direction:column;gap:16px;text-align:center}
+.guia h2{color:#F4F1EC;font-size:1.8rem}.guia .eyebrow{color:#F2B33D}
+.g-s{font-family:var(--f-read);font-size:1.35rem;line-height:1.5;min-height:4.5em}
+.g-n{font-family:var(--f-display);font-weight:800;font-size:5rem;line-height:1;color:#F2B33D;font-variant-numeric:tabular-nums;min-height:1em}
+.guia button{background:#1B2330;color:#F4F1EC;border-color:#2C3747}
+.lesson .chip{margin-left:auto}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;z-index:60;font-size:.9rem}
 </style>
 </head>
@@ -194,7 +221,7 @@ nav.tabs a[aria-current="page"]{color:var(--accent);background:var(--accent-soft
   <div class="in">
     <a href="#inicio" data-tab="inicio"><svg viewBox="0 0 24 24"><path d="M12 3v4M5.6 5.6l2.8 2.8M18.4 5.6l-2.8 2.8"/><path d="M6 21h12l-2-9H8z"/></svg>Inicio</a>
     <a href="#aprender" data-tab="aprender"><svg viewBox="0 0 24 24"><path d="M4 5h7a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4z"/><path d="M20 5h-7"/><path d="M20 5v13h-7"/></svg>Aprender</a>
-    <a href="#discursos" data-tab="discursos"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Discursos</a>
+    <a href="#discursos" data-tab="discursos"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Niveles</a>
     <a href="#crear" data-tab="crear"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg>Crear</a>
     <a href="#calentar" data-tab="calentar"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M9 10h.01M15 10h.01M9 15c1.5 1.3 4.5 1.3 6 0"/></svg>Calentar</a>
     <a href="#progreso" data-tab="progreso"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Progreso</a>
@@ -337,6 +364,115 @@ const CRITERIA = [
  ["Cierre","¿El final se sintió como final y dejó una pregunta o historia clara?"],
 ];
 
+/* Niveles: pasas al siguiente con META prácticas calificadas con 3.5 o más */
+const META=3, APRUEBA=3.5;
+const NIVELES=[
+ {n:1,t:"Estructura",d:"Gancho, presentación, cuerpo y cierre."},
+ {n:2,t:"Storytelling",d:"Discursos con una historia en el centro."},
+ {n:3,t:"Voz y emoción",d:"Subir, bajar y callar a propósito."},
+ {n:4,t:"Improvisación",d:"Un tema al azar: 30 segundos para pensar y 1 minuto para hablar."},
+ {n:5,t:"Preguntas del público",d:"Responde en voz alta una pregunta difícil sobre tu discurso."},
+];
+
+LESSONS.push(
+ {nivel:2,t:"Storytelling: cómo contar una historia", b:`<p>Una historia bien contada hace que el público <b>vea</b> tu idea en lugar de solo escucharla. Dura entre 45 y 90 segundos y tiene cinco pasos:</p>
+ <div class="struct">
+  <div><b>Situación</b><br>Un momento exacto: cuándo, dónde y quién. "Era jueves, 7 de la noche, en la sala de espera de un hospital."</div>
+  <div><b>Conflicto</b><br>Qué estaba en juego y qué sentías. Sin conflicto no hay historia, solo un relato.</div>
+  <div><b>Giro</b><br>El momento en que algo cambia: una frase que alguien dijo, una decisión, una sorpresa.</div>
+  <div><b>Resultado</b><br>Qué pasó después, en una o dos frases.</div>
+  <div><b>Lección</b><br>La idea que te llevas, dicha en una frase corta que conecte con tu mensaje.</div></div>
+ <ul><li><b>Detalles de los sentidos:</b> un olor, un sonido, el frío de la mañana. Hacen que el público entre a la escena.</li>
+  <li><b>Una línea de diálogo:</b> "Me miró y me dijo: <i>¿y si sale bien?</i>" pesa más que "me animó".</li>
+  <li><b>Cuéntala en presente</b> en el momento del giro: "y entonces abro la puerta…". Acerca al público.</li>
+  <li><b>No expliques la lección dos veces.</b> Si la historia es buena, el público ya la entendió.</li></ul>`},
+ {nivel:2,t:"Cinco tipos de historia y dónde usarlas", b:`<ul>
+  <li><b>Transformación personal.</b> Cómo eras antes, qué pasó y cómo eres ahora. Ideal en la <b>presentación</b>, porque te da autoridad. <i>"Hace tres años no podía decir mi nombre frente a cinco personas…"</i></li>
+  <li><b>El fracaso que enseña.</b> Algo que te salió mal y lo que aprendiste. Ideal en el <b>cuerpo</b>, para demostrar un punto. Te hace humano y cercano.</li>
+  <li><b>El momento de decisión.</b> El segundo exacto en que dijiste "ya basta". Ideal en el <b>cierre</b>, porque empuja a la acción.</li>
+  <li><b>La historia de otra persona.</b> Alguien que admiras o un desconocido que te marcó. Ideal cuando el tema no es sobre ti, o en el <b>cuerpo</b> como ejemplo.</li>
+  <li><b>Metáfora o fábula.</b> El bambú, el elefante atado, la rana en el agua tibia. Ideal en el <b>gancho</b> o en el <b>cierre</b>; explica una idea difícil en una imagen.</li></ul>
+ <p>En <b>Crear → Historia</b> Claude te ayuda a sacar tu historia, y en <b>Crear → Unir</b> te dice qué tipo le va mejor a tu discurso y dónde ponerla.</p>`},
+ {nivel:3,t:"Voz y emoción: subir, bajar y callar", b:`<p>Las mismas palabras pueden aburrir o emocionar. Lo que cambia es la voz. En el nivel 3 los discursos traen marcas:</p>
+ <ul><li><b class="sube">texto</b> <b>Sube la energía:</b> más volumen, más fuerza, a veces más rápido. Para lo que quieres que retumbe.</li>
+  <li><i class="baja">texto</i> <b>Baja la voz:</b> más suave y más lento, casi como un secreto. El público se inclina para escucharte.</li>
+  <li><span class="pause">//</span> <b>Silencio largo:</b> cuenta mentalmente hasta tres. Se siente eterno, pero el público lo vive como fuerza.</li></ul>
+ <p>El contraste es lo que funciona: una frase suave justo antes de una fuerte hace que la fuerte pegue el doble. Exagera en tus ensayos; en el escenario siempre sale a la mitad.</p>`},
+ {nivel:4,t:"Improvisar con la fórmula PREP", b:`<p>Cuando te piden hablar sin preparar, usa cuatro pasos. Cabe en un minuto:</p>
+ <div class="struct">
+  <div><b>Punto</b><br>Di tu idea en una frase. "Creo que madrugar cambia tu día."</div>
+  <div><b>Razón</b><br>Por qué lo crees. "Porque la primera hora decide tu estado."</div>
+  <div><b>Ejemplo</b><br>Una historia corta o un caso concreto. Es lo que el público recuerda.</div>
+  <div><b>Punto</b><br>Repite tu idea con otras palabras y termina. No te apagues: cierra con fuerza.</div></div>
+ <p>En los 30 segundos de preparación no escribas frases: elige tu punto y tu ejemplo. Lo demás sale solo.</p>`},
+ {nivel:5,t:"Responder preguntas del público", b:`<ul>
+  <li><b>Escucha hasta el final</b> sin interrumpir, y haz una pausa de un segundo antes de responder. Te ves seguro, no lento.</li>
+  <li><b>Repite o resume la pregunta</b> en una frase: ganas tiempo y todos la escuchan.</li>
+  <li><b>Responde primero, explica después.</b> La respuesta directa va en la primera frase.</li>
+  <li><b>Sé breve:</b> de 30 a 90 segundos. Si quieren más, preguntarán.</li>
+  <li><b>Si no sabes, dilo:</b> "No lo sé, pero lo averiguo y te escribo." Da más confianza que inventar.</li>
+  <li><b>Vuelve a tu mensaje</b> al final: une tu respuesta con la idea central de tu discurso.</li></ul>`}
+);
+
+SPEECHES.forEach(s=>{if(!s.nivel)s.nivel=1});
+SPEECHES.push(
+ {id:"llamada", nivel:2, titulo:"La llamada que no hice", tema:"Storytelling", cierre:"Storytelling",
+  resumen:"Un momento de decisión: lo que cuesta esperar el momento perfecto para decir lo importante.",
+  coach:"Cuenta el giro en presente y más lento. Haz un silencio real antes de la lección.",
+  partes:[
+   ["Gancho","¿Cuántas veces has dicho \"mañana lo hago\" / sobre algo que de verdad importa?"],
+   ["Historia","Era domingo, cerca de las nueve de la noche. / Yo estaba en el sofá, con el teléfono en la mano, / mirando el nombre de mi abuelo en la pantalla. / Hacía meses que no lo llamaba. / Pensé: \"es tarde, / mejor mañana con calma\". / Y dejé el teléfono boca abajo."],
+   ["Giro","El martes me llama mi mamá. / Escucho su voz y ya sé lo que me va a decir. / Mi abuelo se había ido / el lunes en la madrugada."],
+   ["Lección","Esa noche no me faltó tiempo. / Me sobraron excusas. / El momento perfecto no existe; / solo existe este."],
+   ["Cierre","Así que te pido algo antes de que termine el día: / piensa en una persona a la que le debes una llamada, / un gracias / o un perdón. / No esperes al lunes. / Hazlo hoy."]]},
+ {id:"maraton", nivel:2, titulo:"El maratón de mi papá", tema:"Storytelling", cierre:"Storytelling",
+  resumen:"La historia de otra persona: nunca es tarde para empezar, si empiezas pequeño.",
+  coach:"Usa la voz de tu papá en el diálogo. Sonríe en el resultado: el público lo va a sentir.",
+  partes:[
+   ["Gancho","Mi papá corrió su primer maratón / a los sesenta y dos años."],
+   ["Historia","Nunca había hecho deporte. / Trabajó toda su vida de pie, en un taller, / y llegaba a casa con la espalda rota. / Cuando se jubiló, el médico le dijo que tenía que moverse / o en dos años no iba a poder caminar bien."],
+   ["Giro","Esa tarde llegó a casa, se puso unos zapatos viejos / y me dijo: / \"No voy a correr. / Voy a caminar hasta la esquina. / Mañana, hasta la siguiente.\""],
+   ["Resultado","Un año después caminaba cinco kilómetros. / Dos años después, trotaba diez. / Y a los sesenta y dos cruzó la meta de un maratón, / último de su categoría / y el más feliz de toda la carrera."],
+   ["Cierre","Él no empezó con un maratón. / Empezó con una esquina. / ¿Cuál es tu esquina de mañana?"]]},
+ {id:"bambu", nivel:2, titulo:"Lo que hace el bambú", tema:"Storytelling", cierre:"Storytelling",
+  resumen:"Una metáfora: cuando no ves resultados, a veces estás creciendo raíces.",
+  coach:"Cuenta la fábula despacio, como a un niño. Acelera solo cuando el bambú empieza a crecer.",
+  partes:[
+   ["Gancho","Hay una planta que pasa años sin crecer / y luego crece treinta metros en seis semanas."],
+   ["Historia","Dicen que cuando siembras ciertas especies de bambú, / la riegas todos los días / y durante mucho tiempo no ves nada. / Ni un brote. / Muchos agricultores se rinden. / Piensan que la semilla estaba mala."],
+   ["Giro","Pero debajo de la tierra está pasando todo. / La planta está tejiendo raíces enormes, / porque sabe que va a necesitar sostener algo muy alto. / Y un día sale. / Y crece tan rápido que casi la puedes ver subir."],
+   ["Lección","Tal vez llevas meses practicando / y sientes que no avanzas. / No estás estancado. / Estás haciendo raíces."],
+   ["Cierre","Así que sigue regando. / Un día vas a mirar atrás / y no vas a creer lo alto que llegaste."]]}
+);
+SPEECHES.push(
+ {id:"despierta", nivel:3, titulo:"Despierta", tema:"Voz y emoción", cierre:"Pregunta",
+  resumen:"Contraste puro: empieza en un susurro y termina en un grito de energía.",
+  coach:"Empieza casi susurrando. Cada marca de subir es un escalón de energía hasta el final.",
+  partes:[
+   ["Gancho","~Hay una voz dentro de ti / que lleva años esperando.~ // ^Hoy le toca hablar.^"],
+   ["Presentación","~La conoces.~ / Es la que te dice que puedes más. / La que callas cada vez que eliges lo cómodo. / ^Hoy la vamos a escuchar.^"],
+   ["Cuerpo","~Durante mucho tiempo creí que no era el momento.~ / Que me faltaba preparación, / dinero, / valor. // Y un día entendí algo: / ^nunca me faltó nada de eso.^ / ^Me faltó decidir.^ // ~Porque la vida no espera a que estés listo.~ / La vida premia al que se mueve."],
+   ["Cierre","Así que te pregunto, / ~despacio, / para que lo escuches de verdad:~ // ¿Cuánto tiempo más vas a esperar? // ^Despierta.^ / ^Hoy.^"]]},
+ {id:"silencio", nivel:3, titulo:"El poder del silencio", tema:"Voz y emoción", cierre:"Pregunta",
+  resumen:"Un discurso sobre el silencio que se practica con silencios.",
+  coach:"Respeta cada // contando hasta tres. Si te incomoda, lo estás haciendo bien.",
+  partes:[
+   ["Gancho","// ~¿Lo sentiste?~ // Eso que acaba de pasar / se llama silencio."],
+   ["Presentación","Casi todos le tenemos miedo. / Llenamos cada segundo con ruido, / con el teléfono, / con \"este\" y \"eh\". / ^Hoy te quiero mostrar que el silencio es tu mejor aliado.^"],
+   ["Cuerpo","Primero: el silencio da peso. / Lo que dices después de una pausa / ~suena más importante.~ // Segundo: el silencio te calma. / Mientras callas, respiras, / y tu corazón baja el ritmo. / Tercero: ^el silencio demuestra seguridad.^ / Solo quien está tranquilo / se atreve a callar frente a un público."],
+   ["Cierre","La próxima vez que sientas que tienes que llenar el espacio, / ~no lo hagas.~ // Respira. // Mira a tu público. // ^Y entonces habla.^ / ¿Te atreves a callar?"]]},
+ {id:"version", nivel:3, titulo:"Tu mejor versión no es un destino", tema:"Voz y emoción", cierre:"Storytelling",
+  resumen:"Variar la energía para contar un camino: de la duda a la acción.",
+  coach:"Las partes suaves son recuerdos; las fuertes son decisiones. Que se note la diferencia.",
+  partes:[
+   ["Gancho","^¡Basta de esperar a ser tu mejor versión!^ // ~Porque nunca va a llegar.~"],
+   ["Presentación","~Suena duro, lo sé.~ / Pero escúchame bien, / porque esto me cambió la forma de vivir."],
+   ["Cuerpo","~Pasé años pensando que algún día sería esa persona segura, / disciplinada, / feliz.~ / Algún día. // Y mientras esperaba ese día, / se me iban los martes, / los cumpleaños, / los veranos. // ^Hasta que entendí que tu mejor versión no es un lugar al que llegas.^ / ^Es una decisión que tomas cada mañana.^"],
+   ["Cierre","~Hoy, cuando me levanto, me hago una sola pregunta:~ / ¿qué haría hoy la mejor versión de mí? // ^Y la hago.^ / ^Aunque sea pequeña.^ / ^Aunque tenga miedo.^ // ~Esa es toda la diferencia.~"]]}
+);
+
+const TEMAS_IMPRO=["Lo que aprendí de un error","Por qué vale la pena madrugar","La mejor decisión que he tomado","Qué haría si no tuviera miedo","Un consejo para mi yo de quince años","Por qué los hábitos pequeños cambian todo","La persona que más me inspira","Qué significa para mí el éxito","Cómo enfrento un mal día","El dinero no compra la felicidad: ¿verdad o mentira?","Una meta que todavía no cumplo","Lo que me enseñó mi trabajo","Por qué deberías aprender a hablar en público","La disciplina le gana a la motivación","Un lugar que me cambió","Qué le diría a alguien que quiere rendirse","El valor de decir que no","Por qué el teléfono nos roba la vida","Lo mejor de mi ciudad","Qué haría con una hora extra cada día","La gratitud cambia el ánimo","Mi mayor miedo y cómo lo enfrento","Un libro, película o canción que me marcó","Por qué vale la pena empezar de cero","Lo que aprendí de mis padres","El fracaso es parte del éxito","Cómo sería mi día perfecto","Un hábito que quiero dejar","Por qué la salud es lo primero","Qué es para mí una buena amistad"];
+
 /* ================= ESTADO ================= */
 const store = {
   get(k,d){try{const v=localStorage.getItem("ed_"+k);return v?JSON.parse(v):d}catch(e){return d}},
@@ -344,8 +480,11 @@ const store = {
 };
 const app = document.getElementById("app");
 const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
-const withPauses = s => esc(s).replace(/ \/ ?/g,' <span class="pause">/</span> ');
-const plain = s => s.replace(/ \/ ?/g,", ").replace(/\/\s*$/,"");
+// Marcas en los discursos: " / " pausa, " // " silencio largo, ^texto^ subir energía, ~texto~ bajar la voz.
+const withPauses = s => esc(s).replace(/ \/\/ ?/g,' <span class="pause">//</span> ').replace(/ \/ ?/g,' <span class="pause">/</span> ').replace(/^\/\/ ?/,'<span class="pause">//</span> ').replace(/\^([^^]+)\^/g,'<b class="sube">$1</b>').replace(/~([^~]+)~/g,'<i class="baja">$1</i>');
+const sinMarcas = s => s.replace(/[\^~]/g,"");
+const plain = s => sinMarcas(s).replace(/ ?\/\/ ?/g,". ").replace(/ \/ ?/g,", ").replace(/\/\s*$/,"").replace(/^\. /,"");
+const trozos = s => sinMarcas(s).split(/ ?\/\/? /).map(t=>t.replace(/\/+\s*$/,"").trim()).filter(Boolean);
 const words = sp => sp.partes.map(p=>plain(p[1])).join(" ").split(/\s+/).length;
 const setMin=s=>{s.min=Math.max(1,Math.round(words(s)/120*2)/2);return s};
 SPEECHES.forEach(setMin);
@@ -441,7 +580,8 @@ function startRec(id){
   }catch(e){fallback()}
 }
 function toast(msg){const t=document.createElement("div");t.className="toast";t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
-function todaySpeech(){const d=new Date();const n=Math.floor((d-new Date(d.getFullYear(),0,0))/864e5);return SPEECHES[n%SPEECHES.length]}
+// Discurso del día: del nivel en el que vas (los niveles 4 y 5 practican sobre los del 3).
+function todaySpeech(){const d=new Date();const n=Math.floor((d-new Date(d.getFullYear(),0,0))/864e5);const lv=Math.min(3,typeof nivelActual==="function"?nivelActual():1);const l=SPEECHES.filter(s=>s.nivel===lv);return l[n%l.length]}
 function practicedIds(){return new Set(store.get("hist",[]).map(h=>h.id))}
 
 /* ================= VOZ ================= */
@@ -451,12 +591,12 @@ if(synth){loadVoices();synth.onvoiceschanged=loadVoices}
 let speaking=null;
 function marcarParte(i){document.querySelectorAll(".seg").forEach((e,k)=>e.classList.toggle("active",k===i));document.querySelectorAll(".seg")[i]?.scrollIntoView({behavior:"smooth",block:"center"})}
 // La app Android avisa con Voz.parte(i) al empezar cada parte y Voz.fin() al terminar.
-const Voz={parte(i){if(speaking)marcarParte(i)},fin(){stopSpeech()},sinVoz(){stopSpeech();const n=document.getElementById("tts-note");if(n)n.hidden=false}};
+const Voz={parte(i){if(speaking)marcarParte(i)},fin(){if(vozCb){vozCb();return}stopSpeech()},sinVoz(){if(vozCb){vozCb();return}stopSpeech();const n=document.getElementById("tts-note");if(n)n.hidden=false}};
 function stopSpeech(){if(NATIVO&&speaking)NATIVO.callar();if(synth)synth.cancel();speaking=null;document.querySelectorAll(".seg.active").forEach(e=>e.classList.remove("active"));const b=document.getElementById("btn-listen");if(b)b.innerHTML=ICON.play+"Escuchar"}
 function speakSpeech(sp){
   if(speaking){stopSpeech();return}
   if(NATIVO){
-    const partes=[];sp.partes.forEach((p,i)=>p[1].split(" / ").forEach(c=>partes.push({i,t:c.replace(/\/\s*$/,"")})));
+    const partes=[];sp.partes.forEach((p,i)=>trozos(p[1]).forEach(c=>partes.push({i,t:c})));
     speaking=sp.id;const b=document.getElementById("btn-listen");if(b)b.innerHTML=ICON.stop+"Detener";
     NATIVO.hablar(JSON.stringify(partes),parseFloat(store.get("rate",0.95)));return;
   }
@@ -467,8 +607,8 @@ function speakSpeech(sp){
   speaking=sp.id; const b=document.getElementById("btn-listen"); if(b)b.innerHTML=ICON.stop+"Detener";
   synth.cancel();
   sp.partes.forEach((p,i)=>{
-    p[1].split(" / ").forEach((chunk,j,arr)=>{
-      const u=new SpeechSynthesisUtterance(chunk.replace(/\/\s*$/,""));
+    trozos(p[1]).forEach((chunk,j,arr)=>{
+      const u=new SpeechSynthesisUtterance(chunk);
       u.lang=voice?voice.lang:"es-MX"; if(voice)u.voice=voice; u.rate=rate;
       if(j===0)u.onstart=()=>marcarParte(i);
       if(i===sp.partes.length-1&&j===arr.length-1)u.onend=()=>stopSpeech();
@@ -481,6 +621,7 @@ const ICON={
  play:'<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg>',
  stop:'<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>',
  mic:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+ lock:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
  check:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>'
 };
 
@@ -499,10 +640,11 @@ function viewInicio(){
       <button onclick="location.hash='discursos'">Elegir otro</button>
     </div>
   </section>
+  ${(()=>{const n=nivelActual(),l=nivelVista(n),a=Math.min(META,aprobadas(n));return `<a class="card row" href="#discursos" onclick="store.set('nivelVer',${n})" style="text-decoration:none;color:inherit;justify-content:space-between"><span><span class="eyebrow">Tu nivel</span><br><b style="font-family:var(--f-display);font-size:1.15rem">${n}. ${l.t}</b><br><span class="muted">${n===5&&a>=META?"Completaste todos los niveles.":`${a} de ${META} prácticas con ${APRUEBA} o más para subir`}</span></span><span class="chip">${n>=4?"Practicar":"Ver nivel"}</span></a>`})()}
   <section class="stack">
     <div class="section-title"><p class="eyebrow">Rutina de 15 minutos</p><h2>Cada día, en este orden</h2></div>
     <div class="routine">
-      <a href="#calentar"><b>3 min</b><span>Calentar rostro y voz</span></a>
+      <a href="#calentar"><b>4 min</b><span>Calentar con la voz guía</span></a>
       <a href="#d-${sp.id}"><b>4 min</b><span>Escuchar y leer el discurso</span></a>
       <a href="#d-${sp.id}"><b>6 min</b><span>Practicarlo de pie y grabarte</span></a>
       <a href="#evaluar-${sp.id}"><b>2 min</b><span>Calificarte</span></a>
@@ -513,7 +655,7 @@ function viewInicio(){
     <div><b>${streak}</b><span>días seguidos</span></div>
     <div><b>${hist.length?avg(hist.slice(0,5)).toFixed(1):"–"}</b><span>promedio reciente /5</span></div>
   </section>
-  ${IA.listo()&&!window.claude?`<a href="#ajustes" class="muted" style="font-size:.9rem">Ajustes de la IA</a>`:""}
+  <a href="#ajustes" class="muted" style="font-size:.9rem">Ajustes: IA, recordatorio diario y niveles</a>
   <section class="stack">
     <div class="section-title"><p class="eyebrow">Contra los nervios</p><h2>Antes de subir al escenario</h2></div>
     ${NERVES.slice(0,2).map(n=>`<div class="card stack" style="gap:6px"><h3>${esc(n.t)}</h3><p class="muted">${esc(n.b)}</p></div>`).join("")}
@@ -525,27 +667,33 @@ function viewInicio(){
 function viewAprender(){
   return `<div class="stack-lg">
   <div class="section-title"><p class="eyebrow">Introducción</p><h1>Cómo se construye un discurso</h1><p class="muted">Lo básico para escribir, preparar y dar un discurso corto. Léelo una vez completo y vuelve cuando lo necesites.</p></div>
-  <div class="stack">${LESSONS.map((l,i)=>`<details class="lesson" ${i<2?"open":""}><summary><span class="n">${i+1}</span><h3>${esc(l.t)}</h3></summary><div class="lesson-body">${l.b}</div></details>`).join("")}</div>
+  <div class="stack">${LESSONS.map((l,i)=>`<details class="lesson" ${i<2?"open":""}><summary><span class="n">${i+1}</span><h3>${esc(l.t)}</h3>${l.nivel?`<span class="chip">Nivel ${l.nivel}</span>`:""}</summary><div class="lesson-body">${l.b}</div></details>`).join("")}</div>
   <div class="card stack"><h3>Ahora pruébalo</h3><p class="muted">Cada discurso de la biblioteca está marcado por partes para que veas la estructura en acción.</p><a class="btn btn-primary" href="#discursos" style="align-self:flex-start">Ir a los discursos</a></div>
   </div>`;
 }
 
 function viewDiscursos(){
-  const SPEECHES=allSpeeches();
+  const cur=nivelActual(), n=Math.min(store.get("nivelVer",cur),cur), l=nivelVista(n);
   const done=practicedIds();
-  const temas=["Todos",...(mine().length?["Míos"]:[]),...new Set(SPEECHES.filter(s=>!s.mio).map(s=>s.tema))];
-  const f=store.get("filtro","Todos");
-  const list=SPEECHES.filter(s=>f==="Todos"||(f==="Míos"?s.mio:s.tema===f));
+  const tarjeta=s=>`<button class="speech-card card" onclick="location.hash='d-${s.id}'">
+     <div class="meta">${s.mio?'<span class="chip">Mío</span>':""}<span class="chip">${esc(s.kind==="historia"?(s.tipo||"Historia"):s.tema)}</span><span>${s.min} min</span>${done.has(s.id)?`<span class="done-mark">${ICON.check} practicado</span>`:""}</div>
+     <h3>${esc(s.titulo)}</h3><p>${esc(s.resumen)}</p></button>`;
+  let cuerpo;
+  if(n===4)cuerpo=`<div class="card stack"><h3>Improvisación</h3><p class="muted">${l.d} Antes, lee la lección "Improvisar con la fórmula PREP" en Aprender.</p><a class="btn btn-primary" href="#improvisar" style="align-self:flex-start">Empezar a improvisar</a></div>`;
+  else if(n===5)cuerpo=`<div class="card stack"><h3>Preguntas del público</h3><p class="muted">${l.d} Antes, lee la lección "Responder preguntas del público" en Aprender.</p><a class="btn btn-primary" href="#preguntas" style="align-self:flex-start">Empezar</a></div>`;
+  else{
+    const lista=allSpeeches().filter(s=>(s.nivel||1)===n);
+    cuerpo=`<div class="stack">${lista.map(tarjeta).join("")}</div>`;
+  }
   return `<div class="stack-lg">
-  <div class="section-title"><p class="eyebrow">Biblioteca</p><h1>Discursos para practicar</h1><p class="muted">Textos originales de autoayuda, subconsciente y supraconciencia, en el estilo motivacional de Tony Robbins. Duran entre 1 y 3 minutos.</p></div>
-  <a class="btn btn-accent" href="#crear" style="align-self:flex-start">Crear mi propio discurso</a>
-  <div class="row" role="group" aria-label="Filtrar por tema">${temas.map(t=>`<button class="${t===f?"btn-primary":""}" onclick="setFiltro('${t}')">${t}</button>`).join("")}</div>
-  <div class="stack">${list.map(s=>`<button class="speech-card card" onclick="location.hash='d-${s.id}'">
-     <div class="meta">${s.mio?'<span class="chip">Mío</span>':""}<span class="chip">${esc(s.tema)}</span><span>${s.min} min</span><span>Cierre: ${s.cierre}</span>${done.has(s.id)?`<span class="done-mark">${ICON.check} practicado</span>`:""}</div>
-     <h3>${esc(s.titulo)}</h3><p>${esc(s.resumen)}</p></button>`).join("")}</div>
+  <div class="section-title"><p class="eyebrow">Niveles</p><h1>Practica paso a paso</h1><p class="muted">Pasas al siguiente nivel con ${META} prácticas calificadas con ${APRUEBA} o más. Puedes volver a cualquier nivel que ya abriste.</p></div>
+  ${escalera(n)}
+  <div class="section-title"><p class="eyebrow">Nivel ${n}</p><h2>${l.t}</h2>${n===3?`<p class="muted">Marcas: <b class="sube">sube</b> <i class="baja">baja</i> <span class="pause">//</span> silencio largo.</p>`:""}</div>
+  ${cuerpo}
+  ${n<=3?`<a class="btn btn-accent" href="#crear" onclick="store.set('crearModo','${n===2?"historia":"discurso"}')" style="align-self:flex-start">${n===2?"Crear mi historia":"Crear mi propio discurso"}</a>`:""}
   </div>`;
 }
-function delMine(id,b){if(b.dataset.c){store.set("mine",store.get("mine",[]).filter(s=>s.id!==id));toast("Discurso borrado");location.hash="discursos";return}b.dataset.c=1;b.textContent="Toca otra vez para borrar";b.classList.add("rec-on")}
+function delMine(id,b){if(b.dataset.c){store.set("mine",store.get("mine",[]).filter(s=>s.id!==id));toast("Borrado");location.hash="discursos";return}b.dataset.c=1;b.textContent="Toca otra vez para borrar";b.classList.add("rec-on")}
 function setFiltro(t){store.set("filtro",t);render()}
 
 function viewDiscurso(id){
@@ -554,8 +702,8 @@ function viewDiscurso(id){
   const vName=store.get("voice","");
   return `<div class="stack-lg">
   <div class="reader-head">
-    <button class="back" onclick="location.hash='discursos'">← Biblioteca</button>
-    <p class="eyebrow">${sp.tema} · ${sp.min} min · ${words(sp)} palabras</p>
+    <button class="back" onclick="store.set('nivelVer',${sp.nivel||1});location.hash='discursos'">← Nivel ${sp.nivel||1}</button>
+    <p class="eyebrow">${esc(sp.kind==="historia"?(sp.tipo||"Historia"):sp.tema)} · ${sp.min} min · ${words(sp)} palabras</p>
     <h1>${esc(sp.titulo)}</h1>
   </div>
   <div class="toolbar">
@@ -569,7 +717,7 @@ function viewDiscurso(id){
   </div>
   <div class="coach" id="tts-note" hidden><b>La voz no está disponible aquí</b><p>Este navegador no tiene lectura en voz alta. Instala la app Android o abre la página en Chrome:</p><div class="row"><a class="btn" href="${APK_URL}" target="_blank" rel="noopener">Descargar la app Android</a><a class="btn" href="${WEB_URL}#d-${sp.id}" target="_blank" rel="noopener">Abrir en Chrome</a></div><p class="muted" style="font-size:.9rem">Si estás en la app y no suena, revisa en Ajustes de Android → Voz que esté instalado Google Speech Services en español.</p></div>
   ${sp.mio?`<button id="del-btn" style="align-self:flex-start" onclick="delMine('${sp.id}',this)">Borrar este discurso</button>`:""}
-  <div class="coach"><b>Consejo de entrega</b><p>${esc(sp.coach)}</p><p class="muted" style="font-size:.9rem">Cada <span class="pause">/</span> marca una pausa breve para respirar o dejar caer la idea.</p></div>
+  <div class="coach"><b>Consejo de entrega</b><p>${esc(sp.coach)}</p><p class="muted" style="font-size:.9rem">Cada <span class="pause">/</span> marca una pausa breve para respirar o dejar caer la idea.${sp.nivel===3?` <b class="sube">Sube</b> la energía, <i class="baja">baja</i> la voz y en <span class="pause">//</span> calla contando hasta tres.`:""}</p></div>
   <div class="stack" style="gap:4px">${sp.partes.map(p=>`<section class="seg"><span class="tag">${esc(p[0])}${p[0]==="Cierre"?" · "+esc(sp.cierre):""}</span><p>${withPauses(p[1])}</p></section>`).join("")}</div>
   <div class="card stack"><h3>Las tres rondas de hoy</h3>
     <ol style="margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px">
@@ -627,7 +775,7 @@ function openPrompter(id){
 let evalScores={};
 function viewEvaluar(id){
   const sp=findSp(id); if(!sp)return viewDiscursos();
-  evalScores={};
+  evalScores={};vozPropia=0;
   const lt=store.get("lastTime",null);
   const secs=lt&&lt.id===id?lt.s:"";
   return `<div class="stack-lg">
@@ -643,6 +791,7 @@ function viewEvaluar(id){
       <li>Toca <b>Terminar y calificar</b>. Claude evalúa solo lo que dijiste.</li></ol>
     <div class="row"><button class="btn-primary" id="ai-start" onclick="aiStart()">${ICON.play}Empezar</button><span class="live" id="ai-clock">0:00</span></div>
     ${dictBox("ai-text","Aquí aparecerá lo que digas…",6)}
+    ${sp.nivel===3?`<div class="crit"><div class="q"><h3>Tu voz (lo calificas tú)</h3></div><small class="muted">¿Subiste, bajaste y callaste donde estaba marcado? Claude solo lee el texto, así que esto lo decides tú.</small><div class="scale" role="group" aria-label="Tu voz">${[1,2,3,4,5].map(n=>`<button aria-pressed="false" data-c="voz" data-n="${n}" onclick="vozPropia=${n};document.querySelectorAll('[data-c=voz]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.n==${n}))">${n}</button>`).join("")}</div></div>`:""}
     <button class="btn-accent" id="ai-go" style="align-self:flex-start" onclick="aiGrade('${sp.id}')">${ICON.check}Terminar y calificar</button>
     <div class="ai-res" id="ai-res" aria-live="polite"></div>
   </section>
@@ -669,54 +818,17 @@ function aiStart(){
   document.getElementById("ai-start").innerHTML=ICON.play+"Reiniciar";
   startRec("ai-text");
 }
-async function aiGrade(id){
-  const sp=findSp(id),out=document.getElementById("ai-res"),go=document.getElementById("ai-go");
-  stopRec();
-  const said=document.getElementById("ai-text").value.trim();
-  if(said.split(/\s+/).length<15){out.innerHTML='<p class="hint" style="color:var(--bad)">Necesito al menos unas frases de tu discurso para calificarte. Di el discurso mientras el texto se escribe arriba.</p>';return}
-  const secs=aiT0?Math.round((Date.now()-aiT0)/1000):null; clearInterval(aiInt);
-  const nw=said.split(/\s+/).length, ppm=secs?Math.round(nw/secs*60):null;
-  if(!IA.listo()){out.innerHTML='<p class="hint">Falta conectar la IA. <a href="#ajustes">Ve a Ajustes de la IA</a> o usa la autoevaluación de abajo.</p>';return}
-  go.disabled=true; out.innerHTML='<p class="muted">Claude está revisando tu discurso…</p>';
+let vozPropia=0;
+function aiGrade(id){
+  const sp=findSp(id),out=document.getElementById("ai-res");
+  stopRec();cronoParar();clearInterval(aiInt);
+  const dijo=document.getElementById("ai-text").value.trim();
+  if(dijo.split(/\s+/).length<15){out.innerHTML='<p class="hint" style="color:var(--bad)">Necesito al menos unas frases de tu discurso para calificarte. Di el discurso mientras el texto se escribe arriba.</p>';return}
+  const m=medir(dijo,aiT0),nivel=sp.nivel||1;
+  const crits=nivel===2?[...CRIT_DISCURSO.slice(0,5),CRIT_HISTORIA,CRIT_DISCURSO[5]]:CRIT_DISCURSO;
   const guion=sp.partes.map(p=>p[0]+": "+plain(p[1])).join("\n");
-  const prompt=`Eres un coach de oratoria exigente pero motivador, que habla en español de México. Una persona practicó un discurso en voz alta y su teléfono transcribió lo que dijo. Evalúa SOLO lo que dijo, comparándolo con el guion. La transcripción automática no tiene puntuación confiable: no penalices puntuación ni ortografía.
-
-GUION ORIGINAL ("${sp.titulo}"):
-${guion}
-
-TRANSCRIPCIÓN DE LO QUE DIJO:
-${said.slice(0,6000)}
-
-DATOS: ${nw} palabras${secs?`, ${secs} segundos, ${ppm} palabras por minuto (ideal 130 a 150)`:", sin tiempo medido"}.
-
-Califica de 1 a 5 cada punto:
-- Gancho: ¿abrió con fuerza, con el gancho del guion o uno equivalente?
-- Estructura: ¿siguió gancho, presentación, cuerpo y cierre en orden, aunque parafrasee?
-- Claridad: ¿las frases son completas y la idea central se entiende?
-- Ritmo: según las palabras por minuto (si no hay tiempo, califica 3).
-- Muletillas: cuenta "este", "eh", "em", "mmm", "o sea", "bueno", "pues", "entonces" usadas como relleno. 5 = ninguna.
-- Cierre: ¿remató con la pregunta o la historia final?
-
-Responde solo con JSON con esta forma:
-{"puntos":{"Gancho":4,"Estructura":3,"Claridad":4,"Ritmo":3,"Muletillas":5,"Cierre":2},"muletillas":["este (2)"],"fortaleza":"una frase concreta","mejorar":"una frase concreta citando lo que dijo","consejo":"una acción concreta para el próximo ensayo"}`;
-  try{
-    const r=await IA.json(prompt,{tarea:"calificar"});
-    const pts=r&&r.puntos||{}; const names=Object.keys(pts).filter(k=>Number(pts[k])>=1);
-    if(!names.length)throw {code:"invalid_json"};
-    names.forEach(k=>pts[k]=Math.min(5,Math.max(1,Math.round(Number(pts[k])))));
-    const score=names.reduce((a,k)=>a+pts[k],0)/names.length;
-    const h=store.get("hist",[]);
-    h.unshift({id,date:new Date().toISOString(),kind:"ai",crit:pts,score,secs,note:String(r.consejo||"")});
-    store.set("hist",h.slice(0,200));
-    out.innerHTML=`<div class="row" style="justify-content:space-between"><div><p class="eyebrow">Calificación de Claude</p><p class="score-big">${score.toFixed(1)}</p></div><p class="muted" style="font-size:.9rem">${nw} palabras${secs?` · ${secs} s · ${ppm} ppm`:""}</p></div>
-      <div>${names.map(k=>`<div class="pt"><span>${esc(k)}</span><b>${pts[k]}/5</b></div>`).join("")}</div>
-      ${Array.isArray(r.muletillas)&&r.muletillas.length?`<p><b>Muletillas:</b> ${esc(r.muletillas.join(", "))}</p>`:""}
-      <p><b>Lo que hiciste bien:</b> ${esc(r.fortaleza||"")}</p>
-      <p><b>A mejorar:</b> ${esc(r.mejorar||"")}</p>
-      <div class="coach"><b>Para tu próximo ensayo</b><p>${esc(r.consejo||"")}</p></div>
-      <p class="muted" style="font-size:.88rem">Guardado en tu progreso.</p>`;
-  }catch(e){out.innerHTML=`<p class="hint" style="color:var(--bad)">${esc(aiErr(e))}</p>`}
-  finally{go.disabled=false}
+  const p=promptCalificar(`GUION ORIGINAL ("${sp.titulo}"):\n${guion}\n\nCompara lo que dijo con este guion; puede parafrasear.`,dijo,m.txt+" (ideal 130 a 150 palabras por minuto)",crits);
+  calificar(out,document.getElementById("ai-go"),p,m,{id,nivel,extra:nivel===3&&vozPropia?{"Tu voz":vozPropia}:{}});
 }
 function pick(i,n){
   evalScores[i]=n;
@@ -728,9 +840,9 @@ function pick(i,n){
 function saveEval(id){
   const vals=CRITERIA.map((_,i)=>evalScores[i]);
   const h=store.get("hist",[]);
-  h.unshift({id,date:new Date().toISOString(),scores:vals,score:vals.reduce((a,b)=>a+b,0)/vals.length,
+  h.unshift({id,nivel:(findSp(id)||{}).nivel||1,date:new Date().toISOString(),scores:vals,score:vals.reduce((a,b)=>a+b,0)/vals.length,
     secs:parseInt(document.getElementById("ev-time").value)||null,note:document.getElementById("ev-note").value.trim()});
-  store.set("hist",h.slice(0,200)); toast("Práctica guardada"); location.hash="progreso";
+  store.set("hist",h.slice(0,200)); marcarPractica(); toast("Práctica guardada"); location.hash="progreso";
 }
 const avg=h=>h.reduce((a,b)=>a+b.score,0)/h.length;
 function calcStreak(h){
@@ -749,42 +861,50 @@ function viewProgreso(){
   const weak=Object.entries(acc).map(([n,a])=>({n,v:a.reduce((x,y)=>x+y,0)/a.length})).sort((a,b)=>a.v-b.v)[0];
   return `<div class="stack-lg">
   <div class="section-title"><p class="eyebrow">Progreso</p><h1>Tu avance</h1></div>
+  ${escalera(0)}
   <section class="card stats"><div><b>${h.length}</b><span>prácticas</span></div><div><b>${calcStreak(h)}</b><span>días seguidos</span></div><div><b>${avg(h.slice(0,5)).toFixed(1)}</b><span>promedio reciente /5</span></div></section>
   <section class="card stack"><h3>Últimas ${last.length} calificaciones</h3><div class="bars" role="img" aria-label="Calificaciones recientes">${last.map(x=>`<i style="height:${x.score/5*100}%" title="${x.score.toFixed(1)}"></i>`).join("")}</div></section>
   <section class="coach"><b>Para tu próxima práctica</b><p>Tu punto más bajo últimamente es <b>${weak.n}</b> (${weak.v.toFixed(1)}/5). Enfócate solo en eso la próxima vez.</p></section>
-  <section class="card"><h3 style="margin-bottom:6px">Historial</h3><div class="history">${h.slice(0,20).map(x=>{const sp=findSp(x.id);const d=new Date(x.date);return `<div class="h"><span class="d">${d.toLocaleDateString("es-MX",{day:"numeric",month:"short"})}</span><div class="t"><div>${esc(sp?sp.titulo:x.id)}${x.kind==="ai"?' <span class="chip">Claude</span>':""}</div>${x.note?`<small class="muted">${esc(x.note)}</small>`:""}</div><span class="s">${x.score.toFixed(1)}</span></div>`}).join("")}</div></section>
+  <section class="card"><h3 style="margin-bottom:6px">Historial</h3><div class="history">${h.slice(0,20).map(x=>{const sp=findSp(x.id);const d=new Date(x.date);return `<div class="h"><span class="d">${d.toLocaleDateString("es-MX",{day:"numeric",month:"short"})}</span><div class="t"><div>${esc(x.titulo||(sp?sp.titulo:x.id))}${x.kind==="ai"?' <span class="chip">Claude</span>':""}</div>${x.note?`<small class="muted">${esc(x.note)}</small>`:""}</div><span class="s">${x.score.toFixed(1)}</span></div>`}).join("")}</div></section>
   </div>`;
 }
 
 /* Crear discurso con Claude */
 const GEN_RULES=`Eres un coach de oratoria que ayuda a una persona a crear su propio discurso corto (1 a 3 minutos), con el estilo motivacional y enérgico de Tony Robbins, pero con ideas y palabras originales. Hablas en español de México, cercano y breve (2 a 4 frases por respuesta). La persona te habla por dictado de voz, así que su texto puede venir sin puntuación.
 Tu trabajo en esta conversación: entender de qué quiere hablar. Haz UNA sola pregunta a la vez, máximo tres preguntas en total, entre estas: el mensaje central o la idea que quiere dejar, quién es su público, y una historia o experiencia personal que pueda usar en el cierre. Si ya te dio algo, no lo preguntes. Cuando ya tengas suficiente, dile que toque el botón "Armar discurso". Si te pide cambios a un discurso ya armado, confirma brevemente qué vas a cambiar y dile que toque "Armar discurso" otra vez.`;
-function genState(){return store.get("gen",{turns:[],draft:null})}
+function genState(){return store.get(MODOS[modoCrear()].key,{turns:[],draft:null})}
+function genGuardarEstado(g){store.set(MODOS[modoCrear()].key,g)}
 function viewCrear(){
-  const g=genState();
+  const modo=store.get("crearModo","discurso");
+  const tabs=`<div class="modos" role="group" aria-label="Qué crear">${[["discurso","Discurso"],["historia","Historia"],["unir","Unir"]].map(([k,t])=>`<button aria-pressed="${k===modo}" onclick="store.set('crearModo','${k}');render()">${t}</button>`).join("")}</div>`;
+  const intro={discurso:"Cuéntale a Claude de qué quieres hablar. Te hará un par de preguntas y armará un discurso con gancho, cuerpo y cierre.",historia:"Claude te ayuda a sacar una historia real de tu vida: el momento, el conflicto, el giro y la lección. Luego la puedes unir a cualquier discurso.",unir:"Junta un discurso con una de tus historias. Claude te dice dónde va mejor y por qué."}[modo];
+  if(modo==="unir")return `<div class="stack-lg"><div class="section-title"><p class="eyebrow">Crear</p><h1>Unir discurso e historia</h1><p class="muted">${intro}</p></div>${tabs}${viewUnir()}</div>`;
+  const M=MODOS[modo],g=genState();
   return `<div class="stack-lg">
-  <div class="section-title"><p class="eyebrow">Crear</p><h1>Tu propio discurso</h1><p class="muted">Cuéntale a Claude de qué quieres hablar. Te hará un par de preguntas y armará un discurso con gancho, cuerpo y cierre, listo para practicar.</p></div>
+  <div class="section-title"><p class="eyebrow">Crear</p><h1>${modo==="historia"?"Tu historia":"Tu propio discurso"}</h1><p class="muted">${intro}</p></div>
+  ${tabs}
   <section class="chat" id="chat">${chatHtml(g)}</section>
   <section class="card stack">
-    ${dictBox("gen-text",g.turns.length?"Tu respuesta…":"Ej. Quiero hablar de cómo dejar de procrastinar, para jóvenes que empiezan a trabajar…",4)}
+    ${dictBox("gen-text",g.turns.length?"Tu respuesta…":M.ph,4)}
     <div class="row"><button class="btn-primary" id="gen-send" onclick="genSend()">Enviar</button>
-    <button class="btn-accent" id="gen-build" onclick="genBuild()">Armar discurso</button>
+    <button class="btn-accent" id="gen-build" onclick="genBuild()">${M.boton}</button>
     ${g.turns.length?`<button onclick="genReset(this)">Empezar de nuevo</button>`:""}</div>
     <p class="hint" id="gen-err" hidden></p>
   </section>
-  <section id="gen-draft">${draftHtml(g.draft)}</section>
+  <section id="gen-draft">${draftHtml(g.draft,M.key)}</section>
   </div>`;
 }
 function chatHtml(g){
-  if(!g.turns.length)return `<div class="msg cl">¿Sobre qué quieres hacer tu discurso? Cuéntame la idea como te salga, aunque sea desordenada.</div>`;
+  if(!g.turns.length)return `<div class="msg cl">${esc(MODOS[modoCrear()].saludo)}</div>`;
   return g.turns.map(t=>`<div class="msg ${t.role==="user"?"me":"cl"}">${esc(t.content)}</div>`).join("");
 }
-function draftHtml(d){
+function draftHtml(d,key){
   if(!d)return "";
-  return `<div class="card stack"><p class="eyebrow">Borrador · ${esc(d.tema)}</p><h2>${esc(d.titulo)}</h2><p class="muted">${esc(d.resumen)}</p>
+  return `<div class="card stack"><p class="eyebrow">Borrador · ${esc(d.kind==="historia"?(d.tipo||"Historia"):d.tema)}</p><h2>${esc(d.titulo)}</h2><p class="muted">${esc(d.resumen)}</p>
+   ${d.recomendacion?`<div class="coach"><b>Por qué la historia va ahí</b><p>${esc(d.recomendacion)}</p></div>`:""}
    <div class="stack" style="gap:4px">${d.partes.map(p=>`<section class="seg"><span class="tag">${esc(p[0])}</span><p>${withPauses(p[1])}</p></section>`).join("")}</div>
-   <div class="row"><button class="btn-accent" onclick="genSave()">${ICON.check}Guardar y practicar</button></div>
-   <p class="muted" style="font-size:.9rem">¿Quieres cambios? Díselo a Claude arriba ("hazlo más corto", "cambia la historia del cierre") y toca Armar discurso otra vez.</p></div>`;
+   <div class="row"><button class="btn-accent" onclick="genSave('${key}')">${ICON.check}Guardar y practicar</button></div>
+   <p class="muted" style="font-size:.9rem">${key==="genu"?"¿No te convence? Toca Recomendar y unir otra vez.":`¿Quieres cambios? Díselo a Claude arriba ("hazlo más corto", "cambia el final") y toca ${d.kind==="historia"?"Armar historia":"Armar discurso"} otra vez.`}</p></div>`;
 }
 function genErr(msg){const e=document.getElementById("gen-err");if(e){e.hidden=!msg;e.textContent=msg||""}}
 let genBusy=false;
@@ -792,28 +912,30 @@ async function genSend(){
   if(genBusy)return; stopRec();
   const ta=document.getElementById("gen-text"),txt=ta.value.trim(); if(!txt)return;
   if(!IA.listo()){genErr(aiErr({code:"sin_config"}));return}
-  const g=genState(); g.turns.push({role:"user",content:txt}); store.set("gen",g); ta.value=""; genErr("");
+  const g=genState(); g.turns.push({role:"user",content:txt}); genGuardarEstado(g); ta.value=""; genErr("");
   const chat=document.getElementById("chat"); chat.innerHTML=chatHtml(g)+'<div class="msg cl" id="gen-live">Pensando…</div>';
   document.getElementById("gen-build").disabled=false;
   genBusy=true;
   try{
     const turns=g.turns.slice(-16);
-    const text=await IA.texto([{role:"user",content:GEN_RULES},{role:"assistant",content:"Entendido. ¿Sobre qué quieres hacer tu discurso?"},...turns],{rapido:true,tarea:"conversar"});
-    g.turns.push({role:"assistant",content:text}); store.set("gen",g);
+    const M=MODOS[modoCrear()];
+    const text=await IA.texto([{role:"user",content:M.rules()},{role:"assistant",content:"Entendido. "+M.saludo},...turns],{rapido:true,tarea:"conversar"});
+    g.turns.push({role:"assistant",content:text}); genGuardarEstado(g);
   }catch(e){genErr(aiErr(e))}
   finally{genBusy=false;const c=document.getElementById("chat");if(c)c.innerHTML=chatHtml(genState())}
 }
 async function genBuild(){
   if(genBusy)return; stopRec();
   const pending=document.getElementById("gen-text").value.trim();
-  const g=genState(); if(pending){g.turns.push({role:"user",content:pending});store.set("gen",g);document.getElementById("gen-text").value="";document.getElementById("chat").innerHTML=chatHtml(g)}
+  const g=genState(); if(pending){g.turns.push({role:"user",content:pending});genGuardarEstado(g);document.getElementById("gen-text").value="";document.getElementById("chat").innerHTML=chatHtml(g)}
   if(!g.turns.length){genErr("Primero cuéntale a Claude de qué quieres hablar.");return}
   if(!IA.listo()){genErr(aiErr({code:"sin_config"}));return}
   const b=document.getElementById("gen-build"); b.disabled=true; genBusy=true; genErr("");
-  document.getElementById("gen-draft").innerHTML='<div class="card"><p class="muted">Claude está escribiendo tu discurso. Puede tardar hasta un minuto…</p></div>';
+  const esHist=modoCrear()==="historia";
+  document.getElementById("gen-draft").innerHTML=`<div class="card"><p class="muted">Claude está escribiendo tu ${esHist?"historia":"discurso"}. Puede tardar hasta un minuto…</p></div>`;
   const convo=g.turns.map(t=>(t.role==="user"?"PERSONA: ":"COACH: ")+t.content).join("\n");
   const prev=g.draft?"\n\nBORRADOR ANTERIOR (aplica los cambios que la persona pidió después de él):\n"+JSON.stringify(g.draft):"";
-  const prompt=`Escribe un discurso original en español de México para que esta persona lo practique en voz alta, con el estilo motivacional, enérgico y cercano de Tony Robbins, sin copiar frases suyas. Usa lo que la persona contó en esta conversación con su coach:
+  const prompt=esHist?promptHistoria(convo,prev):`Escribe un discurso original en español de México para que esta persona lo practique en voz alta, con el estilo motivacional, enérgico y cercano de Tony Robbins, sin copiar frases suyas. Usa lo que la persona contó en esta conversación con su coach:
 
 ${convo.slice(-8000)}${prev}
 
@@ -826,29 +948,29 @@ Reglas:
 Responde solo con JSON con esta forma:
 {"titulo":"máximo 6 palabras","tema":"Autoayuda","resumen":"una frase","coach":"un consejo de entrega para practicarlo","cierre":"Pregunta o Storytelling","partes":[["Gancho","..."],["Presentación","..."],["Cuerpo","..."],["Cierre","..."]]}`;
   try{
-    const d=await IA.json(prompt,{tarea:"armar"});
-    if(!d||!Array.isArray(d.partes)||d.partes.length<3||!d.titulo)throw {code:"invalid_json"};
-    const draft={titulo:String(d.titulo),tema:String(d.tema||"Mío"),resumen:String(d.resumen||""),coach:String(d.coach||"Practícalo de pie y respeta las pausas."),cierre:String(d.cierre||"Pregunta"),partes:d.partes.filter(p=>Array.isArray(p)&&p[1]).map(p=>[String(p[0]),String(p[1])])};
-    const g2=genState(); g2.draft=draft; store.set("gen",g2);
-    document.getElementById("gen-draft").innerHTML=draftHtml(draft);
+    const d=await IA.json(prompt,{tarea:esHist?"historia":"armar"});
+    const draft=limpiarBorrador(d,esHist?{kind:"historia",tipo:String(d.tipo||"Historia"),tema:"Historia",cierre:"Storytelling",nivel:2}:{nivel:1});
+    const g2=genState(); g2.draft=draft; genGuardarEstado(g2);
+    document.getElementById("gen-draft").innerHTML=draftHtml(draft,MODOS[modoCrear()].key);
     document.getElementById("gen-draft").scrollIntoView({behavior:"smooth",block:"start"});
   }catch(e){document.getElementById("gen-draft").innerHTML="";genErr(aiErr(e))}
   finally{genBusy=false;b.disabled=false}
 }
-function genSave(){
-  const g=genState(); if(!g.draft)return;
+function genSave(key){
+  const g=store.get(key,{}); if(!g.draft)return;
   const sp={...g.draft,id:"m"+Date.now(),mio:true};
+  delete sp.recomendacion;
   store.set("mine",[sp,...store.get("mine",[])]);
-  store.set("gen",{turns:[],draft:null});
+  store.set(key,{turns:[],draft:null});
   toast("Guardado en tu biblioteca"); location.hash="d-"+sp.id;
 }
-function genReset(b){if(!b.dataset.c){b.dataset.c=1;b.textContent="Toca otra vez para borrar la conversación";return}store.set("gen",{turns:[],draft:null});render()}
+function genReset(b){if(!b.dataset.c){b.dataset.c=1;b.textContent="Toca otra vez para borrar la conversación";return}genGuardarEstado({turns:[],draft:null});render()}
 
 function viewAjustes(){
   const c=IA.conf();
   return `<div class="stack-lg">
   <button class="back" onclick="location.hash='inicio'">← Inicio</button>
-  <div class="section-title"><p class="eyebrow">Ajustes</p><h1>Conectar la IA</h1><p class="muted">La calificación y la creación de discursos usan Claude a través de tu servidor, con tu clave de API. Los pasos para preparar el servidor están en el repositorio, en <b>ia-servidor/LEEME.md</b>.</p></div>
+  <div class="section-title"><p class="eyebrow">Ajustes</p><h1>Ajustes</h1><h2 style="margin-top:8px">Conectar la IA</h2><p class="muted">La calificación y la creación de discursos usan Claude a través de tu servidor, con tu clave de API. Los pasos para preparar el servidor están en el repositorio, en <b>ia-servidor/LEEME.md</b>.</p></div>
   <section class="card stack">
     <label for="ia-url"><h3>Enlace del servidor</h3></label>
     <input id="ia-url" type="text" inputmode="url" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec" value="${esc(c.url)}">
@@ -857,9 +979,25 @@ function viewAjustes(){
     <button class="btn-primary" style="align-self:flex-start" onclick="guardarIA(this)">Guardar y probar</button>
     <p class="hint" id="ia-msg" hidden></p>
   </section>
+  <section class="card stack"><h3>Recordatorio diario</h3>
+    ${NATIVO&&NATIVO.recordatorio?(()=>{let r={activo:false,hora:19,minuto:0};try{r=Object.assign(r,JSON.parse(NATIVO.recordatorioEstado()))}catch(e){}
+      return `<p class="muted">Te aviso a esta hora que toca practicar. Si ese día ya practicaste, no te molesto.</p>
+      <div class="row"><label for="av-hora" class="muted">Hora</label><input id="av-hora" type="time" value="${String(r.hora).padStart(2,"0")}:${String(r.minuto).padStart(2,"0")}" style="width:auto"></div>
+      <div class="row"><button class="btn-primary" onclick="guardarAviso(true)">${r.activo?"Cambiar hora":"Activar recordatorio"}</button>${r.activo?`<button onclick="guardarAviso(false)">Desactivar</button>`:""}</div>
+      ${r.activo?`<p class="hint">Activo todos los días a las ${String(r.hora).padStart(2,"0")}:${String(r.minuto).padStart(2,"0")}.</p>`:""}`})()
+    :`<p class="muted">El recordatorio funciona en la app Android${NATIVO?" nueva: descarga otra vez escenario.apk para tenerlo":""}.</p>${NATIVO?`<a class="btn" href="${APK_URL}" target="_blank" rel="noopener" style="align-self:flex-start">Descargar escenario.apk</a>`:""}`}
+  </section>
+  <section class="card stack"><h3>Niveles</h3>
+    <label class="row" for="todos" style="gap:10px;align-items:center"><input id="todos" type="checkbox" ${store.get("todos",false)?"checked":""} onchange="store.set('todos',this.checked)" style="width:22px;height:22px;accent-color:var(--accent)"> Desbloquear todos los niveles (para probar)</label>
+    <p class="muted" style="font-size:.9rem">Apágalo para volver a subir de nivel con tus prácticas.</p></section>
   ${NATIVO?"":`<section class="card stack"><h3>App Android</h3><p class="muted">Con la app Android funcionan la voz que lee los discursos y el micrófono que no se corta en las pausas.</p><a class="btn" href="${APK_URL}" target="_blank" rel="noopener" style="align-self:flex-start">Descargar escenario.apk</a></section>`}
   </div>`;
 }
+function guardarAviso(activo){
+  const [h,m]=(document.getElementById("av-hora").value||"19:00").split(":").map(Number);
+  NATIVO.recordatorio(activo,h||0,m||0);toast(activo?`Te aviso todos los días a las ${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`:"Recordatorio desactivado");render();
+}
+function marcarPractica(){try{NATIVO&&NATIVO.practique&&NATIVO.practique()}catch(e){}}
 async function guardarIA(b){
   const url=document.getElementById("ia-url").value.trim(),clave=document.getElementById("ia-clave").value.trim(),m=document.getElementById("ia-msg");
   m.hidden=false;
@@ -873,7 +1011,9 @@ async function guardarIA(b){
 
 function viewCalentar(){
   return `<div class="stack-lg">
-  <div class="section-title"><p class="eyebrow">Calentamiento</p><h1>Rostro, boca y voz</h1><p class="muted">Unos 7 minutos en total. Haz al menos la parte de rostro y articulación antes de cada práctica. Toca <b>Iniciar</b> para seguir el tiempo.</p></div>
+  <div class="section-title"><p class="eyebrow">Calentamiento</p><h1>Rostro, boca y voz</h1><p class="muted">Unos 8 minutos en total. Con la voz guía no necesitas mirar el teléfono: te dice cada paso y te cuenta el tiempo.</p></div>
+  <button class="btn-accent" style="align-self:flex-start" onclick="guiaCalentar()">${ICON.play}Calentar con voz guía</button>
+  <p class="muted" style="font-size:.9rem">O haz cada ejercicio por separado con su botón <b>Iniciar</b>.</p>
   ${WARMUP.map(g=>`<section class="stack"><h2>${g.g}</h2>${g.items.map(x=>`<div class="card ex"><div class="top"><h3>${esc(x.t)}</h3><span class="dur">${x.s} s</span></div><p class="muted">${esc(x.d)}</p><ol>${x.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol>${x.tw?x.tw.map(t=>`<p class="tw">${esc(t)}</p>`).join(""):""}<button style="align-self:flex-start" onclick="runTimer('${esc(x.t)}',${x.s})">${ICON.play}Iniciar ${x.s} s</button></div>`).join("")}</section>`).join("")}
   <a class="btn" href="#nervios" style="align-self:flex-start">Tips para los nervios</a>
   </div>`;
@@ -905,15 +1045,346 @@ function breathe(){
   step();
 }
 
+/* ================= NIVELES ================= */
+function nivelDe(x){return x.nivel||(findSp(x.id)||{}).nivel||1}
+function aprobadas(n){return store.get("hist",[]).filter(x=>nivelDe(x)===n&&x.score>=APRUEBA).length}
+function nivelActual(){if(store.get("todos",false))return 5;let k=1;while(k<5&&aprobadas(k)>=META)k++;return k}
+function nivelVista(n){return NIVELES[n-1]}
+function escalera(sel){
+  const cur=nivelActual();
+  return `<div class="ladder">${NIVELES.map(l=>{
+    const ok=l.n<cur||(l.n===cur&&aprobadas(l.n)>=META), abierto=l.n<=cur, a=Math.min(META,aprobadas(l.n));
+    const estado=ok?`<span class="done-mark">${ICON.check} superado</span>`:abierto?`<span class="chip">${a}/${META} para subir</span>`:`<span class="muted">${ICON.lock} bloqueado</span>`;
+    return `<button class="lv ${l.n===sel?"sel":""} ${abierto?"":"locked"}" ${abierto?`onclick="verNivel(${l.n})"`:`aria-disabled="true"`}><span class="lv-n">${l.n}</span><span class="lv-t"><b>${l.t}</b><small>${l.d}</small></span>${estado}</button>`}).join("")}</div>`;
+}
+function verNivel(n){store.set("nivelVer",n);render()}
+
+/* ================= CALIFICAR (común a discursos, improvisación y preguntas) ================= */
+const CRIT_DISCURSO=[
+ ["Gancho","¿abrió con fuerza, con el gancho del guion o uno equivalente?"],
+ ["Estructura","¿siguió el orden del guion (inicio, desarrollo y cierre), aunque parafrasee?"],
+ ["Claridad","¿las frases son completas y la idea central se entiende?"],
+ ["Ritmo","según las palabras por minuto (ideal 130 a 150; si no hay tiempo medido, califica 3)"],
+ ["Muletillas","cuenta \"este\", \"eh\", \"em\", \"mmm\", \"o sea\", \"bueno\", \"pues\", \"entonces\" usadas como relleno. 5 = ninguna"],
+ ["Cierre","¿remató con la pregunta o la historia final?"]];
+const CRIT_HISTORIA=["Historia","¿contó la historia con un momento concreto, un conflicto, un giro y una lección clara?"];
+const CRIT_IMPRO=[
+ ["Idea central","¿dejó clara una sola idea sobre el tema?"],
+ ["Estructura","¿siguió algo parecido a PREP: punto, razón, ejemplo y volver al punto?"],
+ ["Ejemplo","¿usó un ejemplo o una historia concreta?"],
+ CRIT_DISCURSO[3],CRIT_DISCURSO[4],
+ ["Cierre","¿terminó con una frase clara en vez de apagarse?"]];
+const CRIT_QA=[
+ ["Respuesta directa","¿respondió lo que se preguntó en las primeras frases?"],
+ ["Brevedad","¿fue al grano, sin dar vueltas (ideal 30 a 90 segundos)?"],
+ ["Seguridad","¿habló con firmeza, sin disculparse ni dudar de más?"],
+ CRIT_DISCURSO[4],
+ ["Conexión","¿unió su respuesta con la idea central de su discurso?"]];
+
+function promptCalificar(contexto,dijo,datos,crits){
+  const ej={};crits.forEach(c=>ej[c[0]]=4);
+  return `Eres un coach de oratoria exigente pero motivador, que habla en español de México. Una persona habló en voz alta y su teléfono transcribió lo que dijo. Evalúa SOLO lo que dijo. La transcripción automática no tiene puntuación confiable: no penalices puntuación ni ortografía.
+
+${contexto}
+
+TRANSCRIPCIÓN DE LO QUE DIJO:
+${dijo.slice(0,6000)}
+
+DATOS: ${datos}.
+
+Califica de 1 a 5 cada punto:
+${crits.map(c=>"- "+c[0]+": "+c[1]).join("\n")}
+
+Responde solo con JSON con esta forma:
+${JSON.stringify({puntos:ej,muletillas:["este (2)"],fortaleza:"una frase concreta",mejorar:"una frase concreta citando lo que dijo",consejo:"una acción concreta para el próximo ensayo"})}`;
+}
+function medir(texto,t0){
+  const nw=texto.split(/\s+/).filter(Boolean).length, secs=t0?Math.round((Date.now()-t0)/1000):null;
+  return {nw,secs,ppm:secs?Math.round(nw/secs*60):null,txt:`${nw} palabras${secs?`, ${secs} segundos, ${Math.round(nw/secs*60)} palabras por minuto`:", sin tiempo medido"}`};
+}
+// entrada: {id, titulo, nivel, extra: {criterio: nota}} — guarda la práctica y avisa si subiste de nivel
+async function calificar(out,go,prompt,m,entrada){
+  if(!IA.listo()){out.innerHTML='<p class="hint">Falta conectar la IA. <a href="#ajustes">Ve a Ajustes de la IA</a>.</p>';return}
+  go.disabled=true;out.innerHTML='<p class="muted">Claude está revisando lo que dijiste…</p>';
+  const antes=nivelActual();
+  try{
+    const r=await IA.json(prompt,{tarea:"calificar"});
+    const pts=Object.assign({},r&&r.puntos||{});
+    const names=Object.keys(pts).filter(k=>Number(pts[k])>=1);
+    if(!names.length)throw {code:"invalid_json"};
+    names.forEach(k=>pts[k]=Math.min(5,Math.max(1,Math.round(Number(pts[k])))));
+    const crit={};names.forEach(k=>crit[k]=pts[k]);Object.assign(crit,entrada.extra||{});
+    const ks=Object.keys(crit),score=ks.reduce((a,k)=>a+crit[k],0)/ks.length;
+    const h=store.get("hist",[]);
+    h.unshift({id:entrada.id,titulo:entrada.titulo,nivel:entrada.nivel,date:new Date().toISOString(),kind:"ai",crit,score,secs:m.secs,note:String(r.consejo||"")});
+    store.set("hist",h.slice(0,200));marcarPractica();
+    const despues=nivelActual();
+    const n=entrada.nivel, faltan=Math.max(0,META-aprobadas(n));
+    out.innerHTML=`${despues>antes?`<div class="levelup"><p class="eyebrow">Nuevo nivel</p><h2>Subiste al nivel ${despues}: ${nivelVista(despues).t}</h2><p>${nivelVista(despues).d}</p><button class="btn-primary" onclick="verNivel(${despues});location.hash='discursos'">Ver el nivel ${despues}</button></div>`:""}
+      <div class="row" style="justify-content:space-between"><div><p class="eyebrow">Calificación de Claude</p><p class="score-big">${score.toFixed(1)}</p></div><p class="muted" style="font-size:.9rem">${m.nw} palabras${m.secs?` · ${m.secs} s · ${m.ppm} ppm`:""}</p></div>
+      <div>${ks.map(k=>`<div class="pt"><span>${esc(k)}</span><b>${crit[k]}/5</b></div>`).join("")}</div>
+      ${Array.isArray(r.muletillas)&&r.muletillas.length?`<p><b>Muletillas:</b> ${esc(r.muletillas.join(", "))}</p>`:""}
+      <p><b>Lo que hiciste bien:</b> ${esc(r.fortaleza||"")}</p>
+      <p><b>A mejorar:</b> ${esc(r.mejorar||"")}</p>
+      <div class="coach"><b>Para tu próximo ensayo</b><p>${esc(r.consejo||"")}</p></div>
+      <p class="muted" style="font-size:.88rem">Guardado en tu progreso.${despues>antes||n<antes?"":score>=APRUEBA?` Te ${faltan===1?"falta 1 práctica":`faltan ${faltan} prácticas`} de ${APRUEBA} o más para subir de nivel.`:` Necesitas ${APRUEBA} o más para que cuente para subir de nivel.`}</p>`;
+  }catch(e){out.innerHTML=`<p class="hint" style="color:var(--bad)">${esc(aiErr(e))}</p>`}
+  finally{go.disabled=false}
+}
+
+/* Cronómetro de práctica: una sola vista activa a la vez */
+let cronoT0=0,cronoInt=null,cronoFin=null;
+function cronoIniciar(elId,limite,alTerminar){
+  cronoT0=Date.now();clearInterval(cronoInt);
+  cronoInt=setInterval(()=>{
+    const s=Math.floor((Date.now()-cronoT0)/1000),c=document.getElementById(elId);
+    const v=limite?Math.max(0,limite-s):s;
+    if(c)c.textContent=Math.floor(v/60)+":"+String(v%60).padStart(2,"0");
+    if(limite&&s>=limite){clearInterval(cronoInt);cronoInt=null;try{navigator.vibrate?.(300)}catch(e){}if(alTerminar)alTerminar()}
+  },250);
+}
+function cronoParar(){clearInterval(cronoInt);cronoInt=null}
+
+/* ================= NIVEL 4: IMPROVISACIÓN ================= */
+let impTema="",impFase="";
+function temaAzar(){let t;do{t=TEMAS_IMPRO[Math.floor(Math.random()*TEMAS_IMPRO.length)]}while(t===impTema&&TEMAS_IMPRO.length>1);return t}
+function bloqueado(n){
+  return `<div class="stack-lg"><button class="back" onclick="location.hash='discursos'">← Niveles</button>
+  <div class="card stack"><p class="eyebrow">Nivel ${n} bloqueado</p><h2>${nivelVista(n).t}</h2><p class="muted">Completa el nivel ${n-1} con ${META} prácticas calificadas con ${APRUEBA} o más para desbloquearlo.</p></div></div>`;
+}
+function viewImprovisar(){
+  if(nivelActual()<4)return bloqueado(4);
+  impTema=impTema||temaAzar();impFase="";
+  return `<div class="stack-lg">
+  <button class="back" onclick="location.hash='discursos'">← Niveles</button>
+  <div class="section-title"><p class="eyebrow">Nivel 4 · Improvisación</p><h1>Habla sin preparar</h1><p class="muted">Tienes 30 segundos para pensar tu punto y tu ejemplo (fórmula PREP), y luego 1 minuto para hablar. El micrófono se enciende solo.</p></div>
+  <section class="card stack">
+    <p class="eyebrow">Tu tema</p><h2 id="imp-tema" class="tema">${esc(impTema)}</h2>
+    <div class="row"><button class="btn-primary" id="imp-go" onclick="impEmpezar()">${ICON.play}Empezar</button><button id="imp-otro" onclick="impTema=temaAzar();document.getElementById('imp-tema').textContent=impTema">Otro tema</button><span class="live" id="imp-clock">0:30</span></div>
+    <p class="muted" id="imp-fase">Toca Empezar cuando estés de pie.</p>
+    ${dictBox("imp-text","Aquí aparecerá lo que digas…",5)}
+    <button class="btn-accent" id="imp-cal" style="align-self:flex-start" onclick="impCalificar()">${ICON.check}Terminar y calificar</button>
+    <div class="ai-res" id="imp-res" aria-live="polite"></div>
+  </section></div>`;
+}
+async function impEmpezar(){
+  const f=document.getElementById("imp-fase"),ta=document.getElementById("imp-text");
+  ta.value="";impFase="pensar";impT=0;impT0=0;document.getElementById("imp-otro").disabled=true;
+  f.textContent="Piensa: ¿cuál es tu punto? ¿Qué ejemplo vas a contar?";
+  decir("Tu tema es: "+impTema+". Tienes treinta segundos para pensar.");
+  cronoIniciar("imp-clock",30,()=>{
+    if(impFase!=="pensar")return;
+    impFase="hablar";f.textContent="¡Habla! Tienes un minuto.";
+    try{navigator.vibrate?.([200,100,200])}catch(e){}
+    startRec("imp-text");
+    cronoIniciar("imp-clock",60,()=>{if(impFase==="hablar"){stopRec();impFase="fin";f.textContent="Tiempo. Toca Terminar y calificar.";impT=Date.now()}});
+    impT0=Date.now();
+  });
+}
+let impT0=0,impT=0;
+function impCalificar(){
+  stopRec();cronoParar();
+  const dijo=document.getElementById("imp-text").value.trim(),out=document.getElementById("imp-res");
+  if(dijo.split(/\s+/).length<10){out.innerHTML='<p class="hint" style="color:var(--bad)">Necesito al menos unas frases para calificarte.</p>';return}
+  const m=medir(dijo,impT0);if(impT&&impT0)m.secs=Math.round((impT-impT0)/1000);
+  impFase="fin";document.getElementById("imp-otro").disabled=false;
+  const p=promptCalificar(`Fue una IMPROVISACIÓN: la persona recibió el tema "${impTema}", tuvo 30 segundos para pensar y 1 minuto para hablar. No hay guion; evalúa cómo armó su idea en el momento.`,dijo,m.txt+" (ideal 130 a 150 palabras por minuto)",CRIT_IMPRO);
+  calificar(out,document.getElementById("imp-cal"),p,m,{id:"impro",titulo:"Improvisación: "+impTema,nivel:4});
+}
+
+/* ================= NIVEL 5: PREGUNTAS DEL PÚBLICO ================= */
+let qaPregunta="",qaT0=0;
+function viewPreguntas(){
+  if(nivelActual()<5)return bloqueado(5);
+  const lista=allSpeeches().filter(s=>s.kind!=="historia"),sel=store.get("qaSp",lista[0].id);
+  return `<div class="stack-lg">
+  <button class="back" onclick="location.hash='discursos'">← Niveles</button>
+  <div class="section-title"><p class="eyebrow">Nivel 5 · Preguntas del público</p><h1>Responde en voz alta</h1><p class="muted">Elige el discurso que acabas de dar. Claude te hará una pregunta difícil como alguien del público, y tú respondes de pie.</p></div>
+  <section class="card stack">
+    <label for="qa-sp"><h3>Tu discurso</h3></label>
+    <select id="qa-sp" onchange="store.set('qaSp',this.value)">${lista.map(s=>`<option value="${s.id}" ${s.id===sel?"selected":""}>${esc(s.titulo)}</option>`).join("")}</select>
+    <button class="btn-primary" id="qa-ask" style="align-self:flex-start" onclick="qaPreguntar()">Hazme una pregunta</button>
+    <div id="qa-q" hidden class="coach"><b>Pregunta del público</b><p id="qa-qt" class="tema"></p></div>
+    <div id="qa-resp" hidden class="stack">
+      <div class="row"><button class="btn-primary" onclick="qaT0=Date.now();cronoIniciar('qa-clock',0);startRec('qa-text')">${ICON.mic}Responder</button><span class="live" id="qa-clock">0:00</span></div>
+      ${dictBox("qa-text","Aquí aparecerá tu respuesta…",4)}
+      <button class="btn-accent" id="qa-cal" style="align-self:flex-start" onclick="qaCalificar()">${ICON.check}Terminar y calificar</button>
+    </div>
+    <p class="hint" id="qa-err" hidden></p>
+    <div class="ai-res" id="qa-res" aria-live="polite"></div>
+  </section></div>`;
+}
+async function qaPreguntar(){
+  const e=document.getElementById("qa-err"),b=document.getElementById("qa-ask");e.hidden=true;
+  if(!IA.listo()){e.hidden=false;e.textContent=aiErr({code:"sin_config"});return}
+  const sp=findSp(document.getElementById("qa-sp").value);
+  b.disabled=true;b.textContent="Pensando la pregunta…";
+  try{
+    const t=await IA.texto(`Eres alguien del público que acaba de escuchar este discurso. Haz UNA pregunta difícil pero respetuosa, de las que de verdad haría una persona escéptica o curiosa: que ponga a prueba la idea central, pida un ejemplo o señale un punto débil. Máximo 30 palabras, en español de México, en segunda persona. Responde solo con la pregunta, sin comillas.
+
+DISCURSO "${sp.titulo}":
+${sp.partes.map(p=>plain(p[1])).join("\n")}`,{rapido:true,tarea:"pregunta"});
+    qaPregunta=t.trim().replace(/^["«]|["»]$/g,"");
+    document.getElementById("qa-qt").textContent=qaPregunta;
+    document.getElementById("qa-q").hidden=false;document.getElementById("qa-resp").hidden=false;document.getElementById("qa-res").innerHTML="";document.getElementById("qa-text").value="";
+    decir(qaPregunta);
+  }catch(x){e.hidden=false;e.textContent=aiErr(x)}
+  finally{b.disabled=false;b.textContent="Otra pregunta"}
+}
+function qaCalificar(){
+  stopRec();cronoParar();
+  const dijo=document.getElementById("qa-text").value.trim(),out=document.getElementById("qa-res"),sp=findSp(document.getElementById("qa-sp").value);
+  if(dijo.split(/\s+/).length<8){out.innerHTML='<p class="hint" style="color:var(--bad)">Necesito al menos unas frases de tu respuesta.</p>';return}
+  const m=medir(dijo,qaT0);
+  const p=promptCalificar(`La persona dio el discurso "${sp.titulo}" (idea central: ${sp.resumen}). Alguien del público le preguntó: "${qaPregunta}". Evalúa su RESPUESTA a esa pregunta.`,dijo,m.txt,CRIT_QA);
+  calificar(out,document.getElementById("qa-cal"),p,m,{id:"qa",titulo:"Pregunta: "+qaPregunta.slice(0,60),nivel:5});
+}
+
+/* ================= VOZ GUÍA (calentar, improvisación, preguntas) ================= */
+let vozCb=null;
+function decir(t){return new Promise(res=>{
+  const listo=()=>{vozCb=null;res()};
+  if(NATIVO){vozCb=listo;NATIVO.hablar(JSON.stringify([{i:0,t}]),parseFloat(store.get("rate",0.95)));return}
+  if(synth&&window.SpeechSynthesisUtterance){
+    synth.cancel();const u=new SpeechSynthesisUtterance(t);
+    const vName=store.get("voice",""),v=voices.find(x=>x.name===vName)||voices.find(x=>/es-(MX|US|419)/i.test(x.lang))||voices[0];
+    u.lang=v?v.lang:"es-MX";if(v)u.voice=v;u.rate=parseFloat(store.get("rate",0.95));u.onend=listo;u.onerror=listo;vozCb=listo;synth.speak(u);return;
+  }
+  setTimeout(res,Math.min(9000,800+t.length*60));
+})}
+function callarGuia(){if(NATIVO)NATIVO.callar();if(synth)synth.cancel();if(vozCb)vozCb()}
+
+let guia=null;
+const esperar=(ms,tk)=>new Promise(r=>{const t0=Date.now();const i=setInterval(()=>{if(!tk.on||tk.saltar||Date.now()-t0>=ms){clearInterval(i);r()}},150)});
+async function guiaCalentar(){
+  guiaCerrar();
+  const tk={on:true,saltar:false,pausa:false};guia=tk;
+  const items=WARMUP.flatMap(g=>g.items.map(x=>({...x,g:g.g})));
+  const el=document.createElement("div");el.className="guia";el.id="guia";
+  el.innerHTML=`<div class="guia-in"><p class="eyebrow" id="g-eb">Calentamiento guiado</p><h2 id="g-t">Ponte de pie</h2><p id="g-s" class="g-s">Hombros sueltos, pies a la anchura de tus hombros.</p><div class="g-n" id="g-n"></div>
+   <div class="row" style="justify-content:center"><button id="g-skip">Saltar ejercicio</button><button id="g-close">Terminar</button></div></div>`;
+  document.body.appendChild(el);
+  let wake=null;try{wake=await navigator.wakeLock?.request("screen")}catch(e){}
+  el.querySelector("#g-skip").onclick=()=>{tk.saltar=true;callarGuia()};
+  el.querySelector("#g-close").onclick=()=>guiaCerrar();
+  const $=id=>document.getElementById(id);
+  await decir("Vamos a calentar. Ponte de pie, con los hombros sueltos y los pies a la anchura de tus hombros.");
+  for(let k=0;k<items.length&&tk.on;k++){
+    const x=items[k];tk.saltar=false;
+    $("g-eb").textContent=`${x.g} · ${k+1} de ${items.length}`;$("g-t").textContent=x.t;$("g-s").textContent=x.d;$("g-n").textContent="";
+    await decir(x.t+". "+x.d);
+    for(const s of x.steps){if(!tk.on||tk.saltar)break;$("g-s").textContent=s;await decir(s)}
+    if(x.tw)for(const t of x.tw){if(!tk.on||tk.saltar)break;$("g-s").textContent=t;await decir("Repite conmigo. "+t);await esperar(5000,tk)}
+    if(!tk.on||tk.saltar)continue;
+    $("g-s").textContent="Ahora hazlo tú.";await decir("Ahora tú. Empieza.");
+    const t0=Date.now();let dijoDiez=false;
+    while(tk.on&&!tk.saltar){
+      const left=x.s-Math.floor((Date.now()-t0)/1000);
+      $("g-n").textContent=Math.max(0,left);
+      if(left<=10&&!dijoDiez&&x.s>15){dijoDiez=true;decir("Diez segundos.")}
+      if(left<=0)break;
+      await esperar(250,tk);
+    }
+    if(tk.on&&!tk.saltar){try{navigator.vibrate?.(150)}catch(e){}await decir(k<items.length-1?"Muy bien. Siguiente.":"Muy bien.")}
+  }
+  if(tk.on){$("g-t").textContent="¡Listo!";$("g-s").textContent="Tu cara y tu voz están despiertas. Ahora a practicar tu discurso.";$("g-n").textContent="";await decir("Terminaste el calentamiento. Ahora sí, a practicar tu discurso.")}
+  try{wake?.release()}catch(e){}
+}
+function guiaCerrar(){if(guia){guia.on=false;guia=null;callarGuia()}document.getElementById("guia")?.remove()}
+
+/* ================= CREAR: HISTORIA Y UNIR ================= */
+const HIST_RULES=`Eres un coach de storytelling que ayuda a una persona a sacar una historia real de su vida para usarla en sus discursos. Hablas en español de México, cercano y breve (2 a 4 frases por respuesta). La persona te habla por dictado de voz, así que su texto puede venir sin puntuación.
+Tipos de historia: transformación personal, fracaso que enseña, momento de decisión, historia de otra persona, metáfora o fábula.
+Tu trabajo: si no te dijo qué tipo quiere, sugiérele uno o dos según lo que cuente. Luego haz UNA sola pregunta a la vez, máximo cuatro en total, para sacar: el momento exacto (cuándo, dónde, quién), qué estaba en juego o qué sentía, el giro (qué pasó, qué dijo alguien o qué decidió) y qué aprendió. Pide detalles de los sentidos y alguna frase que alguien dijo. Si ya te dio algo, no lo preguntes. Cuando tengas suficiente, dile que toque "Armar historia". Si pide cambios a una historia ya armada, confirma brevemente y dile que toque "Armar historia" otra vez.`;
+const MODOS={
+  discurso:{key:"gen",rules:()=>GEN_RULES,saludo:"¿Sobre qué quieres hacer tu discurso? Cuéntame la idea como te salga, aunque sea desordenada.",boton:"Armar discurso",ph:"Ej. Quiero hablar de cómo dejar de procrastinar, para jóvenes que empiezan a trabajar…"},
+  historia:{key:"genh",rules:()=>HIST_RULES,saludo:"Cuéntame un momento de tu vida que te haya cambiado, aunque sea pequeño. Si no se te ocurre, dime de qué trata tu discurso y te ayudo a encontrar uno.",boton:"Armar historia",ph:"Ej. Cuando me quedé sin trabajo y decidí aprender algo nuevo…"},
+};
+function modoCrear(){return store.get("crearModo","discurso")}
+function promptHistoria(convo,prev){return `Escribe una historia corta en primera persona, en español de México, para que esta persona la cuente en voz alta dentro de sus discursos, con la energía cercana de Tony Robbins sin copiar frases suyas. Usa SOLO lo que la persona contó en esta conversación con su coach; no inventes hechos importantes:
+
+${convo.slice(-8000)}${prev}
+
+Reglas:
+- Entre 120 y 200 palabras. Frases cortas, fáciles de decir.
+- Cinco partes: Situación (momento exacto: cuándo, dónde, quién, con un detalle de los sentidos), Conflicto (qué estaba en juego y qué sentía), Giro (lo que cambió; cuéntalo en presente e incluye una frase de diálogo si la persona dio alguna), Resultado (qué pasó después, una o dos frases), Lección (una frase corta y fuerte).
+- Marca las pausas con " / " (espacio, barra, espacio) cada 5 a 15 palabras.
+
+Responde solo con JSON con esta forma:
+{"titulo":"máximo 6 palabras","tipo":"Transformación personal | Fracaso que enseña | Momento de decisión | Historia de otra persona | Metáfora o fábula","resumen":"una frase","coach":"un consejo para contarla","partes":[["Situación","..."],["Conflicto","..."],["Giro","..."],["Resultado","..."],["Lección","..."]]}`}
+
+function viewUnir(){
+  const discursos=allSpeeches().filter(s=>s.kind!=="historia"),historias=mine().filter(s=>s.kind==="historia");
+  const u=store.get("genu",{draft:null,recs:null});
+  return `<section class="card stack">
+    <p class="muted">Elige un discurso y una de tus historias. Claude te dice qué tipo de historia le va mejor, en qué parte ponerla, y las une en un discurso nuevo.</p>
+    <label for="u-sp"><h3>Discurso</h3></label>
+    <select id="u-sp">${discursos.map(s=>`<option value="${s.id}">${esc(s.titulo)}</option>`).join("")}</select>
+    <label for="u-hi"><h3>Historia</h3></label>
+    <select id="u-hi">${historias.map(s=>`<option value="${s.id}">${esc(s.titulo)}${s.tipo?" · "+esc(s.tipo):""}</option>`).join("")}<option value="">Todavía no tengo historia: recomiéndame</option></select>
+    <div class="row"><button class="btn-accent" id="u-go" onclick="unir()">Recomendar y unir</button></div>
+    <p class="hint" id="gen-err" hidden></p>
+  </section>
+  <section id="u-out">${u.recs?recsHtml(u.recs):""}${u.draft?draftHtml(u.draft,"genu"):""}</section>`;
+}
+function recsHtml(r){
+  return `<div class="card stack"><p class="eyebrow">Recomendación de Claude</p>${(r||[]).map(x=>`<div class="stack" style="gap:4px"><h3>${esc(x.tipo||"")} · en ${esc(x.donde||"")}</h3><p>${esc(x.por_que||"")}</p>${Array.isArray(x.preguntas)?`<ul style="margin:0;padding-left:1.2em">${x.preguntas.map(q=>`<li>${esc(q)}</li>`).join("")}</ul>`:""}</div>`).join("")}
+  <button class="btn-primary" style="align-self:flex-start" onclick="store.set('crearModo','historia');render()">Crear mi historia ahora</button></div>`;
+}
+async function unir(){
+  if(genBusy)return;genErr("");
+  if(!IA.listo()){genErr(aiErr({code:"sin_config"}));return}
+  const sp=findSp(document.getElementById("u-sp").value),hiId=document.getElementById("u-hi").value,hi=hiId&&findSp(hiId);
+  const b=document.getElementById("u-go"),out=document.getElementById("u-out");
+  b.disabled=true;genBusy=true;out.innerHTML='<div class="card"><p class="muted">Claude está leyendo tu discurso…</p></div>';
+  const guion=sp.partes.map(p=>p[0]+": "+plain(p[1])).join("\n");
+  try{
+    if(!hi){
+      const r=await IA.json(`Eres coach de storytelling. Lee este discurso y recomienda los 2 tipos de historia personal que mejor lo harían más poderoso. Tipos: transformación personal, fracaso que enseña, momento de decisión, historia de otra persona, metáfora o fábula. Para cada uno di en qué parte iría (gancho, presentación, cuerpo o cierre), por qué en una frase, y 2 preguntas para que la persona recuerde una historia real suya. Español de México.
+
+DISCURSO "${sp.titulo}":
+${guion}
+
+Responde solo con JSON: {"recomendaciones":[{"tipo":"","donde":"","por_que":"","preguntas":["",""]}]}`,{tarea:"recomendar"});
+      const recs=(r&&r.recomendaciones)||[];store.set("genu",{draft:null,recs});out.innerHTML=recsHtml(recs);
+    }else{
+      const historia=hi.partes.map(p=>p[0]+": "+plain(p[1])).join("\n");
+      const d=await IA.json(`Une este discurso con esta historia personal en un discurso nuevo, en español de México, con la energía de Tony Robbins sin copiar frases suyas.
+
+DISCURSO "${sp.titulo}":
+${guion}
+
+HISTORIA "${hi.titulo}" (tipo: ${hi.tipo||"sin tipo"}):
+${historia}
+
+Reglas:
+- Decide en qué parte va mejor la historia (gancho, presentación, cuerpo o cierre) y explica por qué en "recomendacion" (2 frases, dirigidas a la persona).
+- Conserva la historia casi igual (es real) y adapta el discurso para que la historia y la idea central se conecten.
+- Entre 220 y 320 palabras. Frases cortas. Partes: Gancho, Presentación, Cuerpo, Cierre; la historia va dentro de la parte que elijas.
+- Marca las pausas con " / " cada 5 a 15 palabras.
+
+Responde solo con JSON: {"recomendacion":"","titulo":"máximo 6 palabras","resumen":"una frase","coach":"un consejo de entrega","cierre":"Pregunta o Storytelling","partes":[["Gancho","..."],["Presentación","..."],["Cuerpo","..."],["Cierre","..."]]}`,{tarea:"unir"});
+      const draft=limpiarBorrador(d,{tema:"Discurso + historia",nivel:2});
+      draft.recomendacion=String(d.recomendacion||"");
+      store.set("genu",{draft,recs:null});out.innerHTML=draftHtml(draft,"genu");
+    }
+  }catch(e){out.innerHTML="";genErr(aiErr(e))}
+  finally{genBusy=false;b.disabled=false}
+}
+function limpiarBorrador(d,extra){
+  if(!d||!Array.isArray(d.partes)||d.partes.length<3||!d.titulo)throw {code:"invalid_json"};
+  return Object.assign({titulo:String(d.titulo),tema:String(d.tema||"Mío"),resumen:String(d.resumen||""),coach:String(d.coach||"Practícalo de pie y respeta las pausas."),cierre:String(d.cierre||"Pregunta"),partes:d.partes.filter(p=>Array.isArray(p)&&p[1]).map(p=>[String(p[0]),String(p[1])])},extra||{});
+}
+
 /* ================= ROUTER ================= */
 function render(){
-  stopSpeech(); stopRec(true); clearInterval(aiInt);
+  stopSpeech(); stopRec(true); clearInterval(aiInt); cronoParar(); guiaCerrar(); impFase="";
   const h=(location.hash||"#inicio").slice(1);
   let html, tab=h;
   if(h.startsWith("d-")){html=viewDiscurso(h.slice(2));tab="discursos"}
   else if(h.startsWith("evaluar-")){html=viewEvaluar(h.slice(8));tab="discursos"}
-  else html=({inicio:viewInicio,aprender:viewAprender,discursos:viewDiscursos,crear:viewCrear,ajustes:viewAjustes,calentar:viewCalentar,progreso:viewProgreso,nervios:viewNervios}[h]||viewInicio)();
-  if(h==="nervios")tab="calentar"; if(h==="ajustes")tab="inicio";
+  else html=({inicio:viewInicio,aprender:viewAprender,discursos:viewDiscursos,crear:viewCrear,ajustes:viewAjustes,improvisar:viewImprovisar,preguntas:viewPreguntas,calentar:viewCalentar,progreso:viewProgreso,nervios:viewNervios}[h]||viewInicio)();
+  if(h==="nervios")tab="calentar"; if(h==="ajustes")tab="inicio"; if(h==="improvisar"||h==="preguntas")tab="discursos";
   app.innerHTML=html;
   document.querySelectorAll("nav.tabs a").forEach(a=>{if(a.dataset.tab===tab)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
   window.scrollTo(0,0);

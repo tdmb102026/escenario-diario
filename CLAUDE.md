@@ -10,3 +10,8 @@
 - El WebView de Android no tiene `speechSynthesis` ni `webkitSpeechRecognition`; tampoco el artefacto dentro de la app de Claude.
 - Se compila solo en GitHub Actions (aquí no se puede: dl.google.com está bloqueado) y se publica en la release `apk`. Firma con `android/app/debug.keystore` (clave de depuración pública).
 - Datos en `localStorage` con prefijo `ed_`: `hist` (prácticas), `mine` (discursos creados), `gen` (conversación de Crear), `ia` (enlace y contraseña del servidor).
+- Niveles (2026-10-27): 1 Estructura, 2 Storytelling, 3 Voz y emoción, 4 Improvisación (`#improvisar`), 5 Preguntas del público (`#preguntas`). Se sube con `META`=3 prácticas con nota ≥ `APRUEBA`=3.5 en el nivel actual (`nivelActual()`); cada práctica guarda `nivel`. Ajustes → "Desbloquear todos los niveles" (`ed_todos`) para probar.
+- Marcas en discursos del nivel 3: `^texto^` subir, `~texto~` bajar, ` // ` silencio largo (`withPauses`, `plain`, `trozos`).
+- Crear tiene tres modos (`ed_crearModo`): discurso (`ed_gen`), historia (`ed_genh`, guarda `kind:"historia"`, nivel 2) y unir (`ed_genu`: Claude recomienda dónde va la historia y une ambos).
+- Calentar guiado: `guiaCalentar()` lee cada paso con `decir()` (voz nativa o del navegador) y cuenta el tiempo.
+- Recordatorio diario (solo app Android): `AndroidVoz.recordatorio(activo, hora, minuto)`, `recordatorioEstado()`, `practique()`; `Recordatorio.java` usa `AlarmManager.setWindow` (sin permiso de alarmas exactas), no avisa si ese día ya practicaste y se reprograma al reiniciar el teléfono.

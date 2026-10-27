@@ -37,6 +37,7 @@ import java.util.Locale;
 public class MainActivity extends Activity {
     static final String URL = "https://tdmb102026.github.io/escenario-diario/";
     private static final int PEDIR_MIC = 1;
+    private static final int PEDIR_AVISOS = 2;
 
     private WebView web;
     private final Handler h = new Handler(Looper.getMainLooper());
@@ -251,6 +252,11 @@ public class MainActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int pedido, String[] permisos, int[] resultados) {
         super.onRequestPermissionsResult(pedido, permisos, resultados);
+        if (pedido == PEDIR_AVISOS) {
+            if (resultados.length == 0 || resultados[0] != PackageManager.PERMISSION_GRANTED)
+                js("window.toast && toast('Sin permiso de notificaciones no puedo avisarte. Actívalo en Ajustes de Android → Apps → Escenario')");
+            return;
+        }
         if (pedido != PEDIR_MIC) return;
         boolean ok = resultados.length > 0 && resultados[0] == PackageManager.PERMISSION_GRANTED;
         if (ok && micPendiente) iniciarOido();
@@ -280,6 +286,33 @@ public class MainActivity extends Activity {
                     js("Voz.fin()");
                 }
             });
+        }
+
+        // Recordatorio diario: activo, hora (0-23) y minuto.
+        @JavascriptInterface
+        public void recordatorio(boolean activo, int hora, int minuto) {
+            Recordatorio.prefs(MainActivity.this).edit()
+                    .putBoolean("aviso", activo).putInt("hora", hora).putInt("minuto", minuto).apply();
+            Recordatorio.programar(MainActivity.this);
+            if (activo && Build.VERSION.SDK_INT >= 33
+                    && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                runOnUiThread(() -> requestPermissions(new String[]{ Manifest.permission.POST_NOTIFICATIONS }, PEDIR_AVISOS));
+            }
+        }
+
+        @JavascriptInterface
+        public String recordatorioEstado() {
+            android.content.SharedPreferences p = Recordatorio.prefs(MainActivity.this);
+            try {
+                return new JSONObject().put("activo", p.getBoolean("aviso", false))
+                        .put("hora", p.getInt("hora", 19)).put("minuto", p.getInt("minuto", 0)).toString();
+            } catch (Exception e) { return "{}"; }
+        }
+
+        // La página avisa que hoy ya practicaste: ese día no sale el recordatorio.
+        @JavascriptInterface
+        public void practique() {
+            Recordatorio.prefs(MainActivity.this).edit().putString("practico", Recordatorio.hoy()).apply();
         }
 
         @JavascriptInterface
