@@ -562,10 +562,10 @@ async function getSample(){try{return window.claude?await window.claude.use("sam
 const IA={
   conf(){return store.get("ia",{url:"",clave:""})},
   listo(){const c=this.conf();return !!(window.claude||(c.url&&c.clave))},
-  async texto(mensajes,{rapido,tarea}={}){
+  async texto(mensajes,{rapido,tarea,max}={}){
     const s=await getSample();
     if(s){const {text}=await s(mensajes,{cache:false,modelTier:rapido?"quick":"default"});return text}
-    return servidor({tipo:"ia",tarea:tarea||"",mensajes:typeof mensajes==="string"?[{role:"user",content:mensajes}]:mensajes,max:rapido?700:2500});
+    return servidor({tipo:"ia",tarea:tarea||"",mensajes:typeof mensajes==="string"?[{role:"user",content:mensajes}]:mensajes,max:max||(rapido?700:2500)});
   },
   // Las historias traen diálogos; unas comillas sin escapar rompían el JSON ("La respuesta llegó incompleta").
   // Por eso se piden « » para citas, se repara lo que se pueda y, si aún falla, se pide una vez más.
@@ -573,8 +573,8 @@ const IA={
     prompt+=REGLA_COMILLAS;
     const s=await getSample();
     if(s)return s.json(prompt,{cache:false});
-    try{return leerJson(await this.texto(prompt,{tarea}))}
-    catch(e){if(e.code!=="invalid_json")throw e;return leerJson(await this.texto(prompt,{tarea}))}
+    try{return leerJson(await this.texto(prompt,{tarea,max:3000}))}
+    catch(e){if(e.code!=="invalid_json")throw e;return leerJson(await this.texto(prompt,{tarea,max:3000}))}
   }
 };
 async function servidor(cuerpo){
@@ -592,7 +592,8 @@ function leerJson(t){
   const m=t.match(/```(?:json)?\s*([\s\S]*?)```/); if(m)try{return JSON.parse(m[1])}catch(e){}
   const a=t.indexOf("{"),b=t.lastIndexOf("}");
   if(a>=0&&b>a){const c=t.slice(a,b+1);try{return JSON.parse(c)}catch(e){}try{return JSON.parse(repararJson(c))}catch(e){}}
-  throw {code:"invalid_json"};
+  // El detalle (largo y final de la respuesta) ayuda a saber si llegó cortada o con otra forma.
+  throw {code:"invalid_json",message:`${t.length} letras, termina en: ${t.slice(-60)}`};
 }
 // Escapa comillas dentro de los textos: una " solo cierra el texto si después viene , : ] o }.
 function repararJson(c){
@@ -621,7 +622,7 @@ function aiErr(e){const c=e&&e.code;return ({
   not_granted:"No diste permiso para usar Claude en esta página.",
   rate_limited:"Demasiadas solicitudes por ahora. Espera un momento y vuelve a intentarlo.",
   session_expired:"Tu sesión de Claude expiró. Vuelve a iniciar sesión.",
-  invalid_json:"La respuesta llegó incompleta. Toca el botón otra vez."
+  invalid_json:"La respuesta llegó incompleta. Toca el botón otra vez."+detalleErr({message:e&&e.message})
 })[c]||"No se pudo conectar con la IA. Intenta de nuevo."+detalleErr(e)}
 // Para errores raros se muestra el detalle, así se puede saber qué pasó con una captura de pantalla.
 function detalleErr(e){const d=e?[e.code,e.message].filter(Boolean).join(": "):"";return d?` (Detalle: ${String(d).slice(0,160)})`:""}
@@ -1811,8 +1812,12 @@ Responde solo con JSON: {"recomendacion":"","titulo":"máximo 6 palabras","resum
   const draft=limpiarBorrador(d,{tema:"Discurso + historia",nivel:2});draft.recomendacion=String(d.recomendacion||"");return draft;
 }
 function limpiarBorrador(d,extra){
-  if(!d||!Array.isArray(d.partes)||d.partes.length<3||!d.titulo)throw {code:"invalid_json"};
-  return Object.assign({titulo:String(d.titulo),tema:String(d.tema||"Mío"),resumen:String(d.resumen||""),coach:String(d.coach||"Practícalo de pie y respeta las pausas."),cierre:String(d.cierre||"Pregunta"),partes:d.partes.filter(p=>Array.isArray(p)&&p[1]).map(p=>[String(p[0]),String(p[1])])},extra||{});
+  // Claude a veces manda las partes como objetos ({"parte":…,"texto":…}) o como un objeto {Gancho:…}; se aceptan igual.
+  let partes=d&&d.partes;
+  if(partes&&!Array.isArray(partes)&&typeof partes==="object")partes=Object.entries(partes);
+  partes=(Array.isArray(partes)?partes:[]).map(p=>Array.isArray(p)?p:p&&typeof p==="object"?[p.parte||p.nombre||p.titulo||p.seccion||Object.values(p)[0],p.texto||p.contenido||p.text||Object.values(p)[1]]:null).filter(p=>p&&p[1]).map(p=>[String(p[0]||"Parte"),String(p[1])]);
+  if(!d||partes.length<2)throw {code:"invalid_json",message:"sin partes: "+JSON.stringify(d||{}).slice(0,100)};
+  return Object.assign({titulo:String(d.titulo||"Mi discurso"),tema:String(d.tema||"Mío"),resumen:String(d.resumen||""),coach:String(d.coach||"Practícalo de pie y respeta las pausas."),cierre:String(d.cierre||"Pregunta"),partes},extra||{});
 }
 
 /* ================= CREAR PASO A PASO =================
