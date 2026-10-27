@@ -622,6 +622,8 @@ function aiErr(e){const c=e&&e.code;return ({
   not_granted:"No diste permiso para usar Claude en esta página.",
   rate_limited:"Demasiadas solicitudes por ahora. Espera un momento y vuelve a intentarlo.",
   session_expired:"Tu sesión de Claude expiró. Vuelve a iniciar sesión.",
+  vacio:"Claude no alcanzó a responder. Falta actualizar el servidor de la IA (pega el código nuevo del Apps Script y publica una versión nueva).",
+  corto:"La respuesta salió demasiado larga y se cortó. Toca el botón otra vez.",
   invalid_json:"La respuesta llegó incompleta. Toca el botón otra vez."+detalleErr({message:e&&e.message})
 })[c]||"No se pudo conectar con la IA. Intenta de nuevo."+detalleErr(e)}
 // Para errores raros se muestra el detalle, así se puede saber qué pasó con una captura de pantalla.

@@ -55,7 +55,10 @@ function claude_(mensajes, max) {
   const key = PropertiesService.getScriptProperties().getProperty("ANTHROPIC_API_KEY");
   if (!key) return { ok: false, error: "sin-clave-api" };
   const cuerpo = {
-    model: MODELO, max_tokens: Math.min(Math.max(Number(max) || 1500, 200), 3000),
+    // Haiku 5.5 piensa por defecto y ese pensamiento gasta max_tokens: con textos largos (unir historia y discurso)
+    // se comía todo y la respuesta llegaba vacía o cortada. Para esta app no hace falta pensar.
+    model: MODELO, max_tokens: Math.min(Math.max(Number(max) || 1500, 200), 6000),
+    thinking: { type: "disabled" },
     output_config: { effort: "low" },
     messages: mensajes,
   };
@@ -71,6 +74,7 @@ function claude_(mensajes, max) {
   if (j.stop_reason === "refusal") return { ok: false, error: "rechazo" };
   const texto = (j.content || []).filter(b => b.type === "text").map(b => b.text).join("");
   if (!texto) return { ok: false, error: "vacio" };
+  if (j.stop_reason === "max_tokens") return { ok: false, error: "corto" };
   return { ok: true, texto: texto, uso: j.usage };
 }
 
