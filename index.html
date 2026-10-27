@@ -622,7 +622,9 @@ function aiErr(e){const c=e&&e.code;return ({
   rate_limited:"Demasiadas solicitudes por ahora. Espera un momento y vuelve a intentarlo.",
   session_expired:"Tu sesión de Claude expiró. Vuelve a iniciar sesión.",
   invalid_json:"La respuesta llegó incompleta. Toca el botón otra vez."
-})[c]||"No se pudo conectar con la IA. Intenta de nuevo."}
+})[c]||"No se pudo conectar con la IA. Intenta de nuevo."+detalleErr(e)}
+// Para errores raros se muestra el detalle, así se puede saber qué pasó con una captura de pantalla.
+function detalleErr(e){const d=e?[e.code,e.message].filter(Boolean).join(": "):"";return d?` (Detalle: ${String(d).slice(0,160)})`:""}
 
 /* Dictado: usa el reconocimiento de voz si existe; si no, el micrófono del teclado */
 let rec=null;
