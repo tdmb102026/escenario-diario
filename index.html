@@ -166,9 +166,9 @@ textarea,input[type=text],select{font:inherit;width:100%;border:1px solid var(--
 
 /* Tabs */
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--surface);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
-nav.tabs .in{max-width:680px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr);gap:2px}
-nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:10px;text-decoration:none;color:var(--muted);font-size:.68rem;font-weight:600;min-width:0}
-nav.tabs a svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav.tabs .in{max-width:680px;margin:0 auto;display:grid;grid-template-columns:repeat(7,1fr);gap:0}
+nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:10px;text-decoration:none;color:var(--muted);font-size:.62rem;font-weight:600;min-width:0;letter-spacing:-.01em}
+nav.tabs a svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 nav.tabs a[aria-current="page"]{color:var(--accent);background:var(--accent-soft)}
 .section-title{display:flex;flex-direction:column;gap:6px}
 .back{align-self:flex-start;padding:6px 12px;min-height:36px;font-size:.9rem}
@@ -208,6 +208,7 @@ nav.tabs a[aria-current="page"]{color:var(--accent);background:var(--accent-soft
 .guia-in{max-width:560px;width:100%;display:flex;flex-direction:column;gap:16px;text-align:center}
 .guia h2{color:#F4F1EC;font-size:1.8rem}.guia .eyebrow{color:#F2B33D}
 .g-s{font-family:var(--f-read);font-size:1.35rem;line-height:1.5;min-height:4.5em}
+.g-rep{color:#9AA5B5;font-size:.9rem;min-height:1.2em;margin:0}
 .g-n{font-family:var(--f-display);font-weight:800;font-size:5rem;line-height:1;color:#F2B33D;font-variant-numeric:tabular-nums;min-height:1em}
 .guia button{background:#1B2330;color:#F4F1EC;border-color:#2C3747}
 .lesson .chip{margin-left:auto}
@@ -224,6 +225,7 @@ nav.tabs a[aria-current="page"]{color:var(--accent);background:var(--accent-soft
     <a href="#discursos" data-tab="discursos"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Niveles</a>
     <a href="#crear" data-tab="crear"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg>Crear</a>
     <a href="#calentar" data-tab="calentar"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M9 10h.01M15 10h.01M9 15c1.5 1.3 4.5 1.3 6 0"/></svg>Calentar</a>
+    <a href="#ajustes" data-tab="ajustes"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Ajustes</a>
     <a href="#progreso" data-tab="progreso"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Progreso</a>
   </div>
 </nav>
@@ -329,7 +331,7 @@ const SPEECHES = [
 
 const WARMUP = [
  {g:"Respiración y cuerpo", items:[
-  {t:"Respiración diafragmática", s:60, d:"Base de una voz firme y de la calma.", steps:["Pon una mano en el abdomen y otra en el pecho.","Inhala por la nariz en 4 tiempos inflando solo el abdomen.","Suelta el aire por la boca en 6 tiempos con una \"sss\" suave.","Repite 6 veces sin mover los hombros."]},
+  {t:"Respiración diafragmática", s:60, d:"Base de una voz firme y de la calma.", steps:["Pon una mano en el abdomen y otra en el pecho.","Inhala por la nariz en 5 tiempos inflando solo el abdomen.","Suelta el aire por la boca en 6 tiempos con una \"sss\" suave.","Repite 6 veces sin mover los hombros."]},
   {t:"Cuello y hombros sueltos", s:45, d:"La tensión del cuello aprieta la voz.", steps:["Lleva la oreja derecha al hombro, 5 segundos, y cambia.","Gira los hombros hacia atrás 5 veces, despacio.","Deja caer la cabeza al pecho y haz medios círculos de lado a lado."]}]},
  {g:"Rostro y articulación", items:[
   {t:"Masaje de mandíbula", s:40, d:"Libera el músculo masetero, el que más se tensa con nervios.", steps:["Coloca las yemas de los dedos debajo de los pómulos.","Haz círculos firmes mientras abres la boca poco a poco.","Deja caer la mandíbula relajada, como si bostezaras."]},
@@ -644,7 +646,7 @@ function viewInicio(){
   <section class="stack">
     <div class="section-title"><p class="eyebrow">Rutina de 15 minutos</p><h2>Cada día, en este orden</h2></div>
     <div class="routine">
-      <a href="#calentar"><b>4 min</b><span>Calentar con la voz guía</span></a>
+      <a href="#calentar"><b>5 min</b><span>Calentar con el profesor</span></a>
       <a href="#d-${sp.id}"><b>4 min</b><span>Escuchar y leer el discurso</span></a>
       <a href="#d-${sp.id}"><b>6 min</b><span>Practicarlo de pie y grabarte</span></a>
       <a href="#evaluar-${sp.id}"><b>2 min</b><span>Calificarte</span></a>
@@ -655,7 +657,7 @@ function viewInicio(){
     <div><b>${streak}</b><span>días seguidos</span></div>
     <div><b>${hist.length?avg(hist.slice(0,5)).toFixed(1):"–"}</b><span>promedio reciente /5</span></div>
   </section>
-  <a href="#ajustes" class="muted" style="font-size:.9rem">Ajustes: IA, recordatorio diario y niveles</a>
+  
   <section class="stack">
     <div class="section-title"><p class="eyebrow">Contra los nervios</p><h2>Antes de subir al escenario</h2></div>
     ${NERVES.slice(0,2).map(n=>`<div class="card stack" style="gap:6px"><h3>${esc(n.t)}</h3><p class="muted">${esc(n.b)}</p></div>`).join("")}
@@ -969,16 +971,7 @@ function genReset(b){if(!b.dataset.c){b.dataset.c=1;b.textContent="Toca otra vez
 function viewAjustes(){
   const c=IA.conf();
   return `<div class="stack-lg">
-  <button class="back" onclick="location.hash='inicio'">← Inicio</button>
-  <div class="section-title"><p class="eyebrow">Ajustes</p><h1>Ajustes</h1><h2 style="margin-top:8px">Conectar la IA</h2><p class="muted">La calificación y la creación de discursos usan Claude a través de tu servidor, con tu clave de API. Los pasos para preparar el servidor están en el repositorio, en <b>ia-servidor/LEEME.md</b>.</p></div>
-  <section class="card stack">
-    <label for="ia-url"><h3>Enlace del servidor</h3></label>
-    <input id="ia-url" type="text" inputmode="url" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec" value="${esc(c.url)}">
-    <label for="ia-clave"><h3>Contraseña de la app</h3></label>
-    <input id="ia-clave" type="text" autocomplete="off" placeholder="La que guardaste en la hoja" value="${esc(c.clave)}">
-    <button class="btn-primary" style="align-self:flex-start" onclick="guardarIA(this)">Guardar y probar</button>
-    <p class="hint" id="ia-msg" hidden></p>
-  </section>
+  <div class="section-title"><h1>Ajustes</h1></div>
   <section class="card stack"><h3>Recordatorio diario</h3>
     ${NATIVO&&NATIVO.recordatorio?(()=>{let r={activo:false,hora:19,minuto:0};try{r=Object.assign(r,JSON.parse(NATIVO.recordatorioEstado()))}catch(e){}
       return `<p class="muted">Te aviso a esta hora que toca practicar. Si ese día ya practicaste, no te molesto.</p>
@@ -986,6 +979,15 @@ function viewAjustes(){
       <div class="row"><button class="btn-primary" onclick="guardarAviso(true)">${r.activo?"Cambiar hora":"Activar recordatorio"}</button>${r.activo?`<button onclick="guardarAviso(false)">Desactivar</button>`:""}</div>
       ${r.activo?`<p class="hint">Activo todos los días a las ${String(r.hora).padStart(2,"0")}:${String(r.minuto).padStart(2,"0")}.</p>`:""}`})()
     :`<p class="muted">El recordatorio funciona en la app Android${NATIVO?" nueva: descarga otra vez escenario.apk para tenerlo":""}.</p>${NATIVO?`<a class="btn" href="${APK_URL}" target="_blank" rel="noopener" style="align-self:flex-start">Descargar escenario.apk</a>`:""}`}
+  </section>
+  <div class="section-title"><h2>Conectar la IA</h2><p class="muted">La calificación y la creación de discursos usan Claude a través de tu servidor, con tu clave de API. Los pasos para preparar el servidor están en el repositorio, en <b>ia-servidor/LEEME.md</b>.</p></div>
+  <section class="card stack">
+    <label for="ia-url"><h3>Enlace del servidor</h3></label>
+    <input id="ia-url" type="text" inputmode="url" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec" value="${esc(c.url)}">
+    <label for="ia-clave"><h3>Contraseña de la app</h3></label>
+    <input id="ia-clave" type="text" autocomplete="off" placeholder="La que guardaste en la hoja" value="${esc(c.clave)}">
+    <button class="btn-primary" style="align-self:flex-start" onclick="guardarIA(this)">Guardar y probar</button>
+    <p class="hint" id="ia-msg" hidden></p>
   </section>
   <section class="card stack"><h3>Niveles</h3>
     <label class="row" for="todos" style="gap:10px;align-items:center"><input id="todos" type="checkbox" ${store.get("todos",false)?"checked":""} onchange="store.set('todos',this.checked)" style="width:22px;height:22px;accent-color:var(--accent)"> Desbloquear todos los niveles (para probar)</label>
@@ -1011,10 +1013,10 @@ async function guardarIA(b){
 
 function viewCalentar(){
   return `<div class="stack-lg">
-  <div class="section-title"><p class="eyebrow">Calentamiento</p><h1>Rostro, boca y voz</h1><p class="muted">Unos 8 minutos en total. Con la voz guía no necesitas mirar el teléfono: te dice cada paso y te cuenta el tiempo.</p></div>
-  <button class="btn-accent" style="align-self:flex-start" onclick="guiaCalentar()">${ICON.play}Calentar con voz guía</button>
-  <p class="muted" style="font-size:.9rem">O haz cada ejercicio por separado con su botón <b>Iniciar</b>.</p>
-  ${WARMUP.map(g=>`<section class="stack"><h2>${g.g}</h2>${g.items.map(x=>`<div class="card ex"><div class="top"><h3>${esc(x.t)}</h3><span class="dur">${x.s} s</span></div><p class="muted">${esc(x.d)}</p><ol>${x.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol>${x.tw?x.tw.map(t=>`<p class="tw">${esc(t)}</p>`).join(""):""}<button style="align-self:flex-start" onclick="runTimer('${esc(x.t)}',${x.s})">${ICON.play}Iniciar ${x.s} s</button></div>`).join("")}</section>`).join("")}
+  <div class="section-title"><p class="eyebrow">Calentamiento</p><h1>Rostro, boca y voz</h1><p class="muted">Unos 10 minutos. La voz te guía como un profesor: te dice qué hacer, cuenta cada respiración y cada repetición. No necesitas mirar el teléfono.</p></div>
+  <button class="btn-accent" style="align-self:flex-start" onclick="guiaCalentar()">${ICON.play}Calentamiento completo con profesor</button>
+  <p class="muted" style="font-size:.9rem">O toca <b>Guíame</b> en un ejercicio para hacer solo ese.</p>
+  ${WARMUP.map(g=>`<section class="stack"><h2>${g.g}</h2>${g.items.map(x=>`<div class="card ex"><div class="top"><h3>${esc(x.t)}</h3><span class="dur">${x.s} s</span></div><p class="muted">${esc(x.d)}</p><ol>${x.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol>${x.tw?x.tw.map(t=>`<p class="tw">${esc(t)}</p>`).join(""):""}<div class="row"><button class="btn-primary" onclick="guiaCalentar(${WARMUP.flatMap(g=>g.items).indexOf(x)},true)">${ICON.play}Guíame</button><button onclick="runTimer('${esc(x.t)}',${x.s})">Solo tiempo (${x.s} s)</button></div></div>`).join("")}</section>`).join("")}
   <a class="btn" href="#nervios" style="align-self:flex-start">Tips para los nervios</a>
   </div>`;
 }
@@ -1256,40 +1258,154 @@ function callarGuia(){if(NATIVO)NATIVO.callar();if(synth)synth.cancel();if(vozCb
 
 let guia=null;
 const esperar=(ms,tk)=>new Promise(r=>{const t0=Date.now();const i=setInterval(()=>{if(!tk.on||tk.saltar||Date.now()-t0>=ms){clearInterval(i);r()}},150)});
-async function guiaCalentar(){
+/* ================= CALENTAMIENTO CON PROFESOR =================
+   Cada ejercicio tiene un guion que la voz va diciendo y contando:
+   ["di", texto]                         dice una instrucción
+   ["cuenta", n, ms]                     cuenta en voz alta 1..n, un número cada ms (1000 por defecto)
+   ["alterna", [palabras], veces, ms]    "Beso… Sonrisa… Beso…"
+   ["espera", ms, textoPantalla]         silencio mientras haces el ejercicio
+   ["tuTurno", texto]                    dice algo y te deja repetirlo
+   ["repite", veces, [acciones]]         repite el bloque; avisa "Otra vez" y "La última" */
+const GUIONES={
+ "Respiración diafragmática":[
+  ["di","Pon una mano en el abdomen y la otra en el pecho. Vamos a respirar llenando solo el abdomen. El pecho no se mueve."],
+  ["di","Lo vamos a hacer seis veces."],
+  ["repite",6,[["di","Inhala por la nariz."],["cuenta",5],["di","Suelta por la boca, con una ese suave."],["cuenta",6]]],
+  ["di","Muy bien. Siente cómo se calmó tu respiración."]],
+ "Cuello y hombros sueltos":[
+  ["di","Deja los brazos sueltos a los lados."],
+  ["repite",2,[["di","Lleva la oreja derecha hacia el hombro derecho, sin subir el hombro."],["cuenta",5],["di","Ahora la oreja izquierda hacia el hombro izquierdo."],["cuenta",5]]],
+  ["di","Gira los hombros hacia atrás, despacio y grande. Cinco giros."],
+  ["cuenta",5,2000],
+  ["di","Deja caer la cabeza hacia el pecho y haz medios círculos, de un hombro al otro."],
+  ["cuenta",6,2000]],
+ "Masaje de mandíbula":[
+  ["di","Pon las yemas de los dedos justo debajo de los pómulos, donde se juntan los dientes de arriba y de abajo."],
+  ["di","Haz círculos firmes mientras abres la boca poco a poco."],
+  ["cuenta",10,1500],
+  ["di","Ahora suelta la mandíbula, relajada, y haz un bostezo grande."],
+  ["repite",3,[["espera",4000,"Bosteza grande…"]]],
+  ["di","Muy bien. La mandíbula es la que más se tensa con los nervios."]],
+ "Cara de león y cara de limón":[
+  ["di","Vamos a despertar toda la cara. Cinco veces cada una."],
+  ["repite",5,[["di","¡León! Abre los ojos y la boca al máximo y saca la lengua."],["cuenta",3],["di","¡Limón! Aprieta toda la cara hacia la nariz."],["cuenta",3]]],
+  ["di","Suelta la cara. Sacúdela suavecito."]],
+ "Gimnasia de labios":[
+  ["di","Beso exagerado hacia adelante, y sonrisa amplia hacia atrás. Sigue mi ritmo."],
+  ["alterna",["Beso","Sonrisa"],10,1300],
+  ["di","Ahora vibra los labios como un motor. Brrrr. Diez segundos."],
+  ["cuenta",10],
+  ["di","Con la boca cerrada, haz círculos con los labios. Cinco hacia un lado."],
+  ["cuenta",5,1500],
+  ["di","Y cinco hacia el otro."],
+  ["cuenta",5,1500]],
+ "Lengua en movimiento":[
+  ["di","Con la boca cerrada, recorre el interior de las mejillas con la lengua, en círculos. Cinco hacia un lado."],
+  ["cuenta",5,1500],
+  ["di","Ahora cinco hacia el otro lado."],
+  ["cuenta",5,1500],
+  ["di","Abre un poco la boca y toca con la punta de la lengua una comisura y luego la otra, rápido."],
+  ["alterna",["Derecha","Izquierda"],10,800],
+  ["di","Ahora chasquea la lengua contra el paladar, como el trote de un caballo. Diez veces."],
+  ["cuenta",10,900]],
+ "Lápiz entre los dientes":[
+  ["di","Toma un lápiz o un bolígrafo y ponlo horizontal entre los dientes, sin morder fuerte."],
+  ["espera",4000,"Ponte el lápiz entre los dientes…"],
+  ["di","Repite conmigo cada frase del discurso de hoy, exagerando cada sílaba, aunque suene raro."],
+  ["gancho"],
+  ["di","Ahora quita el lápiz y repite lo mismo. Fíjate qué claro suena."],
+  ["gancho"]],
+ "Sirena y resonancia":[
+  ["di","Con la boca cerrada, di mmm, y siente cómo vibran los labios."],
+  ["espera",4000,"Mmmmm…"],
+  ["di","Ahora sube y baja el tono, como una sirena. Cinco veces."],
+  ["repite",5,[["di","Sube."],["espera",1800,"↑ Sube…"],["di","Baja."],["espera",1800,"↓ Baja…"]]],
+  ["di","Ahora abre el sonido: mmm, aaa, como si le hablaras a una pared lejana."],
+  ["repite",3,[["espera",3500,"Mmmm… aaaa…"]]]],
+ "Vocales exageradas":[
+  ["di","Vocales exageradas: abre bien la boca en cada una. Tres rondas, cada vez más fuerte."],
+  ["repite",3,[["alterna",["A","E","I","O","U"],5,1600],["di","Al revés."],["alterna",["U","O","I","E","A"],5,1600]]]],
+ "Trabalenguas":[
+  ["di","Terminamos con trabalenguas. Primero lento y perfecto, luego más rápido."],
+  ["trabalenguas"]],
+};
+
+// Pasos concretos de "gancho" y "trabalenguas", que dependen del discurso del día y de la lista de trabalenguas.
+function expandir(acc,x){
+  if(acc[0]==="gancho"){
+    const sp=todaySpeech();return trozos(sp.partes[0][1]).map(t=>["tuTurno",t]);
+  }
+  if(acc[0]==="trabalenguas"){
+    return (x.tw||[]).flatMap(t=>[["di","Escucha."],["di",t],["tuTurno","Ahora tú, despacio."],["di","Otra vez, más rápido."],["espera",Math.max(3000,t.split(" ").length*350),t],["di","Una vez más, rápido y claro."],["espera",Math.max(2500,t.split(" ").length*300),t]]);
+  }
+  return [acc];
+}
+const NUMEROS=["cero","uno","dos","tres","cuatro","cinco","seis","siete","ocho","nueve","diez","once","doce"];
+const dormir=ms=>new Promise(r=>setTimeout(r,ms));
+async function pausaGuia(tk){while(tk.on&&tk.pausa)await dormir(200)}
+async function ejecutar(acciones,tk,x,pant){
+  for(const a0 of acciones){
+    for(const a of expandir(a0,x)){
+      await pausaGuia(tk);if(!tk.on||tk.saltar)return;
+      const [tipo,...r]=a;
+      if(tipo==="di"){pant.texto(r[0]);pant.num("");await decir(r[0])}
+      else if(tipo==="cuenta"){
+        const [n,ms=1000]=r;
+        for(let k=1;k<=n;k++){await pausaGuia(tk);if(!tk.on||tk.saltar)return;pant.num(k);await Promise.all([decir(NUMEROS[k]||String(k)),esperar(ms,tk)])}
+        pant.num("");
+      }
+      else if(tipo==="alterna"){
+        const [pal,veces,ms=1200]=r;
+        for(let k=0;k<veces;k++){await pausaGuia(tk);if(!tk.on||tk.saltar)return;const w=pal[k%pal.length];pant.num(w);await Promise.all([decir(w),esperar(ms,tk)])}
+        pant.num("");
+      }
+      else if(tipo==="espera"){if(r[1])pant.texto(r[1]);await esperar(r[0],tk)}
+      else if(tipo==="tuTurno"){pant.texto(r[0]);pant.num("");await decir(r[0]);await esperar(1500+r[0].split(/\s+/).length*450,tk)}
+      else if(tipo==="repite"){
+        const [veces,bloque]=r;
+        for(let k=1;k<=veces;k++){
+          await pausaGuia(tk);if(!tk.on||tk.saltar)return;
+          pant.rep(`${k} de ${veces}`);
+          if(k>1){const t=k===veces?"La última.":"Otra vez.";pant.texto(t);await decir(t)}
+          await ejecutar(bloque,tk,x,pant);
+        }
+        pant.rep("");
+      }
+    }
+  }
+}
+
+// desde: índice del ejercicio donde empezar; solo: hacer solo ese.
+async function guiaCalentar(desde,solo){
   guiaCerrar();
   const tk={on:true,saltar:false,pausa:false};guia=tk;
   const items=WARMUP.flatMap(g=>g.items.map(x=>({...x,g:g.g})));
+  const ini=desde||0,fin=solo?ini+1:items.length;
   const el=document.createElement("div");el.className="guia";el.id="guia";
-  el.innerHTML=`<div class="guia-in"><p class="eyebrow" id="g-eb">Calentamiento guiado</p><h2 id="g-t">Ponte de pie</h2><p id="g-s" class="g-s">Hombros sueltos, pies a la anchura de tus hombros.</p><div class="g-n" id="g-n"></div>
-   <div class="row" style="justify-content:center"><button id="g-skip">Saltar ejercicio</button><button id="g-close">Terminar</button></div></div>`;
+  el.innerHTML=`<div class="guia-in"><p class="eyebrow" id="g-eb">Calentamiento guiado</p><h2 id="g-t">Ponte de pie</h2><p class="g-rep" id="g-rep"></p><p id="g-s" class="g-s">Hombros sueltos, pies a la anchura de tus hombros.</p><div class="g-n" id="g-n"></div>
+   <div class="row" style="justify-content:center"><button id="g-pausa">Pausa</button>${solo?"":`<button id="g-skip">Siguiente ejercicio</button>`}<button id="g-close">Terminar</button></div></div>`;
   document.body.appendChild(el);
   let wake=null;try{wake=await navigator.wakeLock?.request("screen")}catch(e){}
-  el.querySelector("#g-skip").onclick=()=>{tk.saltar=true;callarGuia()};
-  el.querySelector("#g-close").onclick=()=>guiaCerrar();
   const $=id=>document.getElementById(id);
-  await decir("Vamos a calentar. Ponte de pie, con los hombros sueltos y los pies a la anchura de tus hombros.");
-  for(let k=0;k<items.length&&tk.on;k++){
+  const pant={texto:t=>{const e=$("g-s");if(e)e.textContent=t},num:n=>{const e=$("g-n");if(e)e.textContent=n},rep:t=>{const e=$("g-rep");if(e)e.textContent=t?"Repetición "+t:""}};
+  if(!solo)$("g-skip").onclick=()=>{tk.saltar=true;tk.pausa=false;callarGuia()};
+  $("g-pausa").onclick=()=>{tk.pausa=!tk.pausa;$("g-pausa").textContent=tk.pausa?"Seguir":"Pausa";if(tk.pausa)callarGuia()};
+  $("g-close").onclick=()=>guiaCerrar();
+  if(!solo)await decir("Vamos a calentar la cara y la voz. Ponte de pie, con los hombros sueltos y los pies a la anchura de tus hombros.");
+  for(let k=ini;k<fin&&tk.on;k++){
     const x=items[k];tk.saltar=false;
-    $("g-eb").textContent=`${x.g} · ${k+1} de ${items.length}`;$("g-t").textContent=x.t;$("g-s").textContent=x.d;$("g-n").textContent="";
-    await decir(x.t+". "+x.d);
-    for(const s of x.steps){if(!tk.on||tk.saltar)break;$("g-s").textContent=s;await decir(s)}
-    if(x.tw)for(const t of x.tw){if(!tk.on||tk.saltar)break;$("g-s").textContent=t;await decir("Repite conmigo. "+t);await esperar(5000,tk)}
-    if(!tk.on||tk.saltar)continue;
-    $("g-s").textContent="Ahora hazlo tú.";await decir("Ahora tú. Empieza.");
-    const t0=Date.now();let dijoDiez=false;
-    while(tk.on&&!tk.saltar){
-      const left=x.s-Math.floor((Date.now()-t0)/1000);
-      $("g-n").textContent=Math.max(0,left);
-      if(left<=10&&!dijoDiez&&x.s>15){dijoDiez=true;decir("Diez segundos.")}
-      if(left<=0)break;
-      await esperar(250,tk);
-    }
-    if(tk.on&&!tk.saltar){try{navigator.vibrate?.(150)}catch(e){}await decir(k<items.length-1?"Muy bien. Siguiente.":"Muy bien.")}
+    $("g-eb").textContent=`${x.g} · ${k+1} de ${items.length}`;$("g-t").textContent=x.t;pant.rep("");
+    pant.texto(x.d);pant.num("");
+    await decir(x.t+".");
+    await ejecutar(GUIONES[x.t]||[["di",x.d],...x.steps.map(s=>["di",s])],tk,x,pant);
+    if(tk.on&&!tk.saltar&&k<fin-1){pant.texto("Muy bien. Siguiente ejercicio.");pant.num("");await decir("Muy bien. Siguiente ejercicio.")}
   }
-  if(tk.on){$("g-t").textContent="¡Listo!";$("g-s").textContent="Tu cara y tu voz están despiertas. Ahora a practicar tu discurso.";$("g-n").textContent="";await decir("Terminaste el calentamiento. Ahora sí, a practicar tu discurso.")}
+  if(tk.on){$("g-t").textContent="¡Listo!";pant.rep("");pant.num("");
+    const t=solo?"Muy bien. Ejercicio terminado.":"Terminaste el calentamiento. Tu cara y tu voz están despiertas. Ahora sí, a practicar tu discurso.";
+    pant.texto(t);await decir(t)}
   try{wake?.release()}catch(e){}
 }
+
 function guiaCerrar(){if(guia){guia.on=false;guia=null;callarGuia()}document.getElementById("guia")?.remove()}
 
 /* ================= CREAR: HISTORIA Y UNIR ================= */
@@ -1384,7 +1500,7 @@ function render(){
   if(h.startsWith("d-")){html=viewDiscurso(h.slice(2));tab="discursos"}
   else if(h.startsWith("evaluar-")){html=viewEvaluar(h.slice(8));tab="discursos"}
   else html=({inicio:viewInicio,aprender:viewAprender,discursos:viewDiscursos,crear:viewCrear,ajustes:viewAjustes,improvisar:viewImprovisar,preguntas:viewPreguntas,calentar:viewCalentar,progreso:viewProgreso,nervios:viewNervios}[h]||viewInicio)();
-  if(h==="nervios")tab="calentar"; if(h==="ajustes")tab="inicio"; if(h==="improvisar"||h==="preguntas")tab="discursos";
+  if(h==="nervios")tab="calentar"; if(h==="improvisar"||h==="preguntas")tab="discursos";
   app.innerHTML=html;
   document.querySelectorAll("nav.tabs a").forEach(a=>{if(a.dataset.tab===tab)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
   window.scrollTo(0,0);

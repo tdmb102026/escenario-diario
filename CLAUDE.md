@@ -13,5 +13,6 @@
 - Niveles (2026-10-27): 1 Estructura, 2 Storytelling, 3 Voz y emoción, 4 Improvisación (`#improvisar`), 5 Preguntas del público (`#preguntas`). Se sube con `META`=3 prácticas con nota ≥ `APRUEBA`=3.5 en el nivel actual (`nivelActual()`); cada práctica guarda `nivel`. Ajustes → "Desbloquear todos los niveles" (`ed_todos`) para probar.
 - Marcas en discursos del nivel 3: `^texto^` subir, `~texto~` bajar, ` // ` silencio largo (`withPauses`, `plain`, `trozos`).
 - Crear tiene tres modos (`ed_crearModo`): discurso (`ed_gen`), historia (`ed_genh`, guarda `kind:"historia"`, nivel 2) y unir (`ed_genu`: Claude recomienda dónde va la historia y une ambos).
-- Calentar guiado: `guiaCalentar()` lee cada paso con `decir()` (voz nativa o del navegador) y cuenta el tiempo.
+- Calentar con profesor: `GUIONES` (por título del ejercicio) con acciones di, cuenta, alterna, espera, tuTurno, repite; `guiaCalentar(desde, solo)` las ejecuta con `decir()` (voz nativa o del navegador). Pausa, Siguiente y Terminar. Botón "Guíame" por ejercicio.
+- Ajustes es una pestaña de la barra de abajo (recordatorio, IA, niveles).
 - Recordatorio diario (solo app Android): `AndroidVoz.recordatorio(activo, hora, minuto)`, `recordatorioEstado()`, `practique()`; `Recordatorio.java` usa `AlarmManager.setWindow` (sin permiso de alarmas exactas), no avisa si ese día ya practicaste y se reprograma al reiniciar el teléfono.
