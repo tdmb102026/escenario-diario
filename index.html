@@ -611,6 +611,8 @@ let speaking=null;
 function marcarParte(i){document.querySelectorAll(".seg").forEach((e,k)=>e.classList.toggle("active",k===i));document.querySelectorAll(".seg")[i]?.scrollIntoView({behavior:"smooth",block:"center"})}
 // La app Android avisa con Voz.parte(i) al empezar cada parte y Voz.fin() al terminar.
 const Voz={parte(i){if(speaking)marcarParte(i)},fin(){if(vozCb){vozCb();return}stopSpeech()},sinVoz(){if(vozCb){vozCb();return}stopSpeech();const n=document.getElementById("tts-note");if(n)n.hidden=false}};
+// La app Android llama "window.Voz && Voz.fin()" y "window.Dictado && …": un const no queda en window, así que se publican aquí.
+window.Voz=Voz;window.Dictado=Dictado;
 function stopSpeech(){if(NATIVO&&speaking)NATIVO.callar();if(synth)synth.cancel();speaking=null;document.querySelectorAll(".seg.active").forEach(e=>e.classList.remove("active"));const b=document.getElementById("btn-listen");if(b)b.innerHTML=ICON.play+"Escuchar"}
 function speakSpeech(sp){
   if(speaking){stopSpeech();return}

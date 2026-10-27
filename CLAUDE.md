@@ -17,3 +17,4 @@
 - Ajustes es una pestaña de la barra de abajo (recordatorio, IA, niveles).
 - Recordatorio diario (solo app Android): `AndroidVoz.recordatorio(activo, hora, minuto)`, `recordatorioEstado()`, `practique()`; `Recordatorio.java` usa `AlarmManager.setWindow` (sin permiso de alarmas exactas), no avisa si ese día ya practicaste y se reprograma al reiniciar el teléfono.
 - Dictado: si una tanda de Google termina sin resultado final o con error, se guarda lo último oído (`ultimoParcial` en Java, `dictParcial` en la página); antes la tanda nueva borraba lo anterior.
+- La página publica `window.Voz` y `window.Dictado`: la app Android los llama como `window.Voz && Voz.fin()` (un `const` no queda en `window`).
