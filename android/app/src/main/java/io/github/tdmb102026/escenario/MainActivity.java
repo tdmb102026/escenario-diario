@@ -154,6 +154,14 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        // Al volver de los ajustes de Android: reprograma y refresca la pantalla de Ajustes.
+        Recordatorio.programar(this);
+        if (web != null) js("location.hash==='#ajustes' && window.render && render()");
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
         // Si sales de la app, deja de escuchar y de leer.
@@ -349,6 +357,7 @@ public class MainActivity extends Activity {
                 return new JSONObject().put("activo", p.getBoolean("aviso", false))
                         .put("hora", p.getInt("hora", 19)).put("minuto", p.getInt("minuto", 0))
                         .put("permiso", getSystemService(android.app.NotificationManager.class).areNotificationsEnabled())
+                        .put("exacta", Build.VERSION.SDK_INT < 31 || getSystemService(android.app.AlarmManager.class).canScheduleExactAlarms())
                         .put("hoyNo", Recordatorio.hoy().equals(p.getString("practico", ""))).toString();
             } catch (Exception e) { return "{}"; }
         }
@@ -370,6 +379,15 @@ public class MainActivity extends Activity {
             Intent i = new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                     .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, getPackageName())
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            try { startActivity(i); } catch (Exception e) { }
+        }
+
+        // Abre el permiso de "Alarmas y recordatorios" para que el aviso llegue a la hora exacta.
+        @JavascriptInterface
+        public void permisoAlarmas() {
+            if (Build.VERSION.SDK_INT < 31) return;
+            Intent i = new Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+                    android.net.Uri.parse("package:" + getPackageName())).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             try { startActivity(i); } catch (Exception e) { }
         }
 

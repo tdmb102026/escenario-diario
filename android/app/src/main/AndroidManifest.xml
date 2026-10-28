@@ -8,6 +8,8 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Para que el recordatorio suene a la hora exacta (Android 12+ lo pide en Ajustes del teléfono). -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <!-- Android 11+ solo deja ver el reconocimiento de voz y la voz que lee si se declaran aquí. -->
     <queries>
@@ -41,6 +43,7 @@
         <receiver android:name=".Recordatorio" android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
             </intent-filter>
         </receiver>
     </application>

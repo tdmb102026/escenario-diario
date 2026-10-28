@@ -37,7 +37,7 @@ public class Recordatorio extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context c, Intent i) {
-        if (Intent.ACTION_BOOT_COMPLETED.equals(i.getAction())) { programar(c); return; }
+        if (i.getAction() != null) { programar(c); return; }  // reinicio o permiso de alarmas exactas
         programar(c);  // la de mañana
         if (hoy().equals(prefs(c).getString("practico", ""))) return;
         avisar(c);
