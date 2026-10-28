@@ -18,7 +18,7 @@ import java.util.Locale;
 // Aviso diario "Hora de practicar" a la hora que elijas en Ajustes. Si ese día ya practicaste, no avisa.
 // Se programa una alarma para el día siguiente cada vez que suena, y otra vez al reiniciar el teléfono.
 public class Recordatorio extends BroadcastReceiver {
-    static final String CANAL = "practica";
+    static final String CANAL = "practica_sonido";  // canal nuevo: el de "practica" quedó sin sonido
     private static final String[] FRASES = {
         "Tu discurso del día te está esperando. Quince minutos y listo.",
         "Un poco cada día le gana a mucho de vez en cuando.",
@@ -50,7 +50,13 @@ public class Recordatorio extends BroadcastReceiver {
     static void avisar(Context c) {
         NotificationManager nm = c.getSystemService(NotificationManager.class);
         if (nm == null) return;
-        nm.createNotificationChannel(new NotificationChannel(CANAL, "Recordatorio de práctica", NotificationManager.IMPORTANCE_DEFAULT));
+        nm.deleteNotificationChannel("practica");
+        NotificationChannel canal = new NotificationChannel(CANAL, "Recordatorio de práctica", NotificationManager.IMPORTANCE_HIGH);
+        canal.setSound(android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_NOTIFICATION),
+                new android.media.AudioAttributes.Builder().setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION).build());
+        canal.enableVibration(true);
+        canal.setVibrationPattern(new long[]{ 0, 300, 200, 300 });
+        nm.createNotificationChannel(canal);
         Intent abrir = new Intent(c, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         PendingIntent pi = PendingIntent.getActivity(c, 0, abrir, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         Notification n = new Notification.Builder(c, CANAL)
