@@ -335,7 +335,7 @@ public class MainActivity extends Activity {
         public void recordatorio(boolean activo, int hora, int minuto) {
             Recordatorio.prefs(MainActivity.this).edit()
                     .putBoolean("aviso", activo).putInt("hora", hora).putInt("minuto", minuto).apply();
-            Recordatorio.programar(MainActivity.this);
+            Recordatorio.programar(MainActivity.this, activo);
             if (activo && Build.VERSION.SDK_INT >= 33
                     && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 runOnUiThread(() -> requestPermissions(new String[]{ Manifest.permission.POST_NOTIFICATIONS }, PEDIR_AVISOS));

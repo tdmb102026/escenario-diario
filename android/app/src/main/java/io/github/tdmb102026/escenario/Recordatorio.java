@@ -61,7 +61,10 @@ public class Recordatorio extends BroadcastReceiver {
     }
 
     // Programa (o quita) la próxima alarma según lo guardado en Ajustes.
-    static void programar(Context c) {
+    static void programar(Context c) { programar(c, false); }
+
+    // desdeAjustes: si eligen la hora del minuto actual, que suene ya (antes la pasaba a mañana).
+    static void programar(Context c, boolean desdeAjustes) {
         SharedPreferences p = prefs(c);
         AlarmManager am = c.getSystemService(AlarmManager.class);
         if (am == null) return;
@@ -73,7 +76,10 @@ public class Recordatorio extends BroadcastReceiver {
         cal.set(Calendar.HOUR_OF_DAY, p.getInt("hora", 19));
         cal.set(Calendar.MINUTE, p.getInt("minuto", 0));
         cal.set(Calendar.SECOND, 0);
-        if (cal.getTimeInMillis() <= System.currentTimeMillis() + 60000) cal.add(Calendar.DAY_OF_MONTH, 1);
+        long ahora = System.currentTimeMillis();
+        if (desdeAjustes && cal.getTimeInMillis() <= ahora && ahora - cal.getTimeInMillis() < 60000)
+            cal.setTimeInMillis(ahora + 5000);
+        else if (cal.getTimeInMillis() <= ahora + 60000) cal.add(Calendar.DAY_OF_MONTH, 1);
         // "AllowWhileIdle": suena aunque el teléfono esté dormido (con setWindow Android la retrasaba horas).
         // Exacta solo si el teléfono la permite; si no, Android la deja en unos minutos de diferencia.
         if (android.os.Build.VERSION.SDK_INT < 31 || am.canScheduleExactAlarms())

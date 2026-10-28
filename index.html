@@ -1252,7 +1252,9 @@ function viewAjustes(){
 }
 function guardarAviso(activo){
   const [h,m]=(document.getElementById("av-hora").value||"19:00").split(":").map(Number);
-  NATIVO.recordatorio(activo,h||0,m||0);toast(activo?`Te aviso todos los días a las ${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`:"Recordatorio desactivado");render();
+  NATIVO.recordatorio(activo,h||0,m||0);
+  const d=new Date(),ya=h*60+m<=d.getHours()*60+d.getMinutes()-1;
+  toast(activo?`Te aviso todos los días a las ${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}${ya?". Esa hora ya pasó: el primero llega mañana":""}`:"Recordatorio desactivado");render();
 }
 function marcarPractica(){
   const d=store.get("dias",[]),h=diaLocal();if(!d.includes(h))store.set("dias",[...d,h].slice(-400));
