@@ -65,6 +65,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle guardado) {
         super.onCreate(guardado);
+        Recordatorio.programar(this);  // por si Android borró la alarma (actualizar la app, cerrar a la fuerza)
         web = new WebView(this);
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
@@ -346,8 +347,30 @@ public class MainActivity extends Activity {
             android.content.SharedPreferences p = Recordatorio.prefs(MainActivity.this);
             try {
                 return new JSONObject().put("activo", p.getBoolean("aviso", false))
-                        .put("hora", p.getInt("hora", 19)).put("minuto", p.getInt("minuto", 0)).toString();
+                        .put("hora", p.getInt("hora", 19)).put("minuto", p.getInt("minuto", 0))
+                        .put("permiso", getSystemService(android.app.NotificationManager.class).areNotificationsEnabled())
+                        .put("hoyNo", Recordatorio.hoy().equals(p.getString("practico", ""))).toString();
             } catch (Exception e) { return "{}"; }
+        }
+
+        // Muestra el aviso ya, para comprobar que las notificaciones llegan.
+        @JavascriptInterface
+        public void probarAviso() {
+            if (Build.VERSION.SDK_INT >= 33
+                    && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                runOnUiThread(() -> requestPermissions(new String[]{ Manifest.permission.POST_NOTIFICATIONS }, PEDIR_AVISOS));
+                return;
+            }
+            Recordatorio.avisar(MainActivity.this);
+        }
+
+        // Abre los ajustes de notificaciones de la app en Android.
+        @JavascriptInterface
+        public void ajustesAvisos() {
+            Intent i = new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                    .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, getPackageName())
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            try { startActivity(i); } catch (Exception e) { }
         }
 
         // La página avisa que hoy ya practicaste: ese día no sale el recordatorio.

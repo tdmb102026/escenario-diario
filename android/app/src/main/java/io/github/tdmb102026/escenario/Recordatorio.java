@@ -40,6 +40,11 @@ public class Recordatorio extends BroadcastReceiver {
         if (Intent.ACTION_BOOT_COMPLETED.equals(i.getAction())) { programar(c); return; }
         programar(c);  // la de mañana
         if (hoy().equals(prefs(c).getString("practico", ""))) return;
+        avisar(c);
+    }
+
+    // Muestra el aviso ahora (también lo usa el botón "Probar aviso" de Ajustes).
+    static void avisar(Context c) {
         NotificationManager nm = c.getSystemService(NotificationManager.class);
         if (nm == null) return;
         nm.createNotificationChannel(new NotificationChannel(CANAL, "Recordatorio de práctica", NotificationManager.IMPORTANCE_DEFAULT));
@@ -69,7 +74,11 @@ public class Recordatorio extends BroadcastReceiver {
         cal.set(Calendar.MINUTE, p.getInt("minuto", 0));
         cal.set(Calendar.SECOND, 0);
         if (cal.getTimeInMillis() <= System.currentTimeMillis() + 60000) cal.add(Calendar.DAY_OF_MONTH, 1);
-        // Ventana de 10 minutos: no necesita el permiso de alarmas exactas.
-        am.setWindow(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), 10 * 60 * 1000, pi);
+        // "AllowWhileIdle": suena aunque el teléfono esté dormido (con setWindow Android la retrasaba horas).
+        // Exacta solo si el teléfono la permite; si no, Android la deja en unos minutos de diferencia.
+        if (android.os.Build.VERSION.SDK_INT < 31 || am.canScheduleExactAlarms())
+            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), pi);
+        else
+            am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), pi);
     }
 }

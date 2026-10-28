@@ -1230,7 +1230,9 @@ function viewAjustes(){
       return `<p class="muted">Te aviso a esta hora que toca practicar. Si ese día ya practicaste, no te molesto.</p>
       <div class="row"><label for="av-hora" class="muted">Hora</label><input id="av-hora" type="time" value="${String(r.hora).padStart(2,"0")}:${String(r.minuto).padStart(2,"0")}" style="width:auto"></div>
       <div class="row"><button class="btn-primary" onclick="guardarAviso(true)">${r.activo?"Cambiar hora":"Activar recordatorio"}</button>${r.activo?`<button onclick="guardarAviso(false)">Desactivar</button>`:""}</div>
-      ${r.activo?`<p class="hint">Activo todos los días a las ${String(r.hora).padStart(2,"0")}:${String(r.minuto).padStart(2,"0")}.</p>`:""}`})()
+      ${r.activo?`<p class="hint">Activo todos los días a las ${String(r.hora).padStart(2,"0")}:${String(r.minuto).padStart(2,"0")}.${r.hoyNo?" Hoy ya practicaste, así que hoy no te aviso.":""}</p>`:""}
+      ${r.permiso===false?`<p class="hint" style="color:var(--bad)">Las notificaciones de Escenario están apagadas en Android, por eso no te llega el aviso.</p>${NATIVO.ajustesAvisos?`<button style="align-self:flex-start" onclick="NATIVO.ajustesAvisos()">Activar notificaciones</button>`:""}`:""}
+      ${NATIVO.probarAviso?`<button style="align-self:flex-start" onclick="NATIVO.probarAviso();toast('Te mandé un aviso de prueba')">Probar aviso ahora</button>`:""}`})()
     :`<p class="muted">El recordatorio funciona en la app Android${NATIVO?" nueva: descarga otra vez escenario.apk para tenerlo":""}.</p>${NATIVO?`<a class="btn" href="${APK_URL}" target="_blank" rel="noopener" style="align-self:flex-start">Descargar escenario.apk</a>`:""}`}
   </section>
   <div class="section-title"><h2>Conectar la IA</h2><p class="muted">La calificación y la creación de discursos usan Claude a través de tu servidor, con tu clave de API. Los pasos para preparar el servidor están en el repositorio, en <b>ia-servidor/LEEME.md</b>.</p></div>
