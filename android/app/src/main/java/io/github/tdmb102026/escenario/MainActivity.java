@@ -295,7 +295,7 @@ public class MainActivity extends Activity {
         super.onRequestPermissionsResult(pedido, permisos, resultados);
         if (pedido == PEDIR_AVISOS) {
             if (resultados.length == 0 || resultados[0] != PackageManager.PERMISSION_GRANTED)
-                js("window.toast && toast('Sin permiso de notificaciones no puedo avisarte. Actívalo en Ajustes de Android → Apps → Escenario')");
+                js("window.toast && toast('Sin permiso de notificaciones no puedo avisarte. Actívalo en Ajustes de Android → Apps → Retorika')");
             return;
         }
         if (pedido == PEDIR_MIC_GRABAR) {
@@ -310,7 +310,7 @@ public class MainActivity extends Activity {
         if (pedido != PEDIR_MIC) return;
         boolean ok = resultados.length > 0 && resultados[0] == PackageManager.PERMISSION_GRANTED;
         if (ok && micPendiente) iniciarOido();
-        else if (!ok) js("Dictado.estado('error:Sin permiso de micrófono. Actívalo en Ajustes de Android → Apps → Escenario')");
+        else if (!ok) js("Dictado.estado('error:Sin permiso de micrófono. Actívalo en Ajustes de Android → Apps → Retorika')");
         micPendiente = false;
     }
 
