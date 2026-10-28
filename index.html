@@ -424,6 +424,7 @@ const WARMUP = [
   {t:"Masaje de mandíbula", s:40, d:"Libera el músculo masetero, el que más se tensa con nervios.", steps:["Coloca las yemas de los dedos debajo de los pómulos.","Haz círculos firmes mientras abres la boca poco a poco.","Deja caer la mandíbula relajada, como si bostezaras."]},
   {t:"Cara de león y cara de limón", s:30, d:"Despierta todos los músculos del rostro.", steps:["León: abre ojos y boca al máximo y saca la lengua hacia la barbilla.","Limón: aprieta toda la cara hacia la nariz.","Alterna 5 veces, 3 segundos en cada posición."]},
   {t:"Gimnasia de labios", s:40, d:"Labios ágiles, consonantes claras.", steps:["Beso exagerado hacia adelante y sonrisa amplia hacia atrás, 10 veces.","Vibra los labios como un motor (brrrr) 10 segundos.","Lleva los labios en círculos con la boca cerrada, 5 por lado."]},
+  {t:"Chicle gigante", s:45, d:"Suelta la mandíbula y despierta la voz jugando.", steps:["Imagina un chicle en la boca y mastícalo despacio, con la boca cerrada.","El chicle crece: mastica más grande, moviendo labios, lengua y mandíbula.","Ya es enorme: mastica exagerado, abriendo la boca al máximo, y suelta un \"mmm\" con la voz mientras masticas."]},
   {t:"Lengua en movimiento", s:40, d:"La lengua es el músculo principal de la dicción.", steps:["Recorre el interior de las mejillas en círculos, 5 por lado.","Toca con la punta la comisura derecha e izquierda rápido, 10 veces.","Chasquea la lengua contra el paladar 10 veces."]},
   {t:"Lápiz entre los dientes", s:60, d:"El ejercicio clásico de dicción.", steps:["Sujeta un lápiz o bolígrafo horizontal entre los dientes, sin morder fuerte.","Lee en voz alta el gancho de tu discurso del día, exagerando cada sílaba.","Quita el lápiz y repítelo: notarás la claridad."]}]},
  {g:"Voz", items:[
@@ -772,7 +773,7 @@ function viewInicio(){
     <p>${esc(sp.resumen)}</p>
     <div class="today">
       <button class="go" onclick="location.hash='hoy'">${ICON.play}${rutinaHoy().hechos.length?"Seguir con la rutina de hoy":"Practicar hoy (10 min)"}</button>
-      <button onclick="location.hash='d-${sp.id}'">Solo el discurso</button>
+      <button onclick="irGuiada('${sp.id}')">Solo el discurso</button>
       <button onclick="location.hash='discursos'">Elegir otro</button>
     </div>
   </section>
@@ -917,6 +918,12 @@ function pract(id){return store.get("pract",{})[id]||{paso:1,hechos:[]}}
 function practSet(id,v){const t=store.get("pract",{});t[id]=v;store.set("pract",t)}
 function practMarcar(id,n){const v=pract(id);if(!v.hechos.includes(n))v.hechos.push(n);practSet(id,v)}
 let guiada=null;
+// Abre el discurso y encima la práctica guiada (desde Inicio y la rutina de hoy).
+function irGuiada(id){
+  const pr=pract(id),n=pr.paso>1&&pr.paso<5?pr.paso:1;
+  if((location.hash||"").slice(1)!=="d-"+id){location.hash="d-"+id;setTimeout(()=>abrirGuiada(id,n),60)}
+  else abrirGuiada(id,n);
+}
 function abrirGuiada(id,paso){
   stopSpeech();stopRec();cerrarEnsayo();
   const sp=findSp(id);if(!sp)return;
@@ -1327,11 +1334,17 @@ function rachaHtml(){
    Un botón en Inicio lleva por 4 pasos en orden: calentar corto, escuchar, tarjetas clave (y grabarte), calificarte.
    ed_hoy = {dia, sp, hechos:[...]}; "calificar" se marca solo cuando guardas una práctica hoy. */
 const RUTINA=[
- {k:"calentar",t:"Calentar",min:"3 min",d:"Respiración, cara, labios y vocales con el profesor."},
+ {k:"calentar",t:"Calentar",min:"3 min",d:"Cuatro ejercicios al azar de la lista, con el profesor."},
  {k:"escuchar",t:"Escuchar el discurso",min:"2 min",d:"Síguelo con la vista mientras la voz lo lee."},
  {k:"sinleer",t:"Tarjetas clave",min:"4 min",d:"Dilo solo con el comienzo y las palabras clave de cada parte. Grábate al final y escúchate."},
  {k:"calificar",t:"Calificarte",min:"2 min",d:"Dilo de pie mientras el teléfono escribe y Claude te califica."}];
 const CALENTAR_CORTO=["Respiración diafragmática","Cara de león y cara de limón","Gimnasia de labios","Vocales exageradas"];
+// Cada vez sortea 4 ejercicios de toda la lista (fer lo pidió); se muestran en el orden de la lista: cuerpo, rostro, voz.
+function calentarAzar(n=4){
+  const todos=WARMUP.flatMap(g=>g.items).map((x,i)=>i);
+  for(let i=todos.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[todos[i],todos[j]]=[todos[j],todos[i]]}
+  return todos.slice(0,n).sort((a,b)=>a-b);
+}
 function rutinaHoy(){
   let r=store.get("hoy",null);
   if(!r||r.dia!==diaLocal())r={dia:diaLocal(),sp:todaySpeech().id,hechos:[]};
@@ -1348,6 +1361,7 @@ function viewHoy(){
     calificar:`<button class="${sig&&sig.k==="calificar"?"siguiente":""}" onclick="location.hash='evaluar-${sp.id}'">${ICON.check}Calificarme</button>`};
   return `<div class="stack-lg">
   <div class="section-title"><p class="eyebrow">Rutina de hoy · unos 10 minutos</p><h1>${esc(sp.titulo)}</h1><p class="muted">Haz los pasos en orden. El botón que toca está iluminado.</p></div>
+  <button class="btn-accent guiada-go" onclick="irGuiada('${sp.id}')">${ICON.play}Práctica guiada del discurso</button>
   ${rachaHtml()}
   <div class="stack" id="hoy-pasos">${RUTINA.map((p,i)=>{const ok=r.hechos.includes(p.k);return `<section class="card paso ${ok?"ok":""} ${sig===p?"actual":""}">
     <div class="paso-top"><span class="paso-n">${ok?ICON.check:i+1}</span><span><b>${p.t}</b> <span class="muted">· ${p.min}</span><br><span class="muted">${p.d}</span></span></div>
@@ -1358,9 +1372,9 @@ function viewHoy(){
 }
 function pintarHoy(){if((location.hash||"").slice(1)!=="hoy")return;const y=window.scrollY,b=document.getElementById("btn-listen"),hablando=!!speaking;app.innerHTML=viewHoy();window.scrollTo(0,y);if(hablando){const n=document.getElementById("btn-listen");if(n)n.innerHTML=ICON.stop+"Detener"}}
 async function hoyCalentar(){
-  const todos=WARMUP.flatMap(g=>g.items),lista=CALENTAR_CORTO.map(t=>todos.findIndex(x=>x.t===t)).filter(i=>i>=0);
-  const ok=await guiaCalentar(0,false,lista);
-  if(ok){rutinaMarcar("calentar");setTimeout(()=>{guiaCerrar();pintarHoy()},1500)}
+  const ok=await guiaCalentar(0,false,calentarAzar());
+  // Al terminar el calentamiento sigue la práctica guiada del discurso, igual que desde Niveles.
+  if(ok){rutinaMarcar("calentar");setTimeout(()=>{guiaCerrar();pintarHoy();setTimeout(()=>irGuiada(rutinaHoy().sp),400)},1500)}
 }
 function rutinaAviso(){
   const r=store.get("hoy",null);if(!r||r.dia!==diaLocal()||!r.hechos.length)return "";
@@ -1796,6 +1810,14 @@ const GUIONES={
   ["repite",5,[["di","Sube."],["espera",1800,"↑ Sube…"],["di","Baja."],["espera",1800,"↓ Baja…"]]],
   ["di","Ahora abre el sonido: mmm, aaa, como si le hablaras a una pared lejana."],
   ["repite",3,[["espera",3500,"Mmmm… aaaa…"]]]],
+ "Chicle gigante":[
+  ["di","Imagina que tienes un chicle en la boca. Mastícalo despacio, con la boca cerrada."],
+  ["cuenta",5,1500],
+  ["di","El chicle está creciendo. Mastica más grande, moviendo los labios, la lengua y la mandíbula."],
+  ["cuenta",5,1500],
+  ["di","Ahora es enorme. Mastícalo exagerado, abriendo la boca todo lo que puedas, y suelta un mmm con la voz mientras masticas."],
+  ["cuenta",8,1500],
+  ["di","Muy bien. Suelta la mandíbula y respira."]],
  "Vocales exageradas":[
   ["di","Vocales exageradas: abre bien la boca en cada una. Tres rondas, cada vez más fuerte."],
   ["repite",3,[["alterna",["A","E","I","O","U"],5,1600],["di","Al revés."],["alterna",["U","O","I","E","A"],5,1600]]]],
