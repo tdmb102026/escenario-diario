@@ -712,8 +712,37 @@ function startRec(id){
   }catch(e){fallback()}
 }
 function toast(msg){const t=document.createElement("div");t.className="toast";t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
-// Discurso del día: del nivel en el que vas (los niveles 4 y 5 practican sobre los del 3).
-function todaySpeech(){const d=new Date();const n=Math.floor((d-new Date(d.getFullYear(),0,0))/864e5);const lv=Math.min(3,typeof nivelActual==="function"?nivelActual():1);const l=SPEECHES.filter(s=>s.nivel===lv);return l[n%l.length]}
+/* "Tu discurso": se queda el mismo día tras día hasta que lo domines (nota >= APRUEBA) o elijas pasar al siguiente.
+   ed_actual = {id, desde, pasar, pasarDia}: con pasar, el siguiente del nivel (en orden) empieza el día después de pasarDia. */
+function todaySpeech(){
+  const lv=Math.min(3,typeof nivelActual==="function"?nivelActual():1),l=SPEECHES.filter(s=>s.nivel===lv),hoy=diaLocal();
+  let a=store.get("actual",null),sp=a&&l.find(s=>s.id===a.id);
+  if(sp&&a.pasar&&a.pasarDia<hoy){sp=l[(l.indexOf(sp)+1)%l.length];a=null}
+  if(!sp){
+    // Empieza con el último que practicaste de este nivel si aún no lo dominas; si no, el primero sin dominar.
+    const h=store.get("hist",[]),dom=new Set(h.filter(x=>x.score>=APRUEBA).map(x=>x.id)),ult=h.find(x=>l.some(s=>s.id===x.id));
+    sp=(ult&&!dom.has(ult.id)&&l.find(s=>s.id===ult.id))||l.find(s=>!dom.has(s.id))||l[0];a=null;
+  }
+  if(!a){a={id:sp.id,desde:hoy,pasar:false};store.set("actual",a)}
+  return sp;
+}
+function actualInfo(){
+  const a=store.get("actual",null);if(!a)return null;
+  const dias=Math.round((new Date(diaLocal()+"T12:00")-new Date(a.desde+"T12:00"))/864e5)+1;
+  const notas=store.get("hist",[]).filter(x=>x.id===a.id&&typeof x.score==="number").map(x=>x.score);
+  return {...a,dias,mejor:notas.length?Math.max(...notas):null};
+}
+function actualDecidir(pasar){const a=store.get("actual",null);if(!a)return;a.pasar=pasar;a.pasarDia=diaLocal();store.set("actual",a)}
+// Después de calificarte: decide solo y te deja cambiarlo con dos botones.
+function actualTrasNota(id,score,mejorar){
+  const a=store.get("actual",null);if(!a||a.id!==id)return "";
+  const ok=score>=APRUEBA;actualDecidir(ok);
+  return `<section class="coach" id="actual-dec"><b>${ok?"¡Lo dominaste! Mañana empiezas el siguiente discurso.":"Mañana lo repetimos."}</b>
+   ${ok?"":`<p>Necesitas ${APRUEBA} o más para pasar al siguiente.${mejorar?" Enfócate en: "+esc(mejorar):""}</p>`}
+   <div class="row"><button onclick="actualDecidir(false);actualPintar(false)">Repetirlo mañana</button><button onclick="actualDecidir(true);actualPintar(true)">Pasar al siguiente</button></div>
+   <p class="muted" id="actual-msg" style="font-size:.88rem;margin:0">${ok?"Mañana verás el siguiente en Inicio.":"Mañana te espera el mismo discurso en Inicio."}</p></section>`;
+}
+function actualPintar(pasar){const m=document.getElementById("actual-msg");if(m)m.textContent=pasar?"Listo: mañana empiezas el siguiente discurso.":"Listo: mañana repites este discurso."}
 function practicedIds(){return new Set(store.get("hist",[]).map(h=>h.id))}
 
 /* ================= VOZ ================= */
@@ -768,7 +797,7 @@ function viewInicio(){
   return `<div class="stack-lg">
   ${IA.listo()?"":`<a class="card row" href="#ajustes" style="text-decoration:none;color:inherit;justify-content:space-between"><span><b>Conecta la IA</b><br><span class="muted">Para que Claude califique y cree tus discursos.</span></span><span class="chip">Ajustes</span></a>`}
   <section class="hero">
-    <p class="eyebrow">Discurso del día</p>
+    <p class="eyebrow">Tu discurso${(()=>{const a=actualInfo();return a&&a.id===sp.id?` · Día ${a.dias} con este discurso${a.mejor!=null?` · tu mejor nota: ${a.mejor.toFixed(1)}`:""}`:""})()}</p>
     <h1>${esc(sp.titulo)}</h1>
     <p>${esc(sp.resumen)}</p>
     <div class="today">
@@ -1094,7 +1123,7 @@ function saveEval(id){
   const h=store.get("hist",[]);
   h.unshift({id,nivel:(findSp(id)||{}).nivel||1,date:new Date().toISOString(),scores:vals,score:vals.reduce((a,b)=>a+b,0)/vals.length,
     secs:parseInt(document.getElementById("ev-time").value)||null,note:document.getElementById("ev-note").value.trim()});
-  store.set("hist",h.slice(0,200)); marcarPractica(); practMarcar(id,5); toast("Práctica guardada"); location.hash="progreso";
+  store.set("hist",h.slice(0,200)); marcarPractica(); practMarcar(id,5); actualTrasNota(id,h[0].score,""); toast(h[0].score>=APRUEBA?"Práctica guardada. ¡Mañana empiezas el siguiente discurso!":"Práctica guardada. Mañana repites este discurso"); location.hash="progreso";
 }
 const avg=h=>h.reduce((a,b)=>a+b.score,0)/h.length;
 // Racha: cuenta los días con una práctica guardada, un calentamiento completo, una grabación o un reto (fecha del teléfono).
@@ -1608,6 +1637,7 @@ async function calificar(out,go,prompt,m,entrada){
       <p><b>Lo que hiciste bien:</b> ${esc(r.fortaleza||"")}</p>
       <p><b>A mejorar:</b> ${esc(r.mejorar||"")}</p>
       <div class="coach"><b>Para tu próximo ensayo</b><p>${esc(r.consejo||"")}</p></div>
+      ${actualTrasNota(entrada.id,score,String(r.mejorar||""))}
       <p class="muted" style="font-size:.88rem">Guardado en tu progreso.${despues>antes||n<antes?"":score>=APRUEBA?` Te ${faltan===1?"falta 1 práctica":`faltan ${faltan} prácticas`} de ${APRUEBA} o más para subir de nivel.`:` Necesitas ${APRUEBA} o más para que cuente para subir de nivel.`}</p>`;
   }catch(e){out.innerHTML=`<p class="hint" style="color:var(--bad)">${esc(aiErr(e))}</p>`}
   finally{go.disabled=false}
