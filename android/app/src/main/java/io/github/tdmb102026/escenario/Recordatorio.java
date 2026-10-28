@@ -38,7 +38,7 @@ public class Recordatorio extends BroadcastReceiver {
     @Override
     public void onReceive(Context c, Intent i) {
         if (i.getAction() != null) { programar(c); return; }  // reinicio o permiso de alarmas exactas
-        programar(c);  // la de mañana
+        programar(c, false, true);  // la de mañana
         SharedPreferences p = prefs(c);
         // Si ya practicaste hoy no avisa, salvo que hoy hayas cambiado la hora (para poder probarlo).
         boolean callar = hoy().equals(p.getString("practico", "")) && !hoy().equals(p.getString("cambio", ""));
@@ -64,10 +64,11 @@ public class Recordatorio extends BroadcastReceiver {
     }
 
     // Programa (o quita) la próxima alarma según lo guardado en Ajustes.
-    static void programar(Context c) { programar(c, false); }
+    static void programar(Context c) { programar(c, false, false); }
+    static void programar(Context c, boolean desdeAjustes) { programar(c, desdeAjustes, false); }
 
     // desdeAjustes: si eligen la hora del minuto actual, que suene ya (antes la pasaba a mañana).
-    static void programar(Context c, boolean desdeAjustes) {
+    static void programar(Context c, boolean desdeAjustes, boolean trasSonar) {
         SharedPreferences p = prefs(c);
         AlarmManager am = c.getSystemService(AlarmManager.class);
         if (am == null) return;
@@ -80,9 +81,16 @@ public class Recordatorio extends BroadcastReceiver {
         cal.set(Calendar.MINUTE, p.getInt("minuto", 0));
         cal.set(Calendar.SECOND, 0);
         long ahora = System.currentTimeMillis();
-        if (desdeAjustes && cal.getTimeInMillis() <= ahora && ahora - cal.getTimeInMillis() < 60000)
+        long guardado = p.getLong("proximo", 0);
+        boolean mismaHora = Math.abs(guardado - cal.getTimeInMillis()) % (24 * 3600000L) < 60000;
+        if (!desdeAjustes && !trasSonar && guardado > ahora && (guardado - ahora < 60000 || mismaHora))
+            cal.setTimeInMillis(guardado);  // al abrir la app o reiniciar: respeta el que ya estaba
+        else if (desdeAjustes && cal.getTimeInMillis() <= ahora && ahora - cal.getTimeInMillis() < 60000)
             cal.setTimeInMillis(ahora + 5000);
-        else if (cal.getTimeInMillis() <= ahora + 60000) cal.add(Calendar.DAY_OF_MONTH, 1);
+        // Solo pasa a mañana si la hora ya pasó (antes también si faltaba menos de un minuto, y al abrir la app se perdía).
+        // Justo después de sonar, la de hoy no cuenta.
+        else if (cal.getTimeInMillis() <= ahora || (trasSonar && cal.getTimeInMillis() <= ahora + 10 * 60000))
+            cal.add(Calendar.DAY_OF_MONTH, 1);
         p.edit().putLong("proximo", cal.getTimeInMillis()).apply();
         // "AllowWhileIdle": suena aunque el teléfono esté dormido (con setWindow Android la retrasaba horas).
         // Exacta solo si el teléfono la permite; si no, Android la deja en unos minutos de diferencia.
