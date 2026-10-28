@@ -342,7 +342,8 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void recordatorio(boolean activo, int hora, int minuto) {
             Recordatorio.prefs(MainActivity.this).edit()
-                    .putBoolean("aviso", activo).putInt("hora", hora).putInt("minuto", minuto).apply();
+                    .putBoolean("aviso", activo).putInt("hora", hora).putInt("minuto", minuto)
+                    .putString("cambio", Recordatorio.hoy()).apply();
             Recordatorio.programar(MainActivity.this, activo);
             if (activo && Build.VERSION.SDK_INT >= 33
                     && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -358,6 +359,8 @@ public class MainActivity extends Activity {
                         .put("hora", p.getInt("hora", 19)).put("minuto", p.getInt("minuto", 0))
                         .put("permiso", getSystemService(android.app.NotificationManager.class).areNotificationsEnabled())
                         .put("exacta", Build.VERSION.SDK_INT < 31 || getSystemService(android.app.AlarmManager.class).canScheduleExactAlarms())
+                        .put("proximo", p.getLong("proximo", 0)).put("sono", p.getLong("sono", 0))
+                        .put("callo", p.getBoolean("callo", false))
                         .put("hoyNo", Recordatorio.hoy().equals(p.getString("practico", ""))).toString();
             } catch (Exception e) { return "{}"; }
         }

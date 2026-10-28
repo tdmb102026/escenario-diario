@@ -1228,9 +1228,11 @@ function viewAjustes(){
   <section class="card stack"><h3>Recordatorio diario</h3>
     ${NATIVO&&NATIVO.recordatorio?(()=>{let r={activo:false,hora:19,minuto:0};try{r=Object.assign(r,JSON.parse(NATIVO.recordatorioEstado()))}catch(e){}
       return `<p class="muted">Te aviso a esta hora que toca practicar. Si ese día ya practicaste, no te molesto.</p>
-      <div class="row"><label for="av-hora" class="muted">Hora</label><input id="av-hora" type="time" value="${String(r.hora).padStart(2,"0")}:${String(r.minuto).padStart(2,"0")}" style="width:auto"></div>
+      <div class="row"><label for="av-hora" class="muted">Hora</label><input id="av-hora" type="time" value="${String(r.hora).padStart(2,"0")}:${String(r.minuto).padStart(2,"0")}" style="width:auto" onchange="${r.activo?"guardarAviso(true)":""}"></div>
       <div class="row"><button class="btn-primary" onclick="guardarAviso(true)">${r.activo?"Cambiar hora":"Activar recordatorio"}</button>${r.activo?`<button onclick="guardarAviso(false)">Desactivar</button>`:""}</div>
-      ${r.activo?`<p class="hint">Activo todos los días a las ${String(r.hora).padStart(2,"0")}:${String(r.minuto).padStart(2,"0")}.${r.hoyNo?" Hoy ya practicaste, así que hoy no te aviso.":""}</p>`:""}
+      ${r.activo?`<p class="hint">Activo todos los días a las ${String(r.hora).padStart(2,"0")}:${String(r.minuto).padStart(2,"0")}.${r.hoyNo?" Hoy ya practicaste, así que hoy no te aviso (salvo que cambies la hora).":""}</p>
+      ${r.proximo?`<p class="hint">Próximo aviso: ${cuandoAviso(r.proximo)}.</p>`:""}`:""}
+      ${r.sono?`<p class="hint">Último: ${cuandoAviso(r.sono)}${r.callo?" (no te avisó porque ya habías practicado)":" (avisó)"}.</p>`:""}
       ${r.permiso===false?`<p class="hint" style="color:var(--bad)">Las notificaciones de Escenario están apagadas en Android, por eso no te llega el aviso.</p>${NATIVO.ajustesAvisos?`<button style="align-self:flex-start" onclick="NATIVO.ajustesAvisos()">Activar notificaciones</button>`:""}`:""}
       ${r.activo&&r.exacta===false&&NATIVO.permisoAlarmas?`<p class="hint" style="color:var(--bad)">Android no deja que el aviso suene a la hora exacta y lo puede retrasar mucho. Toca el botón y activa "Permitir alarmas y recordatorios".</p><button class="btn-primary" style="align-self:flex-start" onclick="NATIVO.permisoAlarmas()">Permitir hora exacta</button>`:""}
       ${NATIVO.probarAviso?`<button style="align-self:flex-start" onclick="NATIVO.probarAviso();toast('Te mandé un aviso de prueba')">Probar aviso ahora</button>`:""}`})()
@@ -1251,6 +1253,9 @@ function viewAjustes(){
   ${NATIVO?"":`<section class="card stack"><h3>App Android</h3><p class="muted">Con la app Android funcionan la voz que lee los discursos y el micrófono que no se corta en las pausas.</p><a class="btn" href="${APK_URL}" target="_blank" rel="noopener" style="align-self:flex-start">Descargar escenario.apk</a></section>`}
   </div>`;
 }
+function cuandoAviso(ms){const d=new Date(ms),h=new Date(),m=new Date();m.setDate(h.getDate()+1);
+  const dia=d.toDateString()===h.toDateString()?"hoy":d.toDateString()===m.toDateString()?"mañana":d.toLocaleDateString("es-MX",{day:"numeric",month:"short"});
+  return `${dia} a las ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`}
 function guardarAviso(activo){
   const [h,m]=(document.getElementById("av-hora").value||"19:00").split(":").map(Number);
   NATIVO.recordatorio(activo,h||0,m||0);

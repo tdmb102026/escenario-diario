@@ -39,8 +39,11 @@ public class Recordatorio extends BroadcastReceiver {
     public void onReceive(Context c, Intent i) {
         if (i.getAction() != null) { programar(c); return; }  // reinicio o permiso de alarmas exactas
         programar(c);  // la de mañana
-        if (hoy().equals(prefs(c).getString("practico", ""))) return;
-        avisar(c);
+        SharedPreferences p = prefs(c);
+        // Si ya practicaste hoy no avisa, salvo que hoy hayas cambiado la hora (para poder probarlo).
+        boolean callar = hoy().equals(p.getString("practico", "")) && !hoy().equals(p.getString("cambio", ""));
+        p.edit().putLong("sono", System.currentTimeMillis()).putBoolean("callo", callar).apply();
+        if (!callar) avisar(c);
     }
 
     // Muestra el aviso ahora (también lo usa el botón "Probar aviso" de Ajustes).
@@ -71,7 +74,7 @@ public class Recordatorio extends BroadcastReceiver {
         PendingIntent pi = PendingIntent.getBroadcast(c, 0, new Intent(c, Recordatorio.class),
                 PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         am.cancel(pi);
-        if (!p.getBoolean("aviso", false)) return;
+        if (!p.getBoolean("aviso", false)) { p.edit().remove("proximo").apply(); return; }
         Calendar cal = Calendar.getInstance();
         cal.set(Calendar.HOUR_OF_DAY, p.getInt("hora", 19));
         cal.set(Calendar.MINUTE, p.getInt("minuto", 0));
@@ -80,6 +83,7 @@ public class Recordatorio extends BroadcastReceiver {
         if (desdeAjustes && cal.getTimeInMillis() <= ahora && ahora - cal.getTimeInMillis() < 60000)
             cal.setTimeInMillis(ahora + 5000);
         else if (cal.getTimeInMillis() <= ahora + 60000) cal.add(Calendar.DAY_OF_MONTH, 1);
+        p.edit().putLong("proximo", cal.getTimeInMillis()).apply();
         // "AllowWhileIdle": suena aunque el teléfono esté dormido (con setWindow Android la retrasaba horas).
         // Exacta solo si el teléfono la permite; si no, Android la deja en unos minutos de diferencia.
         if (android.os.Build.VERSION.SDK_INT < 31 || am.canScheduleExactAlarms())
