@@ -205,7 +205,12 @@ nav.tabs a[aria-current="page"]{color:var(--accent);background:var(--accent-soft
 .f-top .clock{color:#fff;font-weight:700;text-shadow:0 1px 3px #000}
 .f-zoom{position:relative;display:flex;gap:8px;align-items:center;padding:0 14px;color:#fff;font-size:.85rem;text-shadow:0 1px 3px #000}
 .f-zoom input{flex:1;accent-color:var(--accent)}
-.f-txt{position:relative;margin-top:auto;max-height:48vh;overflow:auto;padding:10px 12px calc(14px + env(safe-area-inset-bottom,0px));opacity:.6;color:#fff;text-shadow:0 1px 4px #000,0 0 2px #000;font-size:.95rem}
+.f-bot{position:relative;display:flex;gap:10px;justify-content:center;padding:8px 12px calc(12px + env(safe-area-inset-bottom,0px))}
+.f-bot button{min-height:52px;font-size:1.05rem}
+.f-bot button.rec-on{background:var(--bad);border-color:var(--bad);color:#fff}
+.f-ini{min-width:60%;justify-content:center}
+.f-oido{color:#fff;font-size:.85rem;text-shadow:0 1px 3px #000;opacity:.9;flex-basis:100%;order:9}
+.f-txt{position:relative;margin-top:auto;max-height:42vh;overflow:auto;padding:10px 12px 4px;opacity:.6;color:#fff;text-shadow:0 1px 4px #000,0 0 2px #000;font-size:.95rem}
 .f-txt .pista{background:#0003;border-color:#fff3}
 .f-txt .ptag{color:#fff}
 .guiada-go{align-self:stretch;min-height:54px;font-size:1.05rem;justify-content:center}
@@ -1125,15 +1130,18 @@ function aiStart(){
 }
 let vozPropia=0;
 function aiGrade(id){
-  const sp=findSp(id),out=document.getElementById("ai-res");
   stopRec();cronoParar();clearInterval(aiInt);
-  const dijo=document.getElementById("ai-text").value.trim();
+  calificarTexto(id,document.getElementById("ai-text").value.trim(),aiT0,document.getElementById("ai-res"),document.getElementById("ai-go"));
+}
+// También lo usa el video: califica lo que el dictado escribió mientras grababas.
+function calificarTexto(id,dijo,t0,out,go){
+  const sp=findSp(id);
   if(dijo.split(/\s+/).length<15){out.innerHTML='<p class="hint" style="color:var(--bad)">Necesito al menos unas frases de tu discurso para calificarte. Di el discurso mientras el texto se escribe arriba.</p>';return}
-  const m=medir(dijo,aiT0),nivel=sp.nivel||1;
+  const m=medir(dijo,t0),nivel=sp.nivel||1;
   const crits=nivel===2?[...CRIT_DISCURSO.slice(0,5),CRIT_HISTORIA,CRIT_DISCURSO[5]]:CRIT_DISCURSO;
   const guion=sp.partes.map(p=>p[0]+": "+plain(p[1])).join("\n");
   const p=promptCalificar(`GUION ORIGINAL ("${sp.titulo}"):\n${guion}\n\nCompara lo que dijo con este guion; puede parafrasear.`,dijo,m.txt+" (ideal 130 a 150 palabras por minuto)",crits);
-  calificar(out,document.getElementById("ai-go"),p,m,{id,nivel,extra:nivel===3&&vozPropia?{"Tu voz":vozPropia}:{}});
+  calificar(out,go,p,m,{id,nivel,extra:nivel===3&&vozPropia?{"Tu voz":vozPropia}:{}});
 }
 function pick(i,n){
   evalScores[i]=n;
@@ -1470,6 +1478,7 @@ function abrirEnsayo(id,nivel,grabar,deRutina,desdePaso){
     <button id="e-cerrar">${desdePaso?"Listo, siguiente paso":"Terminar"}</button></div>
     <p class="e-paso" id="e-paso"></p>
     <div class="e-audio" id="e-audio" hidden></div>
+    <div hidden>${dictBox("v-dict","",2)}</div>
     <div class="prompter-text e-texto" id="e-texto"></div>`;
   document.body.appendChild(el);history.pushState({ensayo:1},"");
   const pintar=()=>{
@@ -1504,41 +1513,73 @@ async function grabarToggle(video){
   catch(e){out.hidden=false;out.innerHTML=`<p>No se pudo abrir ${video?"la cámara":"el micrófono"} para grabar. Si es la app Android, instala el APK más nuevo y revisa en Ajustes de Android → Apps → Retorika → Permisos que ${video?"la cámara y el micrófono estén permitidos":"el micrófono esté permitido"}.</p><p class="muted" style="font-size:.85rem">Detalle: ${esc((e&&(e.name+" "+e.message))||"")}</p>`;return}
   if(!ensayo){stream.getTracks().forEach(t=>t.stop());return}
   if(ensayo.url){URL.revokeObjectURL(ensayo.url);ensayo.url=null}
-  if(video)camaraCompleta(stream);
+  if(video){camaraCompleta(stream);return}
+  empezarGrabacion(false,stream);
+}
+// Arranca la grabación. Con video también dicta lo que dices, para poder calificarte al terminar.
+function empezarGrabacion(video,stream){
+  const bv=document.getElementById("e-grab"),bc=document.getElementById("e-video"),out=document.getElementById("e-audio"),clock=document.getElementById("e-clock");
+  const b=video?bc:bv,otro=video?bv:bc;
+  if(video){vaciarDict("v-dict");startRec("v-dict");ensayo.calificar=false}
   const tipos=video?["video/mp4","video/webm;codecs=vp8,opus","video/webm"]:[];
   const mime=tipos.find(t=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t));
   const partes=[],mr=mime?new MediaRecorder(stream,{mimeType:mime}):new MediaRecorder(stream);
   ensayo.mr=mr;ensayo.stream=stream;ensayo.t0=Date.now();ensayo.blob=null;
   mr.ondataavailable=e=>{if(e.data&&e.data.size)partes.push(e.data)};
   mr.onstop=()=>{
-    stream.getTracks().forEach(t=>t.stop());clearInterval(ensayo&&ensayo.int);document.getElementById("e-full")?.remove();
+    stream.getTracks().forEach(t=>t.stop());clearInterval(ensayo&&ensayo.int);
+    document.getElementById("e-full")?.remove();if(ensayo)ensayo.t1=Date.now();
+    if(video){stopRec();out.hidden=false;out.innerHTML='<p class="muted">Preparando tu video…</p>'}
+    // Android entrega lo último que oyó un momento después de detener: se espera antes de leer el texto.
+    setTimeout(()=>mostrarGrabacion(video,partes,mr,b),video?1200:0);
+  };
+  mr.start(1000);b.innerHTML=ICON.stop+"Detener";b.classList.add("rec-on");otro.disabled=true;out.hidden=true;
+  ensayo.int=setInterval(()=>{const s=Math.floor((Date.now()-ensayo.t0)/1000),t="● "+Math.floor(s/60)+":"+String(s%60).padStart(2,"0");clock.textContent=t;const f=document.getElementById("f-clock");if(f)f.textContent=t},500);
+}
+function mostrarGrabacion(video,partes,mr,b){
+    const bv=document.getElementById("e-grab"),bc=document.getElementById("e-video"),out=document.getElementById("e-audio"),otro=video?bv:bc;
+    const dijo=video?((document.getElementById("v-dict")||{}).value||""):"";if(video)stopRec(true);
     if(!ensayo)return;
     ensayo.mr=null;ensayo.stream=null;otro.disabled=false;
     bv.innerHTML=ICON.rec+"Grabar voz";bc.innerHTML=CAM_SVG+"Grabar video";b.innerHTML=(video?CAM_SVG:ICON.rec)+"Grabar otra vez";b.classList.remove("rec-on");
-    const secs=Math.round((Date.now()-ensayo.t0)/1000);
+    const secs=Math.round(((ensayo.t1||Date.now())-ensayo.t0)/1000);
     const blob=new Blob(partes,{type:mr.mimeType||(video?"video/webm":"audio/webm")});ensayo.blob=blob;ensayo.url=URL.createObjectURL(blob);
     if(secs>=10)marcarPractica();
     out.hidden=false;out.innerHTML=video?`<p><b>Mírate</b> (${secs} s)</p><video class="e-ver" controls playsinline src="${ensayo.url}"></video>
       <p class="e-fijate">Fíjate en: ¿miras a la cámara o al piso? ¿espalda recta y hombros sueltos? ¿manos naturales, sin jugar con algo? ¿sonríes al empezar? ¿tu cara acompaña lo que dices? Elige una sola cosa para mejorar en el próximo video.</p>
-      <div class="row"><button id="e-guardar">Guardar en mi teléfono</button></div><p class="muted" style="font-size:.85rem;margin:0">Si no lo guardas, se borra al cerrar.</p>`
+      <div class="row"><button id="e-guardar">Guardar en mi teléfono</button>${dijo.trim().split(/\s+/).length>=15?`<button class="btn-accent" id="e-cal">${ICON.check}Calificarme con Elokua</button>`:""}</div>
+      <p class="muted" style="font-size:.85rem;margin:0">Si no lo guardas, se borra al cerrar.${dijo.trim()?` El teléfono escribió ${dijo.trim().split(/\s+/).length} palabras de lo que dijiste.`:" El teléfono no alcanzó a escribir lo que dijiste, así que para calificarte usa el paso Calificarte."}</p>
+      <div class="ai-res" id="e-res" aria-live="polite"></div>`
      :`<p><b>Escúchate</b> (${secs} s)</p><audio controls src="${ensayo.url}"></audio>
       <p class="e-fijate">Fíjate en: ¿dices "eh" o "este" entre frases? ¿vas muy rápido? ¿haces las pausas? ¿se te cae la voz al final de las frases? Elige una sola cosa para mejorar en la próxima grabación.</p>`;
     const g=document.getElementById("e-guardar");if(g)g.onclick=()=>guardarVideo(g);
-  };
-  mr.start(1000);b.innerHTML=ICON.stop+"Detener";b.classList.add("rec-on");otro.disabled=true;out.hidden=true;
-  ensayo.int=setInterval(()=>{const s=Math.floor((Date.now()-ensayo.t0)/1000),t="● "+Math.floor(s/60)+":"+String(s%60).padStart(2,"0");clock.textContent=t;const f=document.getElementById("f-clock");if(f)f.textContent=t},500);
+    // La velocidad se mide con lo que duró el video, no con el tiempo que tardas en tocar el botón.
+    const dur=(ensayo.t1||Date.now())-ensayo.t0,cal=document.getElementById("e-cal"),idc=ensayo.id;
+    if(cal){cal.onclick=()=>calificarTexto(idc,dijo.trim(),Date.now()-dur,document.getElementById("e-res"),cal);if(ensayo.calificar)cal.click()}
 }
 // Cámara en toda la pantalla con las tarjetas encima, transparentes, para no tapar la imagen. Zoom si el teléfono lo deja.
 function camaraCompleta(stream){
   document.getElementById("e-full")?.remove();
   const el=document.createElement("div");el.className="e-full";el.id="e-full";
   el.innerHTML=`<video id="f-cam" muted playsinline autoplay></video>
-   <div class="f-top"><span class="clock" id="f-clock">● 0:00</span><button id="f-ajuste">Ver todo</button><button id="f-tarj">Ocultar tarjetas</button><button class="rec-on" id="f-stop">${ICON.stop}Detener</button></div>
+   <div class="f-top"><span class="clock" id="f-clock"></span><span class="f-oido" id="f-oido" hidden></span><button id="f-ajuste">Ver todo</button><button id="f-tarj">Ocultar tarjetas</button><button id="f-x">Cancelar</button></div>
    <div class="f-zoom" id="f-zoom" hidden><span>Zoom</span><input type="range" id="f-zr"></div>
-   <div class="f-txt" id="f-txt">${document.getElementById("e-texto").innerHTML}</div>`;
+   <div class="f-txt" id="f-txt">${document.getElementById("e-texto").innerHTML}</div>
+   <div class="f-bot"><button class="btn-accent f-ini" id="f-ini">${ICON.rec}Iniciar</button>
+    <button class="rec-on" id="f-stop" hidden>${ICON.stop}Detener</button><button class="btn-accent" id="f-cal" hidden>${ICON.check}Detener y calificarme</button></div>
+`;
   document.body.appendChild(el);
   const v=el.querySelector("#f-cam");v.srcObject=stream;v.play().catch(()=>{});
+  el.querySelector("#f-x").onclick=()=>{stream.getTracks().forEach(t=>t.stop());el.remove()};
+  el.querySelector("#f-ini").onclick=()=>{
+    el.querySelector("#f-ini").hidden=true;el.querySelector("#f-x").hidden=true;el.querySelector("#f-stop").hidden=false;el.querySelector("#f-cal").hidden=false;
+    empezarGrabacion(true,stream);
+    // Muestra cuántas palabras va escribiendo el dictado: así se ve si el teléfono deja grabar y dictar a la vez.
+    const o=el.querySelector("#f-oido");o.hidden=false;
+    const iv=setInterval(()=>{if(!document.body.contains(el)){clearInterval(iv);return}const t=(document.getElementById("v-dict")||{}).value||"",n=t.trim()?t.trim().split(/\s+/).length:0;o.textContent=n?`Escuchando: ${n} palabras`:"Escuchando…"},700);
+  };
   el.querySelector("#f-stop").onclick=()=>grabarToggle(true);
+  el.querySelector("#f-cal").onclick=()=>{if(ensayo)ensayo.calificar=true;grabarToggle(true)};
   el.querySelector("#f-tarj").onclick=e=>{const t=el.querySelector("#f-txt");t.hidden=!t.hidden;e.target.textContent=t.hidden?"Ver tarjetas":"Ocultar tarjetas"};
   el.querySelector("#f-ajuste").onclick=e=>{const c=v.classList.toggle("todo");e.target.textContent=c?"Llenar pantalla":"Ver todo"};
   const tr=stream.getVideoTracks()[0],caps=tr&&tr.getCapabilities?tr.getCapabilities():{};
