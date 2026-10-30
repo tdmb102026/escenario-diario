@@ -195,6 +195,8 @@ nav.tabs a[aria-current="page"]{color:var(--accent);background:var(--accent-soft
 .logo .mic-l{height:.95em;width:.42em;margin-bottom:.2em}
 .firma{font-family:var(--f-display);font-weight:800;color:var(--accent);white-space:nowrap;display:inline-flex;align-items:flex-end;letter-spacing:.01em}
 .firma .mic-l{height:1.1em;width:.46em;margin-bottom:.18em}
+.e-cam{position:fixed;right:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));width:30vw;max-width:150px;aspect-ratio:3/4;object-fit:cover;border-radius:14px;transform:scaleX(-1);border:2px solid var(--bad);z-index:60;background:#000}
+.e-ver{width:100%;max-height:60vh;border-radius:12px;background:#000}
 .guiada-go{align-self:stretch;min-height:54px;font-size:1.05rem;justify-content:center}
 .guiada{position:fixed;inset:0;z-index:45;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
 .gd-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:14px max(16px,env(safe-area-inset-right,0px)) 6px max(16px,env(safe-area-inset-left,0px))}
@@ -952,7 +954,7 @@ const PASOS_PRACT=[
  {t:"Escuchar",d:"Sigue el texto con la vista mientras la voz lo lee."},
  {t:"Leer en voz alta",d:"De pie, léelo con el teleprompter respetando las pausas. Mejor si lo haces dos veces."},
  {t:"Tarjetas clave",d:"Solo ves cómo empieza cada parte y sus palabras clave. Dilo con tus palabras."},
- {t:"Grabarte",d:"Graba tu voz con solo el comienzo de cada parte y escúchate. Fíjate en una sola cosa para mejorar."},
+ {t:"Grabarte",d:"Grábate en voz o en video con solo el comienzo de cada parte y revísate. Fíjate en una sola cosa para mejorar."},
  {t:"Calificarte",d:"Dilo de memoria mientras el teléfono lo escribe, y Elokua te califica."}];
 function pract(id){return store.get("pract",{})[id]||{paso:1,hechos:[]}}
 function practSet(id,v){const t=store.get("pract",{});t[id]=v;store.set("pract",t)}
@@ -1453,10 +1455,11 @@ function abrirEnsayo(id,nivel,grabar,deRutina,desdePaso){
   const el=document.createElement("div");el.className="prompter ensayo";el.id="ensayo";
   el.innerHTML=`<div class="prompter-bar">
     <button id="e-menos">Más texto</button><button id="e-mas">Ocultar más</button>
-    <button id="e-grab" ${grabar||!desdePaso?"":"hidden"}>${ICON.rec}Grabarme</button><span class="clock" id="e-clock"></span>
+    <button id="e-grab" ${grabar||!desdePaso?"":"hidden"}>${ICON.rec}Grabar voz</button><button id="e-video" ${grabar||!desdePaso?"":"hidden"}>${CAM_SVG}Grabar video</button><span class="clock" id="e-clock"></span>
     <button id="e-cerrar">${desdePaso?"Listo, siguiente paso":"Terminar"}</button></div>
     <p class="e-paso" id="e-paso"></p>
     <div class="e-audio" id="e-audio" hidden></div>
+    <video class="e-cam" id="e-cam" muted playsinline autoplay hidden></video>
     <div class="prompter-text e-texto" id="e-texto"></div>`;
   document.body.appendChild(el);history.pushState({ensayo:1},"");
   const pintar=()=>{
@@ -1472,34 +1475,60 @@ function abrirEnsayo(id,nivel,grabar,deRutina,desdePaso){
   };
   document.getElementById("e-menos").onclick=()=>{ensayo.n=Math.max(0,ensayo.n-1);pintar()};
   document.getElementById("e-mas").onclick=()=>{ensayo.n=Math.min(2,ensayo.n+1);pintar()};
-  document.getElementById("e-grab").onclick=grabarToggle;
+  document.getElementById("e-grab").onclick=()=>grabarToggle(false);
+  document.getElementById("e-video").onclick=()=>grabarToggle(true);
   document.getElementById("e-cerrar").onclick=()=>{const r=ensayo&&ensayo.deRutina,dp=ensayo&&ensayo.desdePaso&&ensayo.paso;cerrarEnsayo();if(r){rutinaMarcar("sinleer");pintarHoy()}if(dp)practTerminar(id,dp)};
   pintar();
-  if(grabar)document.getElementById("e-audio").hidden=false,document.getElementById("e-audio").innerHTML=`<p>Toca <b>Grabarme</b>, di el discurso de pie y luego escúchate. Incomoda, pero es lo que más enseña.</p>`;
+  if(grabar)document.getElementById("e-audio").hidden=false,document.getElementById("e-audio").innerHTML=`<p>Toca <b>Grabar voz</b> o <b>Grabar video</b>, di el discurso de pie y luego revísate. Incomoda, pero es lo que más enseña.</p>`;
 }
-async function grabarToggle(){
-  const b=document.getElementById("e-grab"),out=document.getElementById("e-audio"),clock=document.getElementById("e-clock");
+// Grabar voz o video (cámara frontal). Nada se guarda: vive solo mientras está abierto, salvo que toques "Guardar en mi teléfono".
+const CAM_SVG='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3z"/></svg>';
+async function grabarToggle(video){
+  const bv=document.getElementById("e-grab"),bc=document.getElementById("e-video"),out=document.getElementById("e-audio"),clock=document.getElementById("e-clock"),cam=document.getElementById("e-cam");
   if(!ensayo)return;
   if(ensayo.mr){ensayo.mr.stop();return}
+  const b=video?bc:bv,otro=video?bv:bc;
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.MediaRecorder){out.hidden=false;out.innerHTML=`<p>Aquí no se puede grabar. Usa la app Android o Chrome, o la grabadora de tu teléfono.</p>`;return}
-  let stream;try{stream=await navigator.mediaDevices.getUserMedia({audio:true})}catch(e){out.hidden=false;out.innerHTML=`<p>No se pudo abrir el micrófono para grabar. Si es la app Android, instala el APK más nuevo y revisa en Ajustes de Android → Apps → Escenario → Permisos que el micrófono esté permitido.</p><p class="muted" style="font-size:.85rem">Detalle: ${esc((e&&(e.name+" "+e.message))||"")}</p>`;return}
+  let stream;try{stream=await navigator.mediaDevices.getUserMedia(video?{audio:true,video:{facingMode:"user",width:{ideal:720},height:{ideal:1280}}}:{audio:true})}
+  catch(e){out.hidden=false;out.innerHTML=`<p>No se pudo abrir ${video?"la cámara":"el micrófono"} para grabar. Si es la app Android, instala el APK más nuevo y revisa en Ajustes de Android → Apps → Retorika → Permisos que ${video?"la cámara y el micrófono estén permitidos":"el micrófono esté permitido"}.</p><p class="muted" style="font-size:.85rem">Detalle: ${esc((e&&(e.name+" "+e.message))||"")}</p>`;return}
   if(!ensayo){stream.getTracks().forEach(t=>t.stop());return}
   if(ensayo.url){URL.revokeObjectURL(ensayo.url);ensayo.url=null}
-  const partes=[],mr=new MediaRecorder(stream);
-  ensayo.mr=mr;ensayo.stream=stream;ensayo.t0=Date.now();
+  if(video){cam.srcObject=stream;cam.hidden=false;cam.play().catch(()=>{})}
+  const tipos=video?["video/mp4","video/webm;codecs=vp8,opus","video/webm"]:[];
+  const mime=tipos.find(t=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t));
+  const partes=[],mr=mime?new MediaRecorder(stream,{mimeType:mime}):new MediaRecorder(stream);
+  ensayo.mr=mr;ensayo.stream=stream;ensayo.t0=Date.now();ensayo.blob=null;
   mr.ondataavailable=e=>{if(e.data&&e.data.size)partes.push(e.data)};
   mr.onstop=()=>{
-    stream.getTracks().forEach(t=>t.stop());clearInterval(ensayo&&ensayo.int);
+    stream.getTracks().forEach(t=>t.stop());clearInterval(ensayo&&ensayo.int);cam.srcObject=null;cam.hidden=true;
     if(!ensayo)return;
-    ensayo.mr=null;ensayo.stream=null;b.innerHTML=ICON.rec+"Grabar otra vez";b.classList.remove("rec-on");
+    ensayo.mr=null;ensayo.stream=null;otro.disabled=false;
+    bv.innerHTML=ICON.rec+"Grabar voz";bc.innerHTML=CAM_SVG+"Grabar video";b.innerHTML=(video?CAM_SVG:ICON.rec)+"Grabar otra vez";b.classList.remove("rec-on");
     const secs=Math.round((Date.now()-ensayo.t0)/1000);
-    const blob=new Blob(partes,{type:mr.mimeType||"audio/webm"});ensayo.url=URL.createObjectURL(blob);
+    const blob=new Blob(partes,{type:mr.mimeType||(video?"video/webm":"audio/webm")});ensayo.blob=blob;ensayo.url=URL.createObjectURL(blob);
     if(secs>=10)marcarPractica();
-    out.hidden=false;out.innerHTML=`<p><b>Escúchate</b> (${secs} s)</p><audio controls src="${ensayo.url}"></audio>
+    out.hidden=false;out.innerHTML=video?`<p><b>Mírate</b> (${secs} s)</p><video class="e-ver" controls playsinline src="${ensayo.url}"></video>
+      <p class="e-fijate">Fíjate en: ¿miras a la cámara o al piso? ¿espalda recta y hombros sueltos? ¿manos naturales, sin jugar con algo? ¿sonríes al empezar? ¿tu cara acompaña lo que dices? Elige una sola cosa para mejorar en el próximo video.</p>
+      <div class="row"><button id="e-guardar">Guardar en mi teléfono</button></div><p class="muted" style="font-size:.85rem;margin:0">Si no lo guardas, se borra al cerrar.</p>`
+     :`<p><b>Escúchate</b> (${secs} s)</p><audio controls src="${ensayo.url}"></audio>
       <p class="e-fijate">Fíjate en: ¿dices "eh" o "este" entre frases? ¿vas muy rápido? ¿haces las pausas? ¿se te cae la voz al final de las frases? Elige una sola cosa para mejorar en la próxima grabación.</p>`;
+    const g=document.getElementById("e-guardar");if(g)g.onclick=()=>guardarVideo(g);
   };
-  mr.start();b.innerHTML=ICON.stop+"Detener";b.classList.add("rec-on");out.hidden=true;
+  mr.start(1000);b.innerHTML=ICON.stop+"Detener";b.classList.add("rec-on");otro.disabled=true;out.hidden=true;
   ensayo.int=setInterval(()=>{const s=Math.floor((Date.now()-ensayo.t0)/1000);clock.textContent="● "+Math.floor(s/60)+":"+String(s%60).padStart(2,"0")},500);
+}
+function guardarVideo(btn){
+  if(!ensayo||!ensayo.blob)return;
+  const blob=ensayo.blob,ext=/mp4/.test(blob.type)?"mp4":"webm";
+  if(NATIVO&&NATIVO.guardarVideo){
+    btn.disabled=true;btn.textContent="Guardando…";
+    const fr=new FileReader();
+    fr.onload=()=>{const r=NATIVO.guardarVideo(String(fr.result).split(",")[1],blob.type);btn.disabled=false;
+      if(r==="ok"){btn.textContent="Guardado en la galería";toast("Video guardado en tu galería (Películas/Retorika)")}else{btn.textContent="Guardar en mi teléfono";toast("No se pudo guardar: "+r)}};
+    fr.readAsDataURL(blob);return;
+  }
+  if(NATIVO){toast("Instala el APK más nuevo para guardar videos");return}
+  const a=document.createElement("a");a.href=ensayo.url;a.download=`Retorika ${diaLocal()}.${ext}`;document.body.appendChild(a);a.click();a.remove();
 }
 function cerrarEnsayo(porAtras){
   const el=document.getElementById("ensayo");if(!el)return;

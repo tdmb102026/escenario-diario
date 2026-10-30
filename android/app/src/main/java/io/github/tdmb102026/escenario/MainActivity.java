@@ -69,6 +69,7 @@ public class MainActivity extends Activity {
         web = new WebView(this);
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
+        s.setMediaPlaybackRequiresUserGesture(false);  // la vista de la cámara mientras grabas video
         s.setDomStorageEnabled(true);
         s.setDatabaseEnabled(true);
         // Con internet siempre baja la página nueva (si no, el WebView mostraba la versión vieja guardada).
@@ -79,13 +80,16 @@ public class MainActivity extends Activity {
         web.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onPermissionRequest(PermissionRequest pedido) {
+                // Micrófono (grabar voz) y cámara (grabar video): pide a Android lo que falte y luego da a la página lo concedido.
                 runOnUiThread(() -> {
-                    if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-                        pedido.grant(new String[]{ PermissionRequest.RESOURCE_AUDIO_CAPTURE });
-                    } else {
-                        grabarPendiente = pedido;
-                        requestPermissions(new String[]{ Manifest.permission.RECORD_AUDIO }, PEDIR_MIC_GRABAR);
+                    ArrayList<String> faltan = new ArrayList<>();
+                    for (String r : pedido.getResources()) {
+                        String perm = permisoDe(r);
+                        if (perm != null && checkSelfPermission(perm) != PackageManager.PERMISSION_GRANTED) faltan.add(perm);
                     }
+                    if (faltan.isEmpty()) { concederGrabar(pedido); return; }
+                    grabarPendiente = pedido;
+                    requestPermissions(faltan.toArray(new String[0]), PEDIR_MIC_GRABAR);
                 });
             }
         });
@@ -290,6 +294,22 @@ public class MainActivity extends Activity {
         @Override public void onEvent(int t, Bundle b) { }
     }
 
+    private static String permisoDe(String recurso) {
+        if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(recurso)) return Manifest.permission.RECORD_AUDIO;
+        if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(recurso)) return Manifest.permission.CAMERA;
+        return null;
+    }
+
+    // Da a la página solo lo que Android permitió; si nada, la niega.
+    private void concederGrabar(PermissionRequest pedido) {
+        ArrayList<String> si = new ArrayList<>();
+        for (String r : pedido.getResources()) {
+            String perm = permisoDe(r);
+            if (perm != null && checkSelfPermission(perm) == PackageManager.PERMISSION_GRANTED) si.add(r);
+        }
+        if (si.isEmpty()) pedido.deny(); else pedido.grant(si.toArray(new String[0]));
+    }
+
     @Override
     public void onRequestPermissionsResult(int pedido, String[] permisos, int[] resultados) {
         super.onRequestPermissionsResult(pedido, permisos, resultados);
@@ -299,11 +319,7 @@ public class MainActivity extends Activity {
             return;
         }
         if (pedido == PEDIR_MIC_GRABAR) {
-            boolean ok = resultados.length > 0 && resultados[0] == PackageManager.PERMISSION_GRANTED;
-            if (grabarPendiente != null) {
-                if (ok) grabarPendiente.grant(new String[]{ PermissionRequest.RESOURCE_AUDIO_CAPTURE });
-                else grabarPendiente.deny();
-            }
+            if (grabarPendiente != null) concederGrabar(grabarPendiente);
             grabarPendiente = null;
             return;
         }
@@ -363,6 +379,23 @@ public class MainActivity extends Activity {
                         .put("callo", p.getBoolean("callo", false))
                         .put("hoyNo", Recordatorio.hoy().equals(p.getString("practico", ""))).toString();
             } catch (Exception e) { return "{}"; }
+        }
+
+        // Guarda el video de práctica en la galería (Películas/Retorika). Devuelve "ok" o el error.
+        @JavascriptInterface
+        public String guardarVideo(String base64, String tipo) {
+            try {
+                byte[] datos = android.util.Base64.decode(base64, android.util.Base64.DEFAULT);
+                String ext = tipo != null && tipo.contains("mp4") ? "mp4" : "webm";
+                android.content.ContentValues v = new android.content.ContentValues();
+                v.put(android.provider.MediaStore.Video.Media.DISPLAY_NAME, "Retorika " + new java.text.SimpleDateFormat("yyyy-MM-dd HH.mm", Locale.US).format(new java.util.Date()) + "." + ext);
+                v.put(android.provider.MediaStore.Video.Media.MIME_TYPE, ext.equals("mp4") ? "video/mp4" : "video/webm");
+                v.put(android.provider.MediaStore.Video.Media.RELATIVE_PATH, "Movies/Retorika");
+                Uri u = getContentResolver().insert(android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI, v);
+                if (u == null) return "No se pudo crear el archivo";
+                try (java.io.OutputStream o = getContentResolver().openOutputStream(u)) { o.write(datos); }
+                return "ok";
+            } catch (Exception e) { return String.valueOf(e.getMessage()); }
         }
 
         // Muestra el aviso ya, para comprobar que las notificaciones llegan.

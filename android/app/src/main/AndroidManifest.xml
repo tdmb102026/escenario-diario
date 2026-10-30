@@ -7,6 +7,9 @@
     <!-- El micrófono de la página (getUserMedia) en el WebView también necesita este permiso. -->
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Grabar video de tu práctica (cámara frontal). -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- Para que el recordatorio suene a la hora exacta (Android 12+ lo pide en Ajustes del teléfono). -->
