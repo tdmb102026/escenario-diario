@@ -673,6 +673,11 @@ function aiErr(e){const c=e&&e.code;return ({
   "sin-clave-api":"El servidor todavía no tiene tu clave de Anthropic. Guárdala desde el menú de la hoja.",
   "clave-api":"Anthropic rechazó la clave de API. Crea una nueva y guárdala desde el menú de la hoja.",
   saldo:"Se acabó el saldo de tu API de Anthropic. Recarga en console.anthropic.com → Billing.",
+  "sin-clave-gemini":"Para calificar videos falta la clave de Gemini en tu servidor. En la hoja: menú Escenario IA → Guardar clave de Gemini.",
+  "gemini-clave":"Google rechazó la clave de Gemini. Crea otra en aistudio.google.com y guárdala desde el menú de la hoja.",
+  "gemini-limite":"Llegaste al límite de videos de Gemini por ahora (la capa gratis permite pocos al día). Prueba más tarde.",
+  "servidor-viejo":"Tu servidor todavía no sabe calificar videos: pega el código nuevo del Apps Script y publica una versión nueva.",
+  "video-grande":"El video es muy largo para calificarlo. Graba uno más corto.",
   sin_red:"No hay internet. Conéctate y vuelve a intentarlo.",
   no_json:"El servidor no respondió bien. Revisa que el Apps Script esté publicado para \"Cualquier persona\".",
   not_granted:"No diste permiso para usar la IA en esta página.",
@@ -1524,7 +1529,9 @@ function empezarGrabacion(video,stream){
   const b=video?bc:bv,otro=video?bv:bc;
   const tipos=video?["video/mp4","video/webm;codecs=vp8,opus","video/webm"]:[];
   const mime=tipos.find(t=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t));
-  const partes=[],mr=mime?new MediaRecorder(stream,{mimeType:mime}):new MediaRecorder(stream);
+  // Video liviano (unos 3.5 MB por minuto) para poder mandarlo a calificar.
+  const op=video?{videoBitsPerSecond:420000,audioBitsPerSecond:48000}:{};if(mime)op.mimeType=mime;
+  const partes=[],mr=new MediaRecorder(stream,op);
   ensayo.mr=mr;ensayo.stream=stream;ensayo.t0=Date.now();ensayo.blob=null;
   mr.ondataavailable=e=>{if(e.data&&e.data.size)partes.push(e.data)};
   mr.onstop=()=>{
@@ -1545,11 +1552,13 @@ function mostrarGrabacion(video,partes,mr,b){
     if(secs>=10)marcarPractica();
     out.hidden=false;out.innerHTML=video?`<p><b>Mírate</b> (${secs} s)</p><video class="e-ver" controls playsinline src="${ensayo.url}"></video>
       <p class="e-fijate">Fíjate en: ¿miras a la cámara o al piso? ¿espalda recta y hombros sueltos? ¿manos naturales, sin jugar con algo? ¿sonríes al empezar? ¿tu cara acompaña lo que dices? Elige una sola cosa para mejorar en el próximo video.</p>
-      <div class="row"><button id="e-guardar">Guardar en mi teléfono</button></div>
-      <p class="muted" style="font-size:.85rem;margin:0">Si no lo guardas, se borra al cerrar.</p>`
+      <div class="row"><button id="e-guardar">Guardar en mi teléfono</button>${secs>=15?`<button class="btn-accent" id="e-calv">${ICON.check}Calificar mi video</button>`:""}</div>
+      <p class="muted" style="font-size:.85rem;margin:0">Si no lo guardas, se borra al cerrar.${secs>=15?` ${FIRMA} ve y escucha tu video: califica lo que dijiste, tu voz y tu cuerpo.`:""}</p>
+      <div class="ai-res" id="e-res" aria-live="polite"></div>`
      :`<p><b>Escúchate</b> (${secs} s)</p><audio controls src="${ensayo.url}"></audio>
       <p class="e-fijate">Fíjate en: ¿dices "eh" o "este" entre frases? ¿vas muy rápido? ¿haces las pausas? ¿se te cae la voz al final de las frases? Elige una sola cosa para mejorar en la próxima grabación.</p>`;
     const g=document.getElementById("e-guardar");if(g)g.onclick=()=>guardarVideo(g);
+    const cv=document.getElementById("e-calv");if(cv){const yo=ensayo;cv.onclick=()=>calificarVideo(yo.id,yo.blob,secs,cv)}
 }
 // Cámara en toda la pantalla con las tarjetas encima, transparentes, para no tapar la imagen. Zoom si el teléfono lo deja.
 function camaraCompleta(stream){
@@ -1581,13 +1590,53 @@ function camaraCompleta(stream){
     el.querySelector("#f-zoom").hidden=false;
   }
 }
+/* Calificar el video con Gemini (por el servidor de fer): ve y escucha, así califica contenido, voz y cuerpo. */
+const CRIT_VIDEO=[
+ ["Voz","¿se le escucha clara y con energía, varía tono y volumen, y no se le cae la voz al final de las frases?"],
+ ["Pausas","¿hace pausas para respirar y dejar caer las ideas, sin correr?"],
+ ["Postura y mirada","¿espalda recta, hombros sueltos, mira a la cámara en vez de al piso o a un lado?"],
+ ["Gestos y cara","¿manos y cara acompañan lo que dice, sin tics ni jugar con algo?"]];
+function promptVideo(sp,secs){
+  const nivel=sp.nivel||1,crits=[...(nivel===2?[...CRIT_DISCURSO.slice(0,5),CRIT_HISTORIA,CRIT_DISCURSO[5]]:CRIT_DISCURSO),...CRIT_VIDEO];
+  const ej={};crits.forEach(c=>ej[c[0]]=4);
+  const guion=sp.partes.map(p=>p[0]+": "+plain(p[1])).join("\n");
+  return `Eres un coach de oratoria exigente pero motivador, que habla en español de México. En el video, una persona dice en voz alta un discurso que practica, de pie frente a la cámara frontal de su teléfono (la imagen está en espejo). Mira y escucha todo el video.
+
+GUION ORIGINAL ("${sp.titulo}"):
+${guion}
+Compara lo que dice con este guion; puede parafrasear.${nivel===3?"\nEste discurso es de voz y emoción: el guion marca dónde subir la voz, bajarla y hacer silencios; califica con más peso la voz y las pausas.":""}
+
+DATOS: el video dura ${secs} segundos. Ritmo ideal: 130 a 150 palabras por minuto.
+
+Califica de 1 a 5 cada punto:
+${crits.map(c=>"- "+c[0]+": "+c[1]).join("\n")}
+
+Si el video no tiene sonido o no se ve a la persona, dilo en "mejorar" y califica con 1 lo que no puedas evaluar.
+
+Responde solo con JSON con esta forma:
+${JSON.stringify({puntos:ej,transcripcion:"lo que dijo, palabra por palabra",muletillas:["este (2)"],voz:"una frase concreta sobre su voz",cuerpo:"una frase concreta sobre su postura, mirada y gestos, citando un momento del video",fortaleza:"una frase concreta",mejorar:"una frase concreta",consejo:"una acción concreta para el próximo ensayo"})}`;
+}
+function blobBase64(blob){return new Promise((ok,mal)=>{const fr=new FileReader();fr.onload=()=>ok(String(fr.result).slice(String(fr.result).indexOf("base64,")+7));fr.onerror=mal;fr.readAsDataURL(blob)})}
+function calificarVideo(id,blob,secs,btn){
+  const sp=findSp(id),out=document.getElementById("e-res");if(!sp||!blob||!out)return;
+  if(!IA.conf().url){out.innerHTML=`<p class="hint" style="color:var(--bad)">Para calificar videos hace falta tu servidor de la IA (Ajustes → Conectar la IA).</p>`;return}
+  if(blob.size>34e6){out.innerHTML=`<p class="hint" style="color:var(--bad)">El video es muy largo para calificarlo (máximo unos 8 minutos).</p>`;return}
+  const m=r=>{const t=String(r.transcripcion||""),nw=t.trim()?t.trim().split(/\s+/).length:0;return {nw,secs,ppm:nw&&secs?Math.round(nw/secs*60):null}};
+  calificar(out,btn,"",m,{id,nivel:sp.nivel||1,pedir:async()=>{
+    out.innerHTML=`<p class="muted">Subiendo tu video y ${FIRMA} lo está viendo… Puede tardar hasta un minuto.</p>`;
+    const video=await blobBase64(blob);
+    let t;try{t=await servidor({tipo:"video",tarea:"video",mime:blob.type,video,prompt:promptVideo(sp,secs)+REGLA_COMILLAS})}
+    catch(e){throw e&&e.code==="pedido"?{code:"servidor-viejo"}:e}
+    return leerJson(t);
+  }});
+}
 function guardarVideo(btn){
   if(!ensayo||!ensayo.blob)return;
   const blob=ensayo.blob,ext=/mp4/.test(blob.type)?"mp4":"webm";
   if(NATIVO&&NATIVO.guardarVideo){
     btn.disabled=true;btn.textContent="Guardando…";
     const fr=new FileReader();
-    fr.onload=()=>{const r=NATIVO.guardarVideo(String(fr.result).split(",")[1],blob.type);btn.disabled=false;
+    fr.onload=()=>{const r=NATIVO.guardarVideo(String(fr.result).slice(String(fr.result).indexOf("base64,")+7),blob.type);btn.disabled=false;
       if(r==="ok"){btn.textContent="Guardado en la galería";toast("Video guardado en tu galería (Películas/Retorika)")}else{btn.textContent="Guardar en mi teléfono";toast("No se pudo guardar: "+r)}};
     fr.readAsDataURL(blob);return;
   }
@@ -1723,7 +1772,8 @@ async function calificar(out,go,prompt,m,entrada){
   go.disabled=true;out.innerHTML='<p class="muted">Elokua está revisando lo que dijiste…</p>';
   const antes=nivelActual();
   try{
-    const r=await IA.json(prompt,{tarea:"calificar"});
+    const r=entrada.pedir?await entrada.pedir():await IA.json(prompt,{tarea:"calificar"});
+    if(typeof m==="function")m=m(r);
     const pts=Object.assign({},r&&r.puntos||{});
     const names=Object.keys(pts).filter(k=>Number(pts[k])>=1);
     if(!names.length)throw {code:"invalid_json"};
@@ -1739,6 +1789,7 @@ async function calificar(out,go,prompt,m,entrada){
       <div class="row" style="justify-content:space-between"><div><p class="eyebrow">Calificación de ${FIRMA}</p><p class="score-big">${score.toFixed(1)}</p></div><p class="muted" style="font-size:.9rem">${m.nw} palabras${m.secs?` · ${m.secs} s · ${m.ppm} ppm`:""}</p></div>
       <div>${ks.map(k=>`<div class="pt"><span>${esc(k)}</span><b>${crit[k]}/5</b></div>`).join("")}</div>
       ${Array.isArray(r.muletillas)&&r.muletillas.length?`<p><b>Muletillas:</b> ${esc(r.muletillas.join(", "))}</p>`:""}
+      ${r.voz?`<p><b>Tu voz:</b> ${esc(r.voz)}</p>`:""}${r.cuerpo?`<p><b>Tu cuerpo:</b> ${esc(r.cuerpo)}</p>`:""}
       <p><b>Lo que hiciste bien:</b> ${esc(r.fortaleza||"")}</p>
       <p><b>A mejorar:</b> ${esc(r.mejorar||"")}</p>
       <div class="coach"><b>Para tu próximo ensayo</b><p>${esc(r.consejo||"")}</p></div>

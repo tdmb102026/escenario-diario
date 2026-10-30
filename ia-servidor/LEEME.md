@@ -24,6 +24,19 @@ La clave nunca llega al celular ni a este repositorio. No usa tu plan Pro de Cla
 Cada uso queda anotado en la pestaña **Uso** de la hoja: fecha, tarea, tokens y costo en dólares.
 Con Haiku, calificar un discurso cuesta menos de 0,1 centavos de dólar y crear uno unos 0,2 centavos.
 
+## Calificar videos con Gemini (opcional)
+
+Claude no ve video ni escucha audio. Para calificar el video de tu práctica (lo que dices, tu voz y tu cuerpo) el
+servidor usa **Gemini 3.8 Flash** de Google.
+
+1. Entra a **aistudio.google.com** con tu cuenta de Google → **Get API key → Create API key**. Empieza con `AIza`.
+2. En la hoja: menú **Escenario IA → Guardar clave de Gemini (video)** y pégala.
+3. En la app, después de grabar un video de 15 segundos o más, toca **Calificar mi video**.
+
+Capa gratis: unos 20 videos al día (los límites exactos están en AI Studio) y Google puede usar esos videos para
+mejorar sus productos. Pagando (activando facturación en AI Studio) no los usa, y un video de 2 minutos cuesta
+alrededor de 1 a 3 centavos de dólar. Cada video queda anotado en la pestaña **Uso** como "video (Gemini)".
+
 ## Si cambias el script
 
 Usa **Implementar → Gestionar implementaciones → editar (lápiz) → Versión: Nueva versión**. Así el enlace no cambia.
