@@ -195,8 +195,19 @@ nav.tabs a[aria-current="page"]{color:var(--accent);background:var(--accent-soft
 .logo .mic-l{height:.95em;width:.42em;margin-bottom:.2em}
 .firma{font-family:var(--f-display);font-weight:800;color:var(--accent);white-space:nowrap;display:inline-flex;align-items:flex-end;letter-spacing:.01em}
 .firma .mic-l{height:1.1em;width:.46em;margin-bottom:.18em}
-.e-cam{position:fixed;right:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));width:30vw;max-width:150px;aspect-ratio:3/4;object-fit:cover;border-radius:14px;transform:scaleX(-1);border:2px solid var(--bad);z-index:60;background:#000}
 .e-ver{width:100%;max-height:60vh;border-radius:12px;background:#000}
+.e-full{position:fixed;inset:0;z-index:70;background:#000;display:flex;flex-direction:column}
+.e-full video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.e-full video.todo{object-fit:contain}
+.f-top{position:relative;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 8px;background:linear-gradient(#000a,#0000)}
+.f-top button{background:#0006;border-color:#fff6;color:#fff;min-height:40px;padding:6px 14px}
+.f-top button.rec-on{background:var(--bad);border-color:var(--bad);margin-left:auto}
+.f-top .clock{color:#fff;font-weight:700;text-shadow:0 1px 3px #000}
+.f-zoom{position:relative;display:flex;gap:8px;align-items:center;padding:0 14px;color:#fff;font-size:.85rem;text-shadow:0 1px 3px #000}
+.f-zoom input{flex:1;accent-color:var(--accent)}
+.f-txt{position:relative;margin-top:auto;max-height:48vh;overflow:auto;padding:10px 12px calc(14px + env(safe-area-inset-bottom,0px));opacity:.6;color:#fff;text-shadow:0 1px 4px #000,0 0 2px #000;font-size:.95rem}
+.f-txt .pista{background:#0003;border-color:#fff3}
+.f-txt .ptag{color:#fff}
 .guiada-go{align-self:stretch;min-height:54px;font-size:1.05rem;justify-content:center}
 .guiada{position:fixed;inset:0;z-index:45;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
 .gd-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:14px max(16px,env(safe-area-inset-right,0px)) 6px max(16px,env(safe-area-inset-left,0px))}
@@ -1455,11 +1466,10 @@ function abrirEnsayo(id,nivel,grabar,deRutina,desdePaso){
   const el=document.createElement("div");el.className="prompter ensayo";el.id="ensayo";
   el.innerHTML=`<div class="prompter-bar">
     <button id="e-menos">Más texto</button><button id="e-mas">Ocultar más</button>
-    <button id="e-grab" ${grabar||!desdePaso?"":"hidden"}>${ICON.rec}Grabar voz</button><button id="e-video" ${grabar||!desdePaso?"":"hidden"}>${CAM_SVG}Grabar video</button><span class="clock" id="e-clock"></span>
+    <button id="e-grab" ${desdePaso?"hidden":""}>${ICON.rec}Grabar voz</button><button id="e-video" ${grabar||!desdePaso?"":"hidden"}>${CAM_SVG}Grabar video</button><span class="clock" id="e-clock"></span>
     <button id="e-cerrar">${desdePaso?"Listo, siguiente paso":"Terminar"}</button></div>
     <p class="e-paso" id="e-paso"></p>
     <div class="e-audio" id="e-audio" hidden></div>
-    <video class="e-cam" id="e-cam" muted playsinline autoplay hidden></video>
     <div class="prompter-text e-texto" id="e-texto"></div>`;
   document.body.appendChild(el);history.pushState({ensayo:1},"");
   const pintar=()=>{
@@ -1484,23 +1494,24 @@ function abrirEnsayo(id,nivel,grabar,deRutina,desdePaso){
 // Grabar voz o video (cámara frontal). Nada se guarda: vive solo mientras está abierto, salvo que toques "Guardar en mi teléfono".
 const CAM_SVG='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3z"/></svg>';
 async function grabarToggle(video){
-  const bv=document.getElementById("e-grab"),bc=document.getElementById("e-video"),out=document.getElementById("e-audio"),clock=document.getElementById("e-clock"),cam=document.getElementById("e-cam");
+  const bv=document.getElementById("e-grab"),bc=document.getElementById("e-video"),out=document.getElementById("e-audio"),clock=document.getElementById("e-clock");
   if(!ensayo)return;
   if(ensayo.mr){ensayo.mr.stop();return}
   const b=video?bc:bv,otro=video?bv:bc;
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.MediaRecorder){out.hidden=false;out.innerHTML=`<p>Aquí no se puede grabar. Usa la app Android o Chrome, o la grabadora de tu teléfono.</p>`;return}
-  let stream;try{stream=await navigator.mediaDevices.getUserMedia(video?{audio:true,video:{facingMode:"user",width:{ideal:720},height:{ideal:1280}}}:{audio:true})}
+  // 4:3 usa todo el sensor: se ve más amplio que pedir vertical.
+  let stream;try{stream=await navigator.mediaDevices.getUserMedia(video?{audio:true,video:{facingMode:"user",width:{ideal:1280},height:{ideal:960}}}:{audio:true})}
   catch(e){out.hidden=false;out.innerHTML=`<p>No se pudo abrir ${video?"la cámara":"el micrófono"} para grabar. Si es la app Android, instala el APK más nuevo y revisa en Ajustes de Android → Apps → Retorika → Permisos que ${video?"la cámara y el micrófono estén permitidos":"el micrófono esté permitido"}.</p><p class="muted" style="font-size:.85rem">Detalle: ${esc((e&&(e.name+" "+e.message))||"")}</p>`;return}
   if(!ensayo){stream.getTracks().forEach(t=>t.stop());return}
   if(ensayo.url){URL.revokeObjectURL(ensayo.url);ensayo.url=null}
-  if(video){cam.srcObject=stream;cam.hidden=false;cam.play().catch(()=>{})}
+  if(video)camaraCompleta(stream);
   const tipos=video?["video/mp4","video/webm;codecs=vp8,opus","video/webm"]:[];
   const mime=tipos.find(t=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t));
   const partes=[],mr=mime?new MediaRecorder(stream,{mimeType:mime}):new MediaRecorder(stream);
   ensayo.mr=mr;ensayo.stream=stream;ensayo.t0=Date.now();ensayo.blob=null;
   mr.ondataavailable=e=>{if(e.data&&e.data.size)partes.push(e.data)};
   mr.onstop=()=>{
-    stream.getTracks().forEach(t=>t.stop());clearInterval(ensayo&&ensayo.int);cam.srcObject=null;cam.hidden=true;
+    stream.getTracks().forEach(t=>t.stop());clearInterval(ensayo&&ensayo.int);document.getElementById("e-full")?.remove();
     if(!ensayo)return;
     ensayo.mr=null;ensayo.stream=null;otro.disabled=false;
     bv.innerHTML=ICON.rec+"Grabar voz";bc.innerHTML=CAM_SVG+"Grabar video";b.innerHTML=(video?CAM_SVG:ICON.rec)+"Grabar otra vez";b.classList.remove("rec-on");
@@ -1515,7 +1526,29 @@ async function grabarToggle(video){
     const g=document.getElementById("e-guardar");if(g)g.onclick=()=>guardarVideo(g);
   };
   mr.start(1000);b.innerHTML=ICON.stop+"Detener";b.classList.add("rec-on");otro.disabled=true;out.hidden=true;
-  ensayo.int=setInterval(()=>{const s=Math.floor((Date.now()-ensayo.t0)/1000);clock.textContent="● "+Math.floor(s/60)+":"+String(s%60).padStart(2,"0")},500);
+  ensayo.int=setInterval(()=>{const s=Math.floor((Date.now()-ensayo.t0)/1000),t="● "+Math.floor(s/60)+":"+String(s%60).padStart(2,"0");clock.textContent=t;const f=document.getElementById("f-clock");if(f)f.textContent=t},500);
+}
+// Cámara en toda la pantalla con las tarjetas encima, transparentes, para no tapar la imagen. Zoom si el teléfono lo deja.
+function camaraCompleta(stream){
+  document.getElementById("e-full")?.remove();
+  const el=document.createElement("div");el.className="e-full";el.id="e-full";
+  el.innerHTML=`<video id="f-cam" muted playsinline autoplay></video>
+   <div class="f-top"><span class="clock" id="f-clock">● 0:00</span><button id="f-ajuste">Ver todo</button><button id="f-tarj">Ocultar tarjetas</button><button class="rec-on" id="f-stop">${ICON.stop}Detener</button></div>
+   <div class="f-zoom" id="f-zoom" hidden><span>Zoom</span><input type="range" id="f-zr"></div>
+   <div class="f-txt" id="f-txt">${document.getElementById("e-texto").innerHTML}</div>`;
+  document.body.appendChild(el);
+  const v=el.querySelector("#f-cam");v.srcObject=stream;v.play().catch(()=>{});
+  el.querySelector("#f-stop").onclick=()=>grabarToggle(true);
+  el.querySelector("#f-tarj").onclick=e=>{const t=el.querySelector("#f-txt");t.hidden=!t.hidden;e.target.textContent=t.hidden?"Ver tarjetas":"Ocultar tarjetas"};
+  el.querySelector("#f-ajuste").onclick=e=>{const c=v.classList.toggle("todo");e.target.textContent=c?"Llenar pantalla":"Ver todo"};
+  const tr=stream.getVideoTracks()[0],caps=tr&&tr.getCapabilities?tr.getCapabilities():{};
+  if(caps.focusMode&&caps.focusMode.includes("continuous"))tr.applyConstraints({advanced:[{focusMode:"continuous"}]}).catch(()=>{});
+  if(caps.zoom&&caps.zoom.max>caps.zoom.min){
+    const r=el.querySelector("#f-zr");r.min=caps.zoom.min;r.max=caps.zoom.max;r.step=caps.zoom.step||0.1;r.value=caps.zoom.min;
+    tr.applyConstraints({advanced:[{zoom:caps.zoom.min}]}).catch(()=>{});
+    r.oninput=()=>tr.applyConstraints({advanced:[{zoom:Number(r.value)}]}).catch(()=>{});
+    el.querySelector("#f-zoom").hidden=false;
+  }
 }
 function guardarVideo(btn){
   if(!ensayo||!ensayo.blob)return;
@@ -1532,6 +1565,7 @@ function guardarVideo(btn){
 }
 function cerrarEnsayo(porAtras){
   const el=document.getElementById("ensayo");if(!el)return;
+  document.getElementById("e-full")?.remove();
   if(ensayo){clearInterval(ensayo.int);if(ensayo.mr){ensayo.mr.onstop=null;try{ensayo.mr.stop()}catch(e){}}if(ensayo.stream)ensayo.stream.getTracks().forEach(t=>t.stop());if(ensayo.url)URL.revokeObjectURL(ensayo.url)}
   ensayo=null;el.remove();
   if(!porAtras&&history.state&&history.state.ensayo)history.back();
