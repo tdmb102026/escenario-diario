@@ -38,10 +38,11 @@ function guardarClaveAnthropic() {
 }
 function guardarClaveGemini() {
   const ui = SpreadsheetApp.getUi();
-  const r = ui.prompt("Clave de API de Gemini", "Pega la clave de Google AI Studio (aistudio.google.com → Get API key; empieza con AIza). Queda guardada en el script, no en la hoja.", ui.ButtonSet.OK_CANCEL);
+  const r = ui.prompt("Clave de API de Gemini", "Pega la clave de Google AI Studio (aistudio.google.com → Get API key; empieza con AQ. o AIza). Queda guardada en el script, no en la hoja.", ui.ButtonSet.OK_CANCEL);
   if (r.getSelectedButton() !== ui.Button.OK) return;
   const k = r.getResponseText().trim();
-  if (!/^AIza/.test(k)) return ui.alert("Esa no parece una clave de Gemini (debe empezar con AIza).");
+  // Las claves viejas empiezan con AIza; las nuevas de AI Studio con AQ.
+  if (!/^(AIza|AQ\.)/.test(k) || k.length < 20) return ui.alert("Esa no parece una clave de Gemini (empieza con AQ. o con AIza).");
   PropertiesService.getScriptProperties().setProperty("GEMINI_API_KEY", k);
   ui.alert("Clave de Gemini guardada.");
 }

@@ -29,7 +29,7 @@ Con Haiku, calificar un discurso cuesta menos de 0,1 centavos de dólar y crear 
 Claude no ve video ni escucha audio. Para calificar el video de tu práctica (lo que dices, tu voz y tu cuerpo) el
 servidor usa **Gemini 3.8 Flash** de Google.
 
-1. Entra a **aistudio.google.com** con tu cuenta de Google → **Get API key → Create API key**. Empieza con `AIza`.
+1. Entra a **aistudio.google.com** con tu cuenta de Google → **Get API key → Create API key**. Empieza con `AQ.` (las viejas, con `AIza`).
 2. En la hoja: menú **Escenario IA → Guardar clave de Gemini (video)** y pégala.
 3. En la app, después de grabar un video de 15 segundos o más, toca **Calificar mi video**.
 
