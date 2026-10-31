@@ -115,17 +115,27 @@ function gemini_(q) {
   const base = { contents: [{ role: "user", parts: [parte, { text: prompt }] }] };
   // Pensar poco, resolución baja (más barato; para postura y gestos alcanza) y respuesta en JSON.
   // Si la API no reconoce alguna opción, se vuelve a pedir sin opciones.
-  const extra = { generationConfig: { responseMimeType: "application/json", mediaResolution: "MEDIA_RESOLUTION_LOW", thinkingConfig: { thinkingLevel: "low" }, maxOutputTokens: 4000 } };
+  const extra = { generationConfig: { responseMimeType: "application/json", mediaResolution: "MEDIA_RESOLUTION_LOW", thinkingConfig: { thinkingLevel: "minimal" }, maxOutputTokens: 4000 } };
+  // Cada paso deja su tiempo en Ejecuciones (toca la fila para ver los registros).
+  console.log("video: " + Math.round(b64.length * 0.75 / 1e3) + " KB, " + mime + (parte.file_data ? ", subido con Files API" : ", directo"));
   let r = pedirGemini_(key, Object.assign({}, base, extra));
-  if (!r.ok && r.error === "api" && /400/.test(r.detalle || "")) r = pedirGemini_(key, base);
+  if (!r.ok && r.error === "api" && /400/.test(r.detalle || "")) {
+    // Primero se quita solo la resolución; pensar poco se mantiene porque sin eso tarda mucho más.
+    r = pedirGemini_(key, Object.assign({}, base, { generationConfig: { responseMimeType: "application/json", thinkingConfig: { thinkingLevel: "minimal" } } }));
+    if (!r.ok && r.error === "api" && /400/.test(r.detalle || "")) r = pedirGemini_(key, base);
+  }
   return r;
 }
 function pedirGemini_(key, cuerpo) {
+  const t0 = Date.now();
   const r = UrlFetchApp.fetch(GEMINI + "/v1beta/models/" + MODELO_VIDEO + ":generateContent", {
     method: "post", contentType: "application/json", muteHttpExceptions: true,
     headers: { "x-goog-api-key": key }, payload: JSON.stringify(cuerpo),
   });
   const code = r.getResponseCode(), j = JSON.parse(r.getContentText() || "{}"), msg = ((j.error || {}).message) || "";
+  const u0 = j.usageMetadata || {}, c0 = (j.candidates || [])[0] || {};
+  console.log("Gemini " + code + " en " + Math.round((Date.now() - t0) / 1000) + " s" + (cuerpo.generationConfig ? " (config: " + JSON.stringify(cuerpo.generationConfig.thinkingConfig || {}) + ")" : " (sin config)") +
+    " · entrada " + (u0.promptTokenCount || 0) + ", pensar " + (u0.thoughtsTokenCount || 0) + ", salida " + (u0.candidatesTokenCount || 0) + " tokens · fin " + (c0.finishReason || "-") + (msg ? " · " + msg.slice(0, 300) : ""));
   if (code === 401 || code === 403 || /API key/i.test(msg)) return { ok: false, error: "gemini-clave" };
   if (code === 429) return { ok: false, error: "gemini-limite" };
   if (code !== 200) return { ok: false, error: "api", detalle: code + " " + msg };

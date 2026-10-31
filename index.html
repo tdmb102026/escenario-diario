@@ -679,7 +679,7 @@ function aiErr(e){const c=e&&e.code;return ({
   "sin-clave-api":"El servidor todavía no tiene tu clave de Anthropic. Guárdala desde el menú de la hoja.",
   "clave-api":"Anthropic rechazó la clave de API. Crea una nueva y guárdala desde el menú de la hoja.",
   saldo:"Se acabó el saldo de tu API de Anthropic. Recarga en console.anthropic.com → Billing.",
-  tarde:"El servidor no contestó en 3 minutos. Abre tu Apps Script → Ejecuciones (el reloj de la izquierda) y mira si la última dice Error o Completado.",
+  tarde:"El servidor no contestó en 5 minutos y medio. Abre tu Apps Script → Ejecuciones (el reloj de la izquierda) y mira si la última dice Error o Completado.",
   "sin-clave-gemini":"Para calificar videos falta la clave de Gemini en tu servidor. En la hoja: menú Escenario IA → Guardar clave de Gemini.",
   "gemini-clave":"Google rechazó la clave de Gemini. Crea otra en aistudio.google.com y guárdala desde el menú de la hoja.",
   "gemini-limite":"Llegaste al límite de videos de Gemini por ahora (la capa gratis permite pocos al día). Prueba más tarde.",
@@ -1639,7 +1639,7 @@ function calificarVideo(id,blob,secs,btn){
     const pintar=()=>{if(!out.isConnected)return;const s=Math.round((Date.now()-t0)/1000),pc=Math.min(95,Math.round(100*(1-Math.exp(-s/T))));
       out.innerHTML=`<p><b>${fase}…</b></p><div class="carga"><i style="width:${pc}%"></i></div><p class="muted" style="font-size:.9rem">${pc}% · ${s} s · ${FIRMA} ve y escucha todo tu video, suele tardar entre ${Math.round(T*0.6)} s y ${Math.round(T*2)} s. No cierres esta pantalla.</p>`};
     pintar();const reloj=setInterval(()=>{const s=(Date.now()-t0)/1000;if(fase!=="Preparando tu video")fase=s<8?"Subiendo tu video":"Elokua está viendo tu video";pintar()},1000);
-    let t;try{const video=await blobBase64(blob);fase="Subiendo tu video";pintar();t=await servidor({tipo:"video",tarea:"video",mime:blob.type,video,prompt:promptVideo(sp,secs)+REGLA_COMILLAS},180000)}
+    let t;try{const video=await blobBase64(blob);fase="Subiendo tu video";pintar();t=await servidor({tipo:"video",tarea:"video",mime:blob.type,video,prompt:promptVideo(sp,secs)+REGLA_COMILLAS},330000)}
     catch(e){throw e&&e.code==="pedido"?{code:"servidor-viejo"}:e}
     finally{clearInterval(reloj);if(ensayo)ensayo.calificando=false;if(sig){sig.disabled=false;sig.textContent=sigTxt}}
     return leerJson(t);
