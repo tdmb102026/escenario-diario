@@ -1646,7 +1646,7 @@ function calificarVideo(id,blob,secs,btn){
   // Debajo de la nota, en chiquito: cuánto tardó cada paso en el servidor (para medir la velocidad).
   calificar(out,btn,"",m,{id,nivel:sp.nivel||1,pedir:async()=>{
     // Barra de carga estimada (nunca llega al final hasta que contesta) y "Siguiente paso" bloqueado mientras califica.
-    const t0=Date.now(),T=20+secs*0.8,sig=document.getElementById("e-cerrar"),sigTxt=sig&&sig.textContent;
+    const t0=Date.now(),T=10+secs*0.2,sig=document.getElementById("e-cerrar"),sigTxt=sig&&sig.textContent;
     if(ensayo)ensayo.calificando=true;if(sig){sig.disabled=true;sig.textContent="Calificando…"}
     let fase="Preparando tu video";
     const pintar=()=>{if(!out.isConnected)return;const s=Math.round((Date.now()-t0)/1000),pc=Math.min(95,Math.round(100*(1-Math.exp(-s/T))));
