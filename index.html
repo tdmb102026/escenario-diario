@@ -1650,7 +1650,7 @@ function camaraCompleta(stream){
   el.innerHTML=`<video id="f-cam" muted playsinline autoplay></video>
    <div class="f-top"><span class="clock" id="f-clock"></span><button id="f-ajuste">Ver todo</button><button id="f-tarj">Ocultar tarjetas</button><button id="f-cuadro">Quitar cuadro</button><button id="f-x">Cancelar</button></div>
    <div class="f-zoom" id="f-zoom" hidden><span>Zoom</span><input type="range" id="f-zr"></div>
-   <div class="f-guia" id="f-guia" aria-hidden="true"><i class="f-cabeza"></i><i class="f-caja"><span>Zona de gestos · hombros a cintura</span></i></div>
+   <div class="f-guia" id="f-guia" aria-hidden="true"><i class="f-cabeza"></i><i class="f-caja"><span>Saca las manos de este cuadro</span></i></div>
    <div class="f-txt" id="f-txt">${document.getElementById("e-texto").innerHTML}</div>
    <div class="f-bot"><button class="btn-accent f-ini" id="f-ini">${ICON.rec}Iniciar</button>
     <button class="rec-on" id="f-stop" hidden>${ICON.stop}Detener</button></div>
@@ -1678,7 +1678,7 @@ function camaraCompleta(stream){
 }
 /* Calificar el video con Gemini (por el servidor de fer): ve y escucha, así califica contenido, voz y cuerpo. */
 // La zona de gestos (tip del curso de fer): un cuadro imaginario de los hombros a la cintura.
-const ZONA_GESTOS="Las manos deben gesticular dentro de la zona de gestos, un cuadro imaginario de los hombros a la cintura: ni colgando a los lados ni por encima de la cara. Si salen mucho de esa zona o no se mueven, dilo en cuerpo.";
+const ZONA_GESTOS="Según su curso, el cuadro imaginario va de los hombros a la cintura y las manos deben moverse saliendo de ese cuadro (gestos abiertos, hacia afuera y hacia el público), no quedarse pegadas al cuerpo ni dentro del cuadro todo el tiempo. Si las manos se quedan dentro del cuadro, quietas o colgando, dilo en cuerpo.";
 const CRIT_VIDEO=[
  ["Voz","¿se le escucha clara y con energía, varía tono y volumen, y no se le cae la voz al final de las frases?"],
  ["Pausas","¿hace pausas para respirar y dejar caer las ideas, sin correr?"],
