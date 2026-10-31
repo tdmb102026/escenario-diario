@@ -16,6 +16,13 @@ const PRECIO = [0.10, 0.50];
 // desde 2027 sube a 1.50 / 7.50. Con la capa gratis no se cobra.
 const MODELO_VIDEO = "gemini-3.8-flash";
 const PRECIO_VIDEO = [0.75, 3.75];
+// Modelos que la app puede elegir en Ajustes (para comparar velocidad y calidad), con su precio
+// por millón de tokens (entrada, salida), revisado el 31-10-2026.
+const MODELOS_VIDEO = {
+  "gemini-3.8-flash": [0.75, 3.75],
+  "gemini-3.1-flash-lite": [0.25, 1.50],
+  "gemini-2.5-flash": [0.30, 2.50],
+};
 const HOJA = "Uso";
 const TITULOS = ["Fecha", "Tarea", "Tokens entrada", "Tokens salida", "Costo (USD)"];
 
@@ -116,22 +123,23 @@ function gemini_(q) {
     parte = { file_data: { mime_type: mime, file_uri: f.uri } };
   }
   const base = { contents: [{ role: "user", parts: [parte, { text: prompt }] }] };
-  // Pensar poco, resolución baja (más barato; para postura y gestos alcanza) y respuesta en JSON.
-  // Si la API no reconoce alguna opción, se vuelve a pedir sin opciones.
-  const extra = { generationConfig: { responseMimeType: "application/json", mediaResolution: "MEDIA_RESOLUTION_LOW", thinkingConfig: { thinkingLevel: "minimal" }, maxOutputTokens: 4000 } };
-  // Cada paso deja su tiempo en Ejecuciones (toca la fila para ver los registros).
-  DIAG_.push("video: " + Math.round(b64.length * 0.75 / 1e3) + " KB, " + mime + (parte.file_data ? ", subido con Files API" : ", directo"));
-  let r = pedirGemini_(key, Object.assign({}, base, extra));
+  const modelo = MODELOS_VIDEO[q.modelo] ? q.modelo : MODELO_VIDEO;
+  // Pensar poco (los 2.5 usan presupuesto; los 3.x, nivel; "minimal" no existe en 3.8), resolución baja y respuesta en JSON.
+  // Si la API rechaza una opción (400), se quita primero el pensar y luego todo.
+  const pensar = /^gemini-2\./.test(modelo) ? { thinkingBudget: 0 } : { thinkingLevel: "low" };
+  const extra = { generationConfig: { responseMimeType: "application/json", mediaResolution: "MEDIA_RESOLUTION_LOW", thinkingConfig: pensar, maxOutputTokens: 4000 } };
+  DIAG_.push(modelo + " · video: " + Math.round(b64.length * 0.75 / 1e3) + " KB, " + mime + (parte.file_data ? ", subido con Files API" : ", directo"));
+  let r = pedirGemini_(key, modelo, Object.assign({}, base, extra));
   if (!r.ok && r.error === "api" && /400/.test(r.detalle || "")) {
-    // Primero se quita solo la resolución; pensar poco se mantiene porque sin eso tarda mucho más.
-    r = pedirGemini_(key, Object.assign({}, base, { generationConfig: { responseMimeType: "application/json", thinkingConfig: { thinkingLevel: "minimal" } } }));
-    if (!r.ok && r.error === "api" && /400/.test(r.detalle || "")) r = pedirGemini_(key, base);
+    r = pedirGemini_(key, modelo, Object.assign({}, base, { generationConfig: { responseMimeType: "application/json", maxOutputTokens: 4000 } }));
+    if (!r.ok && r.error === "api" && /400/.test(r.detalle || "")) r = pedirGemini_(key, modelo, base);
   }
+  r.precio = MODELOS_VIDEO[modelo];
   return r;
 }
-function pedirGemini_(key, cuerpo) {
+function pedirGemini_(key, modelo, cuerpo) {
   const t0 = Date.now();
-  const r = UrlFetchApp.fetch(GEMINI + "/v1beta/models/" + MODELO_VIDEO + ":generateContent", {
+  const r = UrlFetchApp.fetch(GEMINI + "/v1beta/models/" + modelo + ":generateContent", {
     method: "post", contentType: "application/json", muteHttpExceptions: true,
     headers: { "x-goog-api-key": key }, payload: JSON.stringify(cuerpo),
   });
@@ -193,7 +201,8 @@ function doPost(e) {
     if (q.tipo === "video") {
       const t0 = Date.now(), v = gemini_(q);
       v.diag = DIAG_.join(" | ") + " | total " + Math.round((Date.now() - t0) / 1000) + " s";
-      anotar_("video (Gemini)" + (v.ok ? "" : " error " + v.error), v.uso, PRECIO_VIDEO, v.diag);
+      anotar_("video (Gemini)" + (v.ok ? "" : " error " + v.error), v.uso, v.precio || PRECIO_VIDEO, v.diag);
+      delete v.precio;
       delete v.uso;
       return json_(v);
     }
