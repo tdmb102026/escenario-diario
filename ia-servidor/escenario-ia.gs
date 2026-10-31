@@ -98,7 +98,10 @@ function claude_(mensajes, max) {
 // ---------- calificar video con Gemini ----------
 // Videos chicos van dentro del pedido; si pesan más de ~14 MB se suben antes con la Files API.
 const GEMINI = "https://generativelanguage.googleapis.com";
+// Lo que tardó cada paso: vuelve a la app (se ve bajo la nota) y queda en la hoja «Uso».
+let DIAG_ = [];
 function gemini_(q) {
+  DIAG_ = [];
   const key = PropertiesService.getScriptProperties().getProperty("GEMINI_API_KEY");
   if (!key) return { ok: false, error: "sin-clave-gemini" };
   const mime = /^video\/(mp4|webm|3gpp|quicktime)/.test(String(q.mime || "")) ? String(q.mime).split(";")[0] : "video/webm";
@@ -117,7 +120,7 @@ function gemini_(q) {
   // Si la API no reconoce alguna opción, se vuelve a pedir sin opciones.
   const extra = { generationConfig: { responseMimeType: "application/json", mediaResolution: "MEDIA_RESOLUTION_LOW", thinkingConfig: { thinkingLevel: "minimal" }, maxOutputTokens: 4000 } };
   // Cada paso deja su tiempo en Ejecuciones (toca la fila para ver los registros).
-  console.log("video: " + Math.round(b64.length * 0.75 / 1e3) + " KB, " + mime + (parte.file_data ? ", subido con Files API" : ", directo"));
+  DIAG_.push("video: " + Math.round(b64.length * 0.75 / 1e3) + " KB, " + mime + (parte.file_data ? ", subido con Files API" : ", directo"));
   let r = pedirGemini_(key, Object.assign({}, base, extra));
   if (!r.ok && r.error === "api" && /400/.test(r.detalle || "")) {
     // Primero se quita solo la resolución; pensar poco se mantiene porque sin eso tarda mucho más.
@@ -134,7 +137,7 @@ function pedirGemini_(key, cuerpo) {
   });
   const code = r.getResponseCode(), j = JSON.parse(r.getContentText() || "{}"), msg = ((j.error || {}).message) || "";
   const u0 = j.usageMetadata || {}, c0 = (j.candidates || [])[0] || {};
-  console.log("Gemini " + code + " en " + Math.round((Date.now() - t0) / 1000) + " s" + (cuerpo.generationConfig ? " (config: " + JSON.stringify(cuerpo.generationConfig.thinkingConfig || {}) + ")" : " (sin config)") +
+  DIAG_.push("Gemini " + code + " en " + Math.round((Date.now() - t0) / 1000) + " s" + (cuerpo.generationConfig ? " (config: " + JSON.stringify(cuerpo.generationConfig.thinkingConfig || {}) + ")" : " (sin config)") +
     " · entrada " + (u0.promptTokenCount || 0) + ", pensar " + (u0.thoughtsTokenCount || 0) + ", salida " + (u0.candidatesTokenCount || 0) + " tokens · fin " + (c0.finishReason || "-") + (msg ? " · " + msg.slice(0, 300) : ""));
   if (code === 401 || code === 403 || /API key/i.test(msg)) return { ok: false, error: "gemini-clave" };
   if (code === 429) return { ok: false, error: "gemini-limite" };
@@ -167,13 +170,13 @@ function subirArchivo_(key, blob) {
   return { ok: true, uri: f.uri };
 }
 
-function anotar_(tarea, uso, precio) {
+function anotar_(tarea, uso, precio, detalle) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let h = ss.getSheetByName(HOJA);
   if (!h) { h = ss.insertSheet(HOJA); h.appendRow(TITULOS); h.setFrozenRows(1); }
   const e = (uso && uso.input_tokens) || 0, s = (uso && uso.output_tokens) || 0;
   const pr = precio || PRECIO;
-  h.appendRow([new Date(), tarea, e, s, (e * pr[0] + s * pr[1]) / 1e6]);
+  h.appendRow([new Date(), tarea, e, s, (e * pr[0] + s * pr[1]) / 1e6].concat(detalle ? [detalle] : []));
 }
 
 // ---------- aplicación web ----------
@@ -188,8 +191,9 @@ function doPost(e) {
     if (!clave || String(q.clave || "") !== clave) return json_({ ok: false, error: "contraseña" });
     if (q.tipo === "probar") return json_({ ok: true, video: !!PropertiesService.getScriptProperties().getProperty("GEMINI_API_KEY") });
     if (q.tipo === "video") {
-      const v = gemini_(q);
-      if (v.ok) anotar_("video (Gemini)", v.uso, PRECIO_VIDEO);
+      const t0 = Date.now(), v = gemini_(q);
+      v.diag = DIAG_.join(" | ") + " | total " + Math.round((Date.now() - t0) / 1000) + " s";
+      anotar_("video (Gemini)" + (v.ok ? "" : " error " + v.error), v.uso, PRECIO_VIDEO, v.diag);
       delete v.uso;
       return json_(v);
     }

@@ -645,6 +645,7 @@ async function servidor(cuerpo,espera){
   finally{clearTimeout(tm)}
   // Si el Apps Script no está publicado para "Cualquier persona", Google responde con una página en vez de JSON.
   try{j=await r.json()}catch(e){throw {code:"no_json"}}
+  servidor.ultimo=j;
   if(!j.ok)throw {code:j.error||"servidor",message:j.detalle||""};
   return j.texto||"";
 }
@@ -1631,6 +1632,8 @@ function calificarVideo(id,blob,secs,btn){
   if(blob.size>34e6){out.innerHTML=`<p class="hint" style="color:var(--bad)">El video es muy largo para calificarlo (máximo unos 8 minutos).</p>`;return}
   const m=r=>{const t=String(r.transcripcion||""),nw=t.trim()?t.trim().split(/\s+/).length:0;return {nw,secs,ppm:nw&&secs?Math.round(nw/secs*60):null}};
   out.scrollIntoView({block:"start"});
+  servidor.ultimo=null;
+  // Debajo de la nota, en chiquito: cuánto tardó cada paso en el servidor (para medir la velocidad).
   calificar(out,btn,"",m,{id,nivel:sp.nivel||1,pedir:async()=>{
     // Barra de carga estimada (nunca llega al final hasta que contesta) y "Siguiente paso" bloqueado mientras califica.
     const t0=Date.now(),T=20+secs*0.8,sig=document.getElementById("e-cerrar"),sigTxt=sig&&sig.textContent;
@@ -1643,7 +1646,7 @@ function calificarVideo(id,blob,secs,btn){
     catch(e){throw e&&e.code==="pedido"?{code:"servidor-viejo"}:e}
     finally{clearInterval(reloj);if(ensayo)ensayo.calificando=false;if(sig){sig.disabled=false;sig.textContent=sigTxt}}
     return leerJson(t);
-  }});
+  }}).then(()=>{const d=servidor.ultimo&&servidor.ultimo.diag;if(d&&out.isConnected)out.insertAdjacentHTML("beforeend",`<p class="muted" style="font-size:.78rem">Tiempos: ${esc(d)}</p>`)});
 }
 function guardarVideo(btn){
   if(!ensayo||!ensayo.blob)return;
