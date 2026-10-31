@@ -14,15 +14,16 @@ const MODELO = "claude-haiku-5-5";
 const PRECIO = [0.10, 0.50];
 // Gemini para el video. Precio estándar en dólares por millón de tokens (entrada, salida) hasta el 31-12-2026;
 // desde 2027 sube a 1.50 / 7.50. Con la capa gratis no se cobra.
-const MODELO_VIDEO = "gemini-3.8-flash";
-const PRECIO_VIDEO = [0.75, 3.75];
+// 3.1 Flash-Lite: calificó un video de 16 s en 9 s; 3.8 Flash tardaba 4 minutos o daba 503 (mucha demanda).
+const MODELO_VIDEO = "gemini-3.1-flash-lite";
+const PRECIO_VIDEO = [0.25, 1.50];
 // Modelos que la app puede elegir en Ajustes (para comparar velocidad y calidad), con su precio
 // por millón de tokens (entrada, salida), revisado el 31-10-2026.
 const MODELOS_VIDEO = {
   "gemini-3.8-flash": [0.75, 3.75],
   "gemini-3.1-flash-lite": [0.25, 1.50],
-  "gemini-2.5-flash": [0.30, 2.50],
 };
+// Si el modelo elegido está saturado (503) o sin cupo (429), se prueba con el otro.
 const HOJA = "Uso";
 const TITULOS = ["Fecha", "Tarea", "Tokens entrada", "Tokens salida", "Costo (USD)"];
 
@@ -123,18 +124,24 @@ function gemini_(q) {
     parte = { file_data: { mime_type: mime, file_uri: f.uri } };
   }
   const base = { contents: [{ role: "user", parts: [parte, { text: prompt }] }] };
-  const modelo = MODELOS_VIDEO[q.modelo] ? q.modelo : MODELO_VIDEO;
-  // Pensar poco (los 2.5 usan presupuesto; los 3.x, nivel; "minimal" no existe en 3.8), resolución baja y respuesta en JSON.
-  // Si la API rechaza una opción (400), se quita primero el pensar y luego todo.
-  const pensar = /^gemini-2\./.test(modelo) ? { thinkingBudget: 0 } : { thinkingLevel: "low" };
-  const extra = { generationConfig: { responseMimeType: "application/json", mediaResolution: "MEDIA_RESOLUTION_LOW", thinkingConfig: pensar, maxOutputTokens: 4000 } };
+  const elegido = MODELOS_VIDEO[q.modelo] ? q.modelo : MODELO_VIDEO;
+  let r;
+  for (const modelo of [elegido].concat(Object.keys(MODELOS_VIDEO).filter(m => m !== elegido))) {
+    r = pedirModelo_(key, modelo, base, parte, mime, b64);
+    r.precio = MODELOS_VIDEO[modelo];
+    if (!(r.error === "gemini-limite" || (r.error === "api" && /^(500|503) /.test(r.detalle || "")))) break;
+  }
+  return r;
+}
+// Pensar poco, resolución baja y respuesta en JSON. Si la API rechaza una opción (400), se quita primero el pensar y luego todo.
+function pedirModelo_(key, modelo, base, parte, mime, b64) {
+  const extra = { generationConfig: { responseMimeType: "application/json", mediaResolution: "MEDIA_RESOLUTION_LOW", thinkingConfig: { thinkingLevel: "low" }, maxOutputTokens: 4000 } };
   DIAG_.push(modelo + " · video: " + Math.round(b64.length * 0.75 / 1e3) + " KB, " + mime + (parte.file_data ? ", subido con Files API" : ", directo"));
   let r = pedirGemini_(key, modelo, Object.assign({}, base, extra));
-  if (!r.ok && r.error === "api" && /400/.test(r.detalle || "")) {
+  if (!r.ok && r.error === "api" && /^400/.test(r.detalle || "")) {
     r = pedirGemini_(key, modelo, Object.assign({}, base, { generationConfig: { responseMimeType: "application/json", maxOutputTokens: 4000 } }));
-    if (!r.ok && r.error === "api" && /400/.test(r.detalle || "")) r = pedirGemini_(key, modelo, base);
+    if (!r.ok && r.error === "api" && /^400/.test(r.detalle || "")) r = pedirGemini_(key, modelo, base);
   }
-  r.precio = MODELOS_VIDEO[modelo];
   return r;
 }
 function pedirGemini_(key, modelo, cuerpo) {
