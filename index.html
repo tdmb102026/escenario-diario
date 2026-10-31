@@ -1587,7 +1587,7 @@ async function grabarToggle(video){
   const b=video?bc:bv,otro=video?bv:bc;
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.MediaRecorder){out.hidden=false;out.innerHTML=`<p>Aquí no se puede grabar. Usa la app Android o Chrome, o la grabadora de tu teléfono.</p>`;return}
   // 4:3 usa todo el sensor: se ve más amplio que pedir vertical.
-  let stream;try{stream=await navigator.mediaDevices.getUserMedia(video?{audio:true,video:{facingMode:"user",width:{ideal:1280},height:{ideal:960}}}:{audio:true})}
+  let stream;try{stream=await navigator.mediaDevices.getUserMedia(video?{audio:MIC_LEJOS,video:{facingMode:"user",width:{ideal:1280},height:{ideal:960}}}:{audio:MIC_LEJOS})}
   catch(e){out.hidden=false;out.innerHTML=`<p>No se pudo abrir ${video?"la cámara":"el micrófono"} para grabar. Si es la app Android, instala el APK más nuevo y revisa en Ajustes de Android → Apps → Retorika → Permisos que ${video?"la cámara y el micrófono estén permitidos":"el micrófono esté permitido"}.</p><p class="muted" style="font-size:.85rem">Detalle: ${esc((e&&(e.name+" "+e.message))||"")}</p>`;return}
   if(!ensayo){stream.getTracks().forEach(t=>t.stop());return}
   if(ensayo.url){URL.revokeObjectURL(ensayo.url);ensayo.url=null}
@@ -1595,18 +1595,30 @@ async function grabarToggle(video){
   empezarGrabacion(false,stream);
 }
 // Arranca la grabación. (Se probó dictar a la vez que el video, pero Android le da el micrófono solo a uno: se quitó.)
+// Micrófono para hablar a 1 o 2 metros: sin quitar ruido ni eco (eso borraba la voz lejana, pensado para llamadas) y con volumen automático.
+const MIC_LEJOS={echoCancellation:false,noiseSuppression:false,autoGainControl:true,channelCount:1};
+// Sube el volumen de la voz (x3) con un compresor para que no se sature; devuelve el stream a grabar.
+function vozMasFuerte(stream){
+  try{const C=window.AudioContext||window.webkitAudioContext;if(!C||!stream.getAudioTracks().length)return {rec:stream};
+    const ac=new C(),src=ac.createMediaStreamSource(stream),g=ac.createGain(),comp=ac.createDynamicsCompressor(),dest=ac.createMediaStreamDestination();
+    g.gain.value=3;comp.threshold.value=-18;comp.ratio.value=6;comp.attack.value=0.003;comp.release.value=0.25;
+    src.connect(g).connect(comp).connect(dest);if(ac.state==="suspended")ac.resume();
+    return {rec:new MediaStream([...stream.getVideoTracks(),...dest.stream.getAudioTracks()]),ac};
+  }catch(e){return {rec:stream}}
+}
 function empezarGrabacion(video,stream){
   const bv=document.getElementById("e-grab"),bc=document.getElementById("e-video"),out=document.getElementById("e-audio"),clock=document.getElementById("e-clock");
   const b=video?bc:bv,otro=video?bv:bc;
   const tipos=video?["video/mp4","video/webm;codecs=vp8,opus","video/webm"]:[];
   const mime=tipos.find(t=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t));
   // Video liviano (unos 3.5 MB por minuto) para poder mandarlo a calificar.
-  const op=video?{videoBitsPerSecond:420000,audioBitsPerSecond:48000}:{};if(mime)op.mimeType=mime;
-  const partes=[],mr=new MediaRecorder(stream,op);
+  const op=video?{videoBitsPerSecond:420000,audioBitsPerSecond:64000}:{};if(mime)op.mimeType=mime;
+  const fuerte=vozMasFuerte(stream);
+  const partes=[],mr=new MediaRecorder(fuerte.rec,op);
   ensayo.mr=mr;ensayo.stream=stream;ensayo.t0=Date.now();ensayo.blob=null;
   mr.ondataavailable=e=>{if(e.data&&e.data.size)partes.push(e.data)};
   mr.onstop=()=>{
-    stream.getTracks().forEach(t=>t.stop());clearInterval(ensayo&&ensayo.int);
+    stream.getTracks().forEach(t=>t.stop());if(fuerte.ac)fuerte.ac.close().catch(()=>{});clearInterval(ensayo&&ensayo.int);
     document.getElementById("e-full")?.remove();if(ensayo)ensayo.t1=Date.now();
     mostrarGrabacion(video,partes,mr,b);
     if(store.get("aplausos",true)&&Date.now()-ensayo.t0>5000)aplausos();
