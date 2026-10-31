@@ -227,6 +227,7 @@ nav.tabs a[aria-current="page"]{color:var(--accent);background:var(--accent-soft
 .e-audio .ai-res .coach{background:#F3E6CF;color:#1B2330}.e-audio .ai-res .coach b{color:#9A5B12}.e-audio .ai-res .coach button{background:#fff;color:#1B2330;border-color:#D9D4CC}
 .e-hist .coach{background:#F3E6CF;color:#1B2330}.e-hist .coach b{color:#9A5B12}
 .e-hist{flex:1;overflow-y:auto;padding:12px 16px 90px;display:flex;flex-direction:column;gap:8px}.e-hist h3{margin:0}
+details.trans summary{cursor:pointer}details.trans p{margin:6px 0 0;font-size:.92rem;line-height:1.5}
 .carga{height:10px;border-radius:99px;background:#E6E0D6;overflow:hidden}.carga i{display:block;height:100%;background:#F2B33D;border-radius:99px;transition:width 1s linear}
 .sig-flot:disabled{opacity:.55}
 .sig-flot{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:75;min-height:52px;padding:0 22px;box-shadow:0 4px 16px #0006}
@@ -1245,9 +1246,10 @@ function histFila(x){
   return `<details class="h"><summary><span class="d">${d.toLocaleDateString("es-MX",{day:"numeric",month:"short"})}<br>${d.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"})}</span><div class="t"><div>${esc(x.titulo||(sp?sp.titulo:x.id))}${x.video?' <span class="chip">Video</span>':x.kind==="ai"?' <span class="chip">Elokua</span>':""}</div>${x.note?`<small class="muted">${esc(x.note)}</small>`:""}</div><span class="s">${x.score.toFixed(1)}</span></summary>
    <div class="h-det">${x.nw||x.secs?`<p class="muted" style="font-size:.88rem">${x.nw?x.nw+" palabras":""}${x.secs?` · ${x.secs} s`:""}${x.ppm?` · ${x.ppm} ppm`:""}</p>`:""}
     ${Object.keys(crit).map(k=>`<div class="pt"><span>${esc(k)}</span><b>${crit[k]}/5</b></div>`).join("")}
-    ${r.muletillas?`<p><b>Muletillas:</b> ${esc(r.muletillas.join(", "))}</p>`:""}${r.voz?`<p><b>Tu voz:</b> ${esc(r.voz)}</p>`:""}${r.cuerpo?`<p><b>Tu cuerpo:</b> ${esc(r.cuerpo)}</p>`:""}
+    ${r.muletillas?`<p><b>Muletillas${r.mulApp?" según Elokua":""}:</b> ${esc(r.muletillas.join(", "))}</p>`:""}${r.mulApp?`<p><b>Muletillas contadas por la app:</b> ${r.mulApp.length?esc(r.mulApp.join(", ")):"ninguna"}</p>`:""}${r.voz?`<p><b>Tu voz:</b> ${esc(r.voz)}</p>`:""}${r.cuerpo?`<p><b>Tu cuerpo:</b> ${esc(r.cuerpo)}</p>`:""}
     ${r.fortaleza?`<p><b>Lo que hiciste bien:</b> ${esc(r.fortaleza)}</p>`:""}${r.mejorar?`<p><b>A mejorar:</b> ${esc(r.mejorar)}</p>`:""}
-    ${x.note?`<div class="coach"><b>Para tu próximo ensayo</b><p>${esc(x.note)}</p></div>`:""}</div></details>`;
+    ${x.note?`<div class="coach"><b>Para tu próximo ensayo</b><p>${esc(x.note)}</p></div>`:""}
+    ${r.transcripcion?`<details class="trans"><summary><b>Lo que dijiste</b> (transcripción literal)</summary><p>${esc(r.transcripcion)}</p></details>`:""}</div></details>`;
 }
 
 /* Crear discurso con Claude */
@@ -1711,10 +1713,13 @@ DATOS: el video dura ${secs} segundos. Ritmo ideal: 130 a 150 palabras por minut
 Califica de 1 a 5 cada punto:
 ${crits.map(c=>"- "+c[0]+": "+c[1]).join("\n")}
 
+TRANSCRIPCIÓN LITERAL: en "transcripcion" escribe exactamente lo que se escucha, sin corregir ni limpiar nada: cada "eh", "em", "mmm", "este", "o sea", "¿no?", cada palabra repetida ("yo yo") y cada frase cortada, tal como suenan.
+MULETILLAS: escucha con cuidado estas y otras parecidas: ${[...MULETILLAS,...CONECTORES].join(", ")}. En "muletillas" pon solo las que de verdad oíste, cada una con las veces entre paréntesis; si no oíste ninguna, deja la lista vacía. No inventes.
+
 Si el video no tiene sonido o no se ve a la persona, dilo en "mejorar" y califica con 1 lo que no puedas evaluar.
 
 Responde solo con JSON con esta forma:
-${JSON.stringify({puntos:ej,transcripcion:"lo que dijo, palabra por palabra",muletillas:["este (2)"],voz:"una frase concreta sobre su voz",cuerpo:"una frase concreta sobre su postura, mirada y gestos, citando un momento del video",fortaleza:"una frase concreta",mejorar:"una frase concreta",consejo:"una acción concreta para el próximo ensayo"})}`;
+${JSON.stringify({puntos:ej,transcripcion:"lo que dijo, literal, con cada muletilla",muletillas:["<muletilla que oíste> (<veces>)"],voz:"una frase concreta sobre su voz",cuerpo:"una frase concreta sobre su postura, mirada y gestos, citando un momento del video",fortaleza:"una frase concreta",mejorar:"una frase concreta",consejo:"una acción concreta para el próximo ensayo"})}`;
 }
 function blobBase64(blob){return new Promise((ok,mal)=>{const fr=new FileReader();fr.onload=()=>ok(String(fr.result).slice(String(fr.result).indexOf("base64,")+7));fr.onerror=mal;fr.readAsDataURL(blob)})}
 // Los mismos que acepta el servidor (MODELOS_VIDEO en escenario-ia.gs).
@@ -1725,7 +1730,8 @@ function calificarVideo(id,blob,secs,btn){
   const sp=findSp(id),out=document.getElementById("e-res");if(!sp||!blob||!out)return;
   if(!IA.conf().url){out.innerHTML=`<p class="hint" style="color:var(--bad)">Para calificar videos hace falta tu servidor de la IA (Ajustes → Conectar la IA).</p>`;return}
   if(blob.size>34e6){out.innerHTML=`<p class="hint" style="color:var(--bad)">El video es muy largo para calificarlo (máximo unos 8 minutos).</p>`;return}
-  const m=r=>{const t=String(r.transcripcion||""),nw=t.trim()?t.trim().split(/\s+/).length:0;return {nw,secs,ppm:nw&&secs?Math.round(nw/secs*60):null}};
+  // La app cuenta las muletillas con su propia lista sobre la transcripción literal de Gemini (igual que en el dictado).
+  const m=r=>{const t=String(r.transcripcion||""),nw=t.trim()?t.trim().split(/\s+/).length:0;return {nw,secs,ppm:nw&&secs?Math.round(nw/secs*60):null,trans:t,mu:t.trim()?contarMuletillas(t):null}};
   out.scrollIntoView({block:"start"});
   servidor.ultimo=null;
   // Debajo de la nota, en chiquito: cuánto tardó cada paso en el servidor (para medir la velocidad).
@@ -1872,7 +1878,7 @@ Califica de 1 a 5 cada punto:
 ${crits.map(c=>"- "+c[0]+": "+c[1]).join("\n")}
 
 Responde solo con JSON con esta forma:
-${JSON.stringify({puntos:ej,muletillas:["este (2)"],fortaleza:"una frase concreta",mejorar:"una frase concreta citando lo que dijo",consejo:"una acción concreta para el próximo ensayo"})}`;
+${JSON.stringify({puntos:ej,muletillas:["<muletilla que dijo> (<veces>)"],fortaleza:"una frase concreta",mejorar:"una frase concreta citando lo que dijo",consejo:"una acción concreta para el próximo ensayo"})}`;
 }
 function medir(texto,t0){
   const nw=texto.split(/\s+/).filter(Boolean).length, secs=t0?Math.round((Date.now()-t0)/1000):null;
@@ -1896,6 +1902,7 @@ async function calificar(out,go,prompt,m,entrada){
     const h=store.get("hist",[]);
     // Se guarda la calificación completa para volver a leerla en Progreso → Historial.
     const res={};["voz","cuerpo","fortaleza","mejorar"].forEach(k=>{if(r[k])res[k]=String(r[k])});if(Array.isArray(r.muletillas)&&r.muletillas.length)res.muletillas=r.muletillas.map(String);
+    if(m.trans)res.transcripcion=m.trans.slice(0,6000);if(m.mu)res.mulApp=m.mu.lista.map(([w,n])=>`${w} ×${n}`);
     h.unshift({id:entrada.id,titulo:entrada.titulo,nivel:entrada.nivel,date:new Date().toISOString(),kind:"ai",video:!!entrada.pedir,crit,score,secs:m.secs,nw:m.nw,ppm:m.ppm,note:String(r.consejo||""),res});
     store.set("hist",h.slice(0,200));marcarPractica();if(entrada.id&&findSp(entrada.id))practMarcar(entrada.id,5);
     const despues=nivelActual();
@@ -1903,7 +1910,9 @@ async function calificar(out,go,prompt,m,entrada){
     out.innerHTML=`${despues>antes?`<div class="levelup"><p class="eyebrow">Nuevo nivel</p><h2>Subiste al nivel ${despues}: ${nivelVista(despues).t}</h2><p>${nivelVista(despues).d}</p><button class="btn-primary" onclick="verNivel(${despues});location.hash='discursos'">Ver el nivel ${despues}</button></div>`:""}
       <div class="row" style="justify-content:space-between"><div><p class="eyebrow">Calificación de ${FIRMA}</p><p class="score-big">${score.toFixed(1)}</p></div><p class="muted" style="font-size:.9rem">${m.nw} palabras${m.secs?` · ${m.secs} s · ${m.ppm} ppm`:""}</p></div>
       <div>${ks.map(k=>`<div class="pt"><span>${esc(k)}</span><b>${crit[k]}/5</b></div>`).join("")}</div>
-      ${Array.isArray(r.muletillas)&&r.muletillas.length?`<p><b>Muletillas:</b> ${esc(r.muletillas.join(", "))}</p>`:""}
+      ${Array.isArray(r.muletillas)&&r.muletillas.length?`<p><b>Muletillas${m.mu?" según Elokua":""}:</b> ${esc(r.muletillas.join(", "))}</p>`:m.mu?`<p><b>Muletillas según Elokua:</b> ninguna</p>`:""}
+      ${m.mu?`<p><b>Muletillas contadas por la app:</b> ${m.mu.total?esc(m.mu.lista.map(([w,n])=>`${w} ×${n}`).join(", ")):"ninguna"}</p>`:""}
+      ${m.trans?`<details class="trans"><summary><b>Lo que dijiste</b> (transcripción literal)</summary><p>${esc(m.trans)}</p></details>`:""}
       ${r.voz?`<p><b>Tu voz:</b> ${esc(r.voz)}</p>`:""}${r.cuerpo?`<p><b>Tu cuerpo:</b> ${esc(r.cuerpo)}</p>`:""}
       <p><b>Lo que hiciste bien:</b> ${esc(r.fortaleza||"")}</p>
       <p><b>A mejorar:</b> ${esc(r.mejorar||"")}</p>
