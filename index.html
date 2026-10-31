@@ -215,6 +215,8 @@ nav.tabs a[aria-current="page"]{color:var(--accent);background:var(--accent-soft
 .f-txt .ptag{color:#fff}
 .gd-pasos button{cursor:pointer;background:var(--card)}
 .sig-flot,.gd-bar .gd-sig{background:#F2B33D!important;border-color:#F2B33D!important;color:#1A1A1A!important;font-weight:700}
+.carga{height:10px;border-radius:99px;background:#E6E0D6;overflow:hidden}.carga i{display:block;height:100%;background:#F2B33D;border-radius:99px;transition:width 1s linear}
+.sig-flot:disabled{opacity:.55}
 .sig-flot{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:75;min-height:52px;padding:0 22px;box-shadow:0 4px 16px #0006}
 .guiada-go{align-self:stretch;min-height:54px;font-size:1.05rem;justify-content:center}
 .guiada{position:fixed;inset:0;z-index:45;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
@@ -1508,7 +1510,7 @@ function abrirEnsayo(id,nivel,grabar,deRutina,desdePaso){
   document.getElementById("e-mas").onclick=()=>{ensayo.n=Math.min(2,ensayo.n+1);pintar()};
   document.getElementById("e-grab").onclick=()=>grabarToggle(false);
   document.getElementById("e-video").onclick=()=>grabarToggle(true);
-  document.getElementById("e-cerrar").onclick=()=>{const r=ensayo&&ensayo.deRutina,dp=ensayo&&ensayo.desdePaso&&ensayo.paso;cerrarEnsayo();if(r){rutinaMarcar("sinleer");pintarHoy()}if(dp)practTerminar(id,dp)};
+  document.getElementById("e-cerrar").onclick=()=>{if(ensayo&&ensayo.calificando&&!confirm("Elokua todavía está calificando tu video. Si sales ahora, se pierde la calificación. ¿Salir igual?"))return;const r=ensayo&&ensayo.deRutina,dp=ensayo&&ensayo.desdePaso&&ensayo.paso;cerrarEnsayo();if(r){rutinaMarcar("sinleer");pintarHoy()}if(dp)practTerminar(id,dp)};
   pintar();
   if(grabar)document.getElementById("e-audio").hidden=false,document.getElementById("e-audio").innerHTML=`<p>Toca <b>Grabar voz</b> o <b>Grabar video</b>, di el discurso de pie y luego revísate. Incomoda, pero es lo que más enseña.</p>`;
 }
@@ -1630,12 +1632,16 @@ function calificarVideo(id,blob,secs,btn){
   const m=r=>{const t=String(r.transcripcion||""),nw=t.trim()?t.trim().split(/\s+/).length:0;return {nw,secs,ppm:nw&&secs?Math.round(nw/secs*60):null}};
   out.scrollIntoView({block:"start"});
   calificar(out,btn,"",m,{id,nivel:sp.nivel||1,pedir:async()=>{
-    // Contador visible para saber que sigue trabajando; a los 3 minutos se corta con un aviso.
-    const t0=Date.now(),txt=()=>`<p class="muted">Subiendo tu video (${(blob.size/1e6).toFixed(1)} MB) y ${FIRMA} lo está viendo… ${Math.round((Date.now()-t0)/1000)} s. Suele tardar menos de un minuto.</p>`;
-    out.innerHTML=txt();const reloj=setInterval(()=>{if(out.isConnected)out.innerHTML=txt()},1000);
-    let t;try{const video=await blobBase64(blob);t=await servidor({tipo:"video",tarea:"video",mime:blob.type,video,prompt:promptVideo(sp,secs)+REGLA_COMILLAS},180000)}
+    // Barra de carga estimada (nunca llega al final hasta que contesta) y "Siguiente paso" bloqueado mientras califica.
+    const t0=Date.now(),T=20+secs*0.8,sig=document.getElementById("e-cerrar"),sigTxt=sig&&sig.textContent;
+    if(ensayo)ensayo.calificando=true;if(sig){sig.disabled=true;sig.textContent="Calificando…"}
+    let fase="Preparando tu video";
+    const pintar=()=>{if(!out.isConnected)return;const s=Math.round((Date.now()-t0)/1000),pc=Math.min(95,Math.round(100*(1-Math.exp(-s/T))));
+      out.innerHTML=`<p><b>${fase}…</b></p><div class="carga"><i style="width:${pc}%"></i></div><p class="muted" style="font-size:.9rem">${pc}% · ${s} s · ${FIRMA} ve y escucha todo tu video, suele tardar entre ${Math.round(T*0.6)} s y ${Math.round(T*2)} s. No cierres esta pantalla.</p>`};
+    pintar();const reloj=setInterval(()=>{const s=(Date.now()-t0)/1000;if(fase!=="Preparando tu video")fase=s<8?"Subiendo tu video":"Elokua está viendo tu video";pintar()},1000);
+    let t;try{const video=await blobBase64(blob);fase="Subiendo tu video";pintar();t=await servidor({tipo:"video",tarea:"video",mime:blob.type,video,prompt:promptVideo(sp,secs)+REGLA_COMILLAS},180000)}
     catch(e){throw e&&e.code==="pedido"?{code:"servidor-viejo"}:e}
-    finally{clearInterval(reloj)}
+    finally{clearInterval(reloj);if(ensayo)ensayo.calificando=false;if(sig){sig.disabled=false;sig.textContent=sigTxt}}
     return leerJson(t);
   }});
 }
@@ -1659,7 +1665,7 @@ function cerrarEnsayo(porAtras){
   ensayo=null;el.remove();
   if(!porAtras&&history.state&&history.state.ensayo)history.back();
 }
-window.addEventListener("popstate",()=>{if(document.getElementById("ensayo"))cerrarEnsayo(true)});
+window.addEventListener("popstate",()=>{if(!document.getElementById("ensayo"))return;if(ensayo&&ensayo.calificando&&!confirm("Elokua todavía está calificando tu video. Si sales ahora, se pierde la calificación. ¿Salir igual?")){history.pushState({ensayo:1},"");return}cerrarEnsayo(true)});
 
 /* ================= MULETILLAS Y VELOCIDAD EN VIVO ================= */
 // Las de siempre cuentan todas; las que también sirven para unir ideas (pues, entonces, bueno…) solo si se repiten 3 veces o más.
