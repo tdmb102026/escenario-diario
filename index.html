@@ -136,6 +136,8 @@ textarea,input[type=text],select{font:inherit;width:100%;border:1px solid var(--
 .history{display:flex;flex-direction:column;gap:0}
 .history .h{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
 .history .h:last-child{border-bottom:0}
+details.h{display:block!important}details.h summary{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;cursor:pointer;list-style:none}details.h summary::-webkit-details-marker{display:none}
+.h-det{display:flex;flex-direction:column;gap:6px;padding:10px 0 4px}.h-det p{margin:0}.h-det .pt{display:grid;grid-template-columns:1fr auto;padding:4px 0;border-bottom:1px solid var(--line)}
 .history .h .d{font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 .history .h .t{min-width:0}
 .history .h .s{font-family:var(--f-display);font-weight:800;font-variant-numeric:tabular-nums}
@@ -1199,8 +1201,18 @@ function viewProgreso(){
   <section class="card stack"><h3>Últimas ${last.length} calificaciones</h3><div class="bars" role="img" aria-label="Calificaciones recientes">${last.map(x=>`<i style="height:${x.score/5*100}%" title="${x.score.toFixed(1)}"></i>`).join("")}</div></section>
   <section class="coach"><b>Para tu próxima práctica</b><p>Tu punto más bajo últimamente es <b>${weak.n}</b> (${weak.v.toFixed(1)}/5). Enfócate solo en eso la próxima vez.</p></section>
   ${retosLista()}
-  <section class="card"><h3 style="margin-bottom:6px">Historial</h3><div class="history">${h.slice(0,20).map(x=>{const sp=findSp(x.id);const d=new Date(x.date);return `<div class="h"><span class="d">${d.toLocaleDateString("es-MX",{day:"numeric",month:"short"})}</span><div class="t"><div>${esc(x.titulo||(sp?sp.titulo:x.id))}${x.kind==="ai"?' <span class="chip">Elokua</span>':""}</div>${x.note?`<small class="muted">${esc(x.note)}</small>`:""}</div><span class="s">${x.score.toFixed(1)}</span></div>`}).join("")}</div></section>
+  <section class="card"><h3 style="margin-bottom:6px">Historial</h3><p class="muted" style="font-size:.88rem;margin:0 0 4px">Toca una práctica para ver su calificación completa.</p><div class="history">${h.slice(0,30).map(histFila).join("")}</div></section>
   </div>`;
+}
+
+function histFila(x){
+  const sp=findSp(x.id),d=new Date(x.date),crit=x.kind==="ai"?x.crit||{}:Object.fromEntries(CRITERIA.map((c,i)=>[c[0],(x.scores||[])[i]])),r=x.res||{};
+  return `<details class="h"><summary><span class="d">${d.toLocaleDateString("es-MX",{day:"numeric",month:"short"})}<br>${d.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"})}</span><div class="t"><div>${esc(x.titulo||(sp?sp.titulo:x.id))}${x.video?' <span class="chip">Video</span>':x.kind==="ai"?' <span class="chip">Elokua</span>':""}</div>${x.note?`<small class="muted">${esc(x.note)}</small>`:""}</div><span class="s">${x.score.toFixed(1)}</span></summary>
+   <div class="h-det">${x.nw||x.secs?`<p class="muted" style="font-size:.88rem">${x.nw?x.nw+" palabras":""}${x.secs?` · ${x.secs} s`:""}${x.ppm?` · ${x.ppm} ppm`:""}</p>`:""}
+    ${Object.keys(crit).map(k=>`<div class="pt"><span>${esc(k)}</span><b>${crit[k]}/5</b></div>`).join("")}
+    ${r.muletillas?`<p><b>Muletillas:</b> ${esc(r.muletillas.join(", "))}</p>`:""}${r.voz?`<p><b>Tu voz:</b> ${esc(r.voz)}</p>`:""}${r.cuerpo?`<p><b>Tu cuerpo:</b> ${esc(r.cuerpo)}</p>`:""}
+    ${r.fortaleza?`<p><b>Lo que hiciste bien:</b> ${esc(r.fortaleza)}</p>`:""}${r.mejorar?`<p><b>A mejorar:</b> ${esc(r.mejorar)}</p>`:""}
+    ${x.note?`<div class="coach"><b>Para tu próximo ensayo</b><p>${esc(x.note)}</p></div>`:""}</div></details>`;
 }
 
 /* Crear discurso con Claude */
@@ -1809,7 +1821,9 @@ async function calificar(out,go,prompt,m,entrada){
     const crit={};names.forEach(k=>crit[k]=pts[k]);Object.assign(crit,entrada.extra||{});
     const ks=Object.keys(crit),score=ks.reduce((a,k)=>a+crit[k],0)/ks.length;
     const h=store.get("hist",[]);
-    h.unshift({id:entrada.id,titulo:entrada.titulo,nivel:entrada.nivel,date:new Date().toISOString(),kind:"ai",crit,score,secs:m.secs,note:String(r.consejo||"")});
+    // Se guarda la calificación completa para volver a leerla en Progreso → Historial.
+    const res={};["voz","cuerpo","fortaleza","mejorar"].forEach(k=>{if(r[k])res[k]=String(r[k])});if(Array.isArray(r.muletillas)&&r.muletillas.length)res.muletillas=r.muletillas.map(String);
+    h.unshift({id:entrada.id,titulo:entrada.titulo,nivel:entrada.nivel,date:new Date().toISOString(),kind:"ai",video:!!entrada.pedir,crit,score,secs:m.secs,nw:m.nw,ppm:m.ppm,note:String(r.consejo||""),res});
     store.set("hist",h.slice(0,200));marcarPractica();if(entrada.id&&findSp(entrada.id))practMarcar(entrada.id,5);
     const despues=nivelActual();
     const n=entrada.nivel, faltan=Math.max(0,META-aprobadas(n));
