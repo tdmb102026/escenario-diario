@@ -195,7 +195,8 @@ nav.tabs a[aria-current="page"]{color:var(--accent);background:var(--accent-soft
 .logo .mic-l{height:.95em;width:.42em;margin-bottom:.2em}
 .firma{font-family:var(--f-display);font-weight:800;color:var(--accent);white-space:nowrap;display:inline-flex;align-items:flex-end;letter-spacing:.01em}
 .firma .mic-l{height:1.1em;width:.46em;margin-bottom:.18em}
-.e-ver{width:100%;max-height:60vh;border-radius:12px;background:#000}
+.e-audio .ai-res:not(:empty){--ink:#1B2330;--muted:#5B6472;--line:#D9D4CC;background:#FBF8F3!important;color:#1B2330;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.e-ver{width:100%;max-height:38vh;border-radius:12px;background:#000}
 .e-full{position:fixed;inset:0;z-index:80;background:#000;display:flex;flex-direction:column}
 .e-full video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
 .e-full video.todo{object-fit:contain}
@@ -291,7 +292,7 @@ nav.tabs a[aria-current="page"]{color:var(--accent);background:var(--accent-soft
 .vivo b{font-family:var(--f-display);font-size:1.1rem}.vivo b.bien{color:var(--good)}.vivo b.mal{color:var(--bad)}
 .e-paso{margin:0;padding:10px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));color:#B8C0CC;font-size:.92rem}
 .e-paso b{color:#F2B33D}
-.e-audio{padding:10px 16px;display:flex;flex-direction:column;gap:8px;color:#F4F1EC;border-bottom:1px solid #263041}
+.e-audio{padding:10px 16px 84px;display:flex;flex-direction:column;gap:8px;color:#F4F1EC;border-bottom:1px solid #263041;max-height:72vh;overflow-y:auto;flex:none}
 .e-audio audio{width:100%}.e-audio p{margin:0}.e-fijate{color:#B8C0CC;font-size:.9rem}
 .ensayo .e-texto{padding-top:24px;padding-bottom:30vh}
 .pistas{display:flex;flex-direction:column;gap:14px}
@@ -1550,11 +1551,12 @@ function mostrarGrabacion(video,partes,mr,b){
     const secs=Math.round(((ensayo.t1||Date.now())-ensayo.t0)/1000);
     const blob=new Blob(partes,{type:mr.mimeType||(video?"video/webm":"audio/webm")});ensayo.blob=blob;ensayo.url=URL.createObjectURL(blob);
     if(secs>=10)marcarPractica();
-    out.hidden=false;out.innerHTML=video?`<p><b>Mírate</b> (${secs} s)</p><video class="e-ver" controls playsinline src="${ensayo.url}"></video>
-      <p class="e-fijate">Fíjate en: ¿miras a la cámara o al piso? ¿espalda recta y hombros sueltos? ¿manos naturales, sin jugar con algo? ¿sonríes al empezar? ¿tu cara acompaña lo que dices? Elige una sola cosa para mejorar en el próximo video.</p>
+    out.hidden=false;out.innerHTML=video?`<p><b>Mírate</b> (${secs} s)</p>
       <div class="row"><button id="e-guardar">Guardar en mi teléfono</button>${secs>=15?`<button class="btn-accent" id="e-calv">${ICON.check}Calificar mi video</button>`:""}</div>
       <p class="muted" style="font-size:.85rem;margin:0">Si no lo guardas, se borra al cerrar.${secs>=15?` ${FIRMA} ve y escucha tu video: califica lo que dijiste, tu voz y tu cuerpo.`:""}</p>
-      <div class="ai-res" id="e-res" aria-live="polite"></div>`
+      <div class="ai-res" id="e-res" aria-live="polite"></div>
+      <video class="e-ver" controls playsinline src="${ensayo.url}"></video>
+      <p class="e-fijate">Fíjate en: ¿miras a la cámara o al piso? ¿espalda recta y hombros sueltos? ¿manos naturales, sin jugar con algo? ¿sonríes al empezar? ¿tu cara acompaña lo que dices? Elige una sola cosa para mejorar en el próximo video.</p>`
      :`<p><b>Escúchate</b> (${secs} s)</p><audio controls src="${ensayo.url}"></audio>
       <p class="e-fijate">Fíjate en: ¿dices "eh" o "este" entre frases? ¿vas muy rápido? ¿haces las pausas? ¿se te cae la voz al final de las frases? Elige una sola cosa para mejorar en la próxima grabación.</p>`;
     const g=document.getElementById("e-guardar");if(g)g.onclick=()=>guardarVideo(g);
@@ -1622,6 +1624,7 @@ function calificarVideo(id,blob,secs,btn){
   if(!IA.conf().url){out.innerHTML=`<p class="hint" style="color:var(--bad)">Para calificar videos hace falta tu servidor de la IA (Ajustes → Conectar la IA).</p>`;return}
   if(blob.size>34e6){out.innerHTML=`<p class="hint" style="color:var(--bad)">El video es muy largo para calificarlo (máximo unos 8 minutos).</p>`;return}
   const m=r=>{const t=String(r.transcripcion||""),nw=t.trim()?t.trim().split(/\s+/).length:0;return {nw,secs,ppm:nw&&secs?Math.round(nw/secs*60):null}};
+  out.scrollIntoView({block:"start"});
   calificar(out,btn,"",m,{id,nivel:sp.nivel||1,pedir:async()=>{
     out.innerHTML=`<p class="muted">Subiendo tu video y ${FIRMA} lo está viendo… Puede tardar hasta un minuto.</p>`;
     const video=await blobBase64(blob);
