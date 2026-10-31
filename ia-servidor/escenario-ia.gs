@@ -125,12 +125,17 @@ function gemini_(q) {
   }
   const base = { contents: [{ role: "user", parts: [parte, { text: prompt }] }] };
   const elegido = MODELOS_VIDEO[q.modelo] ? q.modelo : MODELO_VIDEO;
-  let r;
+  // Saturado (503/500): se espera unos segundos y se reintenta el mismo modelo; si sigue, se prueba el otro.
+  let r, saturado = false;
+  const lleno = x => x.error === "api" && /^(500|503) /.test(x.detalle || "");
   for (const modelo of [elegido].concat(Object.keys(MODELOS_VIDEO).filter(m => m !== elegido))) {
     r = pedirModelo_(key, modelo, base, parte, mime, b64);
+    for (let i = 0; i < 2 && lleno(r); i++) { Utilities.sleep(4000 * (i + 1)); r = pedirModelo_(key, modelo, base, parte, mime, b64); }
     r.precio = MODELOS_VIDEO[modelo];
-    if (!(r.error === "gemini-limite" || (r.error === "api" && /^(500|503) /.test(r.detalle || "")))) break;
+    if (lleno(r)) saturado = true;
+    if (!(r.error === "gemini-limite" || lleno(r))) break;
   }
+  if (!r.ok && saturado) return { ok: false, error: "gemini-saturado", precio: r.precio };
   return r;
 }
 // Pensar poco, resolución baja y respuesta en JSON. Si la API rechaza una opción (400), se quita primero el pensar y luego todo.
