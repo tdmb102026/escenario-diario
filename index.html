@@ -171,8 +171,8 @@ details.h{display:block!important}details.h summary{display:grid;grid-template-c
 
 /* Tabs */
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--surface);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
-nav.tabs .in{max-width:680px;margin:0 auto;display:grid;grid-template-columns:repeat(7,1fr);gap:0}
-nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:10px;text-decoration:none;color:var(--muted);font-size:.62rem;font-weight:600;min-width:0;letter-spacing:-.01em}
+nav.tabs .in{max-width:none;margin:0;display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:10px;text-decoration:none;color:var(--muted);font-size:.7rem;font-weight:600;min-width:0;letter-spacing:-.01em}
 nav.tabs a svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 nav.tabs a[aria-current="page"]{color:var(--accent);background:var(--accent-soft)}
 .section-title{display:flex;flex-direction:column;gap:6px}
@@ -749,6 +749,10 @@ function dictBox(id,ph,rows){return `<div class="dict"><textarea id="${id}" rows
  <div class="row"><button type="button" id="${id}-mic" onclick="startRec('${id}')">${ICON.mic}Hablar</button><button type="button" onclick="borrarDict('${id}')">Borrar texto</button></div>
  <div class="vivo" id="${id}-vivo" hidden></div>
  <p class="hint" id="${id}-hint" hidden>Este navegador no deja usar el micrófono aquí. Toca el ícono de micrófono de tu teclado y habla: tu teléfono escribirá lo que digas. Con la app Android esto no hace falta.</p></div>`}
+// Cámara y micrófono abiertos por la página. Android no deja que el dictado use el micrófono si la página
+// lo tiene tomado (p. ej. la cámara quedó abierta al saltar de paso), así que se sueltan antes de dictar.
+const MICS=new Set();
+function soltarMic(){MICS.forEach(st=>{if(ensayo&&ensayo.mr&&ensayo.mr.state==="recording"&&ensayo.stream===st)return;st.getTracks().forEach(t=>t.stop());MICS.delete(st)})}
 function startRec(id){
   const ta=document.getElementById(id),btn=document.getElementById(id+"-mic"),hint=document.getElementById(id+"-hint");
   const fallback=()=>{rec=null;btn.classList.remove("rec-on");btn.innerHTML=ICON.mic+"Hablar";hint.hidden=false;ta.focus()};
@@ -757,9 +761,10 @@ function startRec(id){
     if(dictId){stopRec();return}
     dictId=id;dictBase=ta.value?ta.value.trim()+" ":"";dictFinal="";dictParcial="";
     btn.classList.add("rec-on");btn.innerHTML=ICON.stop+"Detener";hint.hidden=true;
-    NATIVO.escuchar();return;
+    soltarMic();NATIVO.escuchar();return;
   }
   if(rec){rec.stop();return}
+  soltarMic();
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){fallback();return}
   try{
@@ -1110,7 +1115,7 @@ function guiadaIr(n){
   $("gd-eb").textContent=n?`Paso ${n} de 5`:"Antes de empezar";$("gd-t").textContent=P.t;
   // Cada círculo es un botón: tocas un visto (o cualquier paso) y vas a ese paso. El primero (C) es calentar.
   const cal=calentadoHoy();
-  const cortos=["Calentar","Escuchar","Leer","Tarjetas","Video","Nota"],hecho=i=>i?v.hechos.includes(i):cal;
+  const cortos=["Calentar","Escuchar","Leer","Tarjetas","Video","Calificar"],hecho=i=>i?v.hechos.includes(i):cal;
   $("gd-pasos").innerHTML=cortos.map((t,i)=>`<button type="button" class="${i===n?"ahora":hecho(i)?"hecho":""}" aria-label="${i?"Paso "+i+": "+PASOS_PRACT[i-1].t:"Calentar"}" onclick="guiadaIr(${i})">${hecho(i)&&i!==n?"✓ ":""}${t}</button>`).join("");
   $("gd-ant").disabled=n===0;$("gd-sig").textContent=n<5?"Siguiente paso →":"Terminar";
   $("gd-sig").classList.toggle("siguiente",n?v.hechos.includes(n):cal);if(n===0)$("gd-sig").textContent=cal?"Siguiente paso →":"Saltar calentamiento →";
@@ -1652,9 +1657,10 @@ async function grabarToggle(video){
   // 4:3 usa todo el sensor: se ve más amplio que pedir vertical.
   let stream;try{stream=await navigator.mediaDevices.getUserMedia(video?{audio:MIC_LEJOS,video:{facingMode:"user",width:{ideal:1280},height:{ideal:960}}}:{audio:MIC_LEJOS})}
   catch(e){out.hidden=false;out.innerHTML=`<p>No se pudo abrir ${video?"la cámara":"el micrófono"} para grabar. Si es la app Android, instala el APK más nuevo y revisa en Ajustes de Android → Apps → Retorika → Permisos que ${video?"la cámara y el micrófono estén permitidos":"el micrófono esté permitido"}.</p><p class="muted" style="font-size:.85rem">Detalle: ${esc((e&&(e.name+" "+e.message))||"")}</p>`;return}
-  if(!ensayo){stream.getTracks().forEach(t=>t.stop());return}
+  MICS.add(stream);
+  if(!ensayo){soltarMic();return}
   if(ensayo.url){URL.revokeObjectURL(ensayo.url);ensayo.url=null}
-  if(video){camaraCompleta(stream);return}
+  if(video){ensayo.stream=stream;camaraCompleta(stream);return}
   empezarGrabacion(false,stream);
 }
 // Arranca la grabación. (Se probó dictar a la vez que el video, pero Android le da el micrófono solo a uno: se quitó.)
