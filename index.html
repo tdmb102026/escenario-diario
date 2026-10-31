@@ -634,10 +634,13 @@ const IA={
     catch(e){if(e.code!=="invalid_json")throw e;return leerJson(await this.texto(prompt,{tarea,max:3000}))}
   }
 };
-async function servidor(cuerpo){
+async function servidor(cuerpo,espera){
   const c=IA.conf(); if(!c.url||!c.clave)throw {code:"sin_config"};
   let r,j;
-  try{r=await fetch(c.url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({clave:c.clave,...cuerpo})})}catch(e){throw {code:"sin_red"}}
+  // Con espera (ms) se corta el pedido si el servidor no contesta a tiempo.
+  const ac=espera&&window.AbortController?new AbortController():null,tm=ac&&setTimeout(()=>ac.abort(),espera);
+  try{r=await fetch(c.url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({clave:c.clave,...cuerpo}),signal:ac?ac.signal:undefined})}catch(e){throw {code:ac&&ac.signal.aborted?"tarde":"sin_red"}}
+  finally{clearTimeout(tm)}
   // Si el Apps Script no está publicado para "Cualquier persona", Google responde con una página en vez de JSON.
   try{j=await r.json()}catch(e){throw {code:"no_json"}}
   if(!j.ok)throw {code:j.error||"servidor",message:j.detalle||""};
@@ -674,6 +677,7 @@ function aiErr(e){const c=e&&e.code;return ({
   "sin-clave-api":"El servidor todavía no tiene tu clave de Anthropic. Guárdala desde el menú de la hoja.",
   "clave-api":"Anthropic rechazó la clave de API. Crea una nueva y guárdala desde el menú de la hoja.",
   saldo:"Se acabó el saldo de tu API de Anthropic. Recarga en console.anthropic.com → Billing.",
+  tarde:"El servidor no contestó en 3 minutos. Abre tu Apps Script → Ejecuciones (el reloj de la izquierda) y mira si la última dice Error o Completado.",
   "sin-clave-gemini":"Para calificar videos falta la clave de Gemini en tu servidor. En la hoja: menú Escenario IA → Guardar clave de Gemini.",
   "gemini-clave":"Google rechazó la clave de Gemini. Crea otra en aistudio.google.com y guárdala desde el menú de la hoja.",
   "gemini-limite":"Llegaste al límite de videos de Gemini por ahora (la capa gratis permite pocos al día). Prueba más tarde.",
@@ -1626,10 +1630,12 @@ function calificarVideo(id,blob,secs,btn){
   const m=r=>{const t=String(r.transcripcion||""),nw=t.trim()?t.trim().split(/\s+/).length:0;return {nw,secs,ppm:nw&&secs?Math.round(nw/secs*60):null}};
   out.scrollIntoView({block:"start"});
   calificar(out,btn,"",m,{id,nivel:sp.nivel||1,pedir:async()=>{
-    out.innerHTML=`<p class="muted">Subiendo tu video y ${FIRMA} lo está viendo… Puede tardar hasta un minuto.</p>`;
-    const video=await blobBase64(blob);
-    let t;try{t=await servidor({tipo:"video",tarea:"video",mime:blob.type,video,prompt:promptVideo(sp,secs)+REGLA_COMILLAS})}
+    // Contador visible para saber que sigue trabajando; a los 3 minutos se corta con un aviso.
+    const t0=Date.now(),txt=()=>`<p class="muted">Subiendo tu video (${(blob.size/1e6).toFixed(1)} MB) y ${FIRMA} lo está viendo… ${Math.round((Date.now()-t0)/1000)} s. Suele tardar menos de un minuto.</p>`;
+    out.innerHTML=txt();const reloj=setInterval(()=>{if(out.isConnected)out.innerHTML=txt()},1000);
+    let t;try{const video=await blobBase64(blob);t=await servidor({tipo:"video",tarea:"video",mime:blob.type,video,prompt:promptVideo(sp,secs)+REGLA_COMILLAS},180000)}
     catch(e){throw e&&e.code==="pedido"?{code:"servidor-viejo"}:e}
+    finally{clearInterval(reloj)}
     return leerJson(t);
   }});
 }
