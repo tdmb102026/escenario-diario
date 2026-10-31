@@ -230,6 +230,8 @@ nav.tabs a[aria-current="page"]{color:var(--accent);background:var(--accent-soft
 details.trans summary{cursor:pointer}details.trans p{margin:6px 0 0;font-size:.92rem;line-height:1.5}
 .modulo{display:flex;gap:14px;align-items:flex-start;text-decoration:none;color:inherit}.modulo .mod-n{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font-weight:800}.modulo.ok .mod-n{background:var(--accent);color:var(--bg)}.modulo .mod-n svg{width:18px;height:18px}
 .mod-pasos{display:flex;gap:8px;flex-wrap:wrap}.mod-pasos button{width:38px;height:38px;padding:0;border-radius:50%;justify-content:center}.mod-pasos .ahora{background:var(--accent);color:var(--bg);border-color:var(--accent)}.mod-pasos .hecho{border-color:var(--accent);color:var(--accent)}
+.calif-ov{position:fixed;inset:0;z-index:200;background:#0B0E13;color:#F4F1EC;display:flex;align-items:center;justify-content:center;padding:24px;touch-action:none}
+.calif-in{width:100%;max-width:420px;display:flex;flex-direction:column;gap:12px;text-align:center}.calif-in .muted{color:#B9B4AC}.calif-n{font-family:var(--f-display);font-size:4.2rem;font-weight:800;margin:0;line-height:1;color:#F2B33D}.calif-ov .carga{height:14px;background:#2A303B}
 .carga{height:10px;border-radius:99px;background:#E6E0D6;overflow:hidden}.carga i{display:block;height:100%;background:#F2B33D;border-radius:99px;transition:width 1s linear}
 .sig-flot:disabled{opacity:.55}
 .sig-flot{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:75;min-height:52px;padding:0 22px;box-shadow:0 4px 16px #0006}
@@ -1807,12 +1809,18 @@ function calificarVideo(id,blob,secs,btn){
     const t0=Date.now(),T=10+secs*0.2,sig=document.getElementById("e-cerrar"),sigTxt=sig&&sig.textContent;
     if(ensayo)ensayo.calificando=true;if(sig){sig.disabled=true;sig.textContent="Calificando…"}
     let fase="Preparando tu video";
-    const pintar=()=>{if(!out.isConnected)return;const s=Math.round((Date.now()-t0)/1000),pc=Math.min(95,Math.round(100*(1-Math.exp(-s/T))));
+    // Pantalla completa que tapa todo mientras califica (fer: que no se pueda tocar nada; solo el gesto de atrás, que pregunta).
+    document.getElementById("calif-ov")?.remove();
+    const ov=document.createElement("div");ov.className="calif-ov";ov.id="calif-ov";document.body.appendChild(ov);
+    let wake=null;try{wake=await navigator.wakeLock?.request("screen")}catch(e){}
+    const pintar=()=>{const s=Math.round((Date.now()-t0)/1000),pc=Math.min(95,Math.round(100*(1-Math.exp(-s/T))));
+      ov.innerHTML=`<div class="calif-in"><p class="eyebrow">${FIRMA} está calificando</p><p class="calif-n">${s} s</p><div class="carga"><i style="width:${pc}%"></i></div><p><b>${fase}…</b> ${pc}%</p><p class="muted">Suele tardar entre ${Math.round(T*0.6)} y ${Math.round(T*2)} segundos. No cierres la app ni apagues la pantalla.</p></div>`;
+      if(!out.isConnected)return;
       out.innerHTML=`<p><b>${fase}…</b></p><div class="carga"><i style="width:${pc}%"></i></div><p class="muted" style="font-size:.9rem">${pc}% · ${s} s · ${FIRMA} ve y escucha todo tu video, suele tardar entre ${Math.round(T*0.6)} s y ${Math.round(T*2)} s. No cierres esta pantalla.</p>`};
     pintar();const reloj=setInterval(()=>{const s=(Date.now()-t0)/1000;if(fase!=="Preparando tu video")fase=s<8?"Subiendo tu video":"Elokua está viendo tu video";pintar()},1000);
     let t;try{const video=await blobBase64(blob);fase="Subiendo tu video";pintar();t=await servidor({tipo:"video",tarea:"video",modelo:vmodelo(),mime:blob.type,video,prompt:promptVideo(sp,secs)+REGLA_COMILLAS},330000)}
     catch(e){throw e&&e.code==="pedido"?{code:"servidor-viejo"}:e}
-    finally{clearInterval(reloj);if(ensayo)ensayo.calificando=false;if(sig){sig.disabled=false;sig.textContent=sigTxt}}
+    finally{clearInterval(reloj);ov.remove();try{wake&&wake.release()}catch(e){};if(ensayo)ensayo.calificando=false;if(sig){sig.disabled=false;sig.textContent=sigTxt}}
     return leerJson(t);
   }}).then(()=>{const d=servidor.ultimo&&servidor.ultimo.diag;if(d&&out.isConnected)out.insertAdjacentHTML("beforeend",`<p class="muted" style="font-size:.78rem">Tiempos: ${esc(d)}</p>`)});
 }
