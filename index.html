@@ -250,6 +250,12 @@ details.trans summary{cursor:pointer}details.trans p{margin:6px 0 0;font-size:.9
 .gd-bar button{min-height:48px;flex:1}
 .gd-bar button:disabled{opacity:.4}
 .pestanas.tres{grid-template-columns:1fr 1.5fr 1fr}
+.pestanas.cuatro{grid-template-columns:.95fr 1.45fr 1.05fr .85fr}.pestanas.cuatro button{padding:0 3px;font-size:.8rem}
+.banco summary{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.banco summary>span:first-child{flex:1 1 60%}
+.habito{display:flex;gap:10px;align-items:flex-start;text-align:left;width:100%;min-height:44px;padding:8px 12px;font-weight:500;border-radius:14px}
+.habito .hb-c{flex:0 0 22px;height:22px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center}
+.habito.ok{opacity:.75}.habito.ok .hb-c{background:var(--accent);border-color:var(--accent);color:#fff}.habito .hb-c svg{width:14px;height:14px}
+.mini2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mini2 a{display:flex;flex-direction:column;gap:2px;padding:12px;text-decoration:none;color:inherit}.mini2 b{font-family:var(--f-display);font-size:1.05rem}.mini2 span{font-size:.8rem;color:var(--muted)}
 .ocasiones{display:flex;flex-wrap:wrap;gap:8px}
 .ocasiones button{min-height:38px;padding:6px 14px;border-radius:999px;font-size:.9rem}
 .ocasiones button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -884,6 +890,10 @@ function viewInicio(){
     <a class="card" href="#discursos" onclick="store.set('nivelVer',${n});store.set('nivTab','niveles')"><b>Nivel ${n}</b><span>${esc(l.t)} · ${Math.min(META,aprobadas(n))}/${META}</span></a>
     <a class="card" href="#progreso"><b>Reto ${Math.min(retos+1,RETOS.length)}</b><span>${retos>=RETOS.length?"Todos listos":esc(RETOS[retos].split(" ").slice(0,5).join(" "))+"…"}</span></a>
   </div>
+  <div class="mini2">
+    <a class="card" href="#palabras"><span>Palabra de hoy${palabraUsadaHoy()?" · usada ✓":""}</span><b>${esc(palabraHoy().p)}</b></a>
+    <a class="card" href="#discursos" onclick="store.set('nivTab','historias')"><span>Banco de historias</span><b>${banco().length} ${banco().length===1?"historia":"historias"}</b></a>
+  </div>
   </div>`;
 }
 // Lista para elegir "Tu discurso": los que practicaste hace poco, los tuyos y los de tu nivel.
@@ -920,12 +930,81 @@ const MODULOS=[
  {k:"preguntas",t:"Preguntas del público",d:"Cómo responder con calma, aunque no sepas la respuesta.",l:["Responder preguntas del público"],ir:["Practicar preguntas","location.hash='preguntas'"]},
  {k:"ocasiones",t:"Ocasiones especiales",d:"Brindis, cumpleaños, bodas y unas palabras.",l:["Felicitaciones, brindis y unas palabras"],ir:["Crear unas palabras","store.set('crearModo','ocasion');location.hash='crear'"]},
  {k:"social",t:"Caer bien",d:"Sonrisa, saludo y dar la mano: la gente decide antes de que hables.",l:["Caer bien desde el saludo"],ir:["Ver los retos","location.hash='progreso'"]}];
+// Lecciones del video "Cómo mejorar tu forma de hablar" (fer, 2026-11-12).
+LESSONS.push(
+ {t:"La voz se entrena: disciplina, no talento", b:`<p>Mucha gente cree que el mundo no la escucha porque no tiene talento, cuando en realidad <b>nunca aprendió a expresar lo que lleva dentro</b>. Hablar bien no es un regalo con el que unos nacen: es una habilidad, y se entrena.</p>
+ <ul><li><b>Piensa en un músico.</b> Nadie espera tocar una sinfonía la primera vez que toma un violín. Con la voz pasa igual: necesita práctica, paciencia y repetición.</li>
+ <li><b>No cambies de personalidad, cambia de hábitos.</b> Personas muy tímidas se volvieron grandes comunicadoras porque practicaron todos los días.</li>
+ <li><b>Cada conversación es un ensayo.</b> Cada pregunta que respondes es una oportunidad de practicar.</li>
+ <li><b>La vida no siempre premia al que más sabe,</b> sino al que logra transmitir con claridad lo que sabe. Tu trabajo necesita una voz que lo represente.</li></ul>
+ <div class="coach"><b>Tu plan de 10 minutos</b><p>10 minutos al día son más de 60 horas al año. Lee en voz alta, cuenta una historia frente al espejo o grábate y escúchate. Al principio parece que nada cambia, pero las raíces están creciendo.</p></div>`},
+ {t:"Antes de hablar: respira y haz una pausa", b:`<p>Hablar bien empieza mucho antes de abrir la boca. Dos personas pueden decir "buenos días" con las mismas palabras: una transmite calma y la otra ansiedad. <b>Una voz nerviosa no nace en la garganta, nace en una mente acelerada.</b></p>
+ <div class="struct">
+  <div><b>1. Respira un minuto</b><br>Antes de una reunión, una entrevista o una conversación difícil: llena el abdomen de aire, exhala despacio y repite varias veces. Tu cuerpo recibe el mensaje "no estoy en peligro" y la mente vuelve a pensar con claridad.</div>
+  <div><b>2. Cambia tu intención</b><br>No vas a demostrar que sabes más que nadie. Vas a compartir algo que le puede servir a otra persona.</div>
+  <div><b>3. Haz una pausa antes de responder</b><br>Escucha, respira, piensa y luego habla. Esa pausa vale más que cien palabras dichas con ansiedad. La seguridad no está en responder rápido: está en la pausa.</div></div>
+ <p>El silencio no siempre es inseguridad. Muchas veces es respeto por las palabras que vas a decir.</p>`},
+ {t:"Piensa claro: una idea y tres puntos", b:`<p>La claridad del pensamiento crea la claridad de las palabras. Si tus ideas están desordenadas, tus frases también. ¿Te ha pasado que media hora después se te ocurre lo que debiste decir? No es que las palabras llegaran tarde: tus ideas no estaban ordenadas.</p>
+ <ul><li><b>Una sola idea.</b> Antes de hablar pregúntate: si solo recordaran una cosa, ¿cuál quiero que sea? Con eso claro, lo demás encuentra su lugar. Como una casa: primero los cimientos, nadie empieza por el techo.</li>
+ <li><b>¿Qué quiero lograr con estas palabras?</b> ¿Tener la razón, demostrar que sé más o construir? Primero decide el resultado y después elige las palabras que te acercan a él.</li>
+ <li><b>Piensa para descubrir qué vale la pena decir,</b> en vez de hablar para descubrir lo que piensas.</li></ul>
+ <div class="coach"><b>Ejercicio diario</b><p>Escoge un tema sencillo (el libro que lees, algo que viviste esta semana, una lección reciente) y explícalo en 2 minutos con solo tres ideas. Las muletillas bajan y la seguridad sube.</p></div>
+ <a class="btn btn-accent" href="#tres-ideas" style="align-self:flex-start">Hacer el ejercicio de 3 ideas</a>`},
+ {t:"El miedo se quita hablando", b:`<p>No hay curso ni técnica mágica que quite el miedo antes de actuar. <b>Primero llega la acción y después aparece la confianza.</b> Un niño que aprende a caminar no espera a sentirse preparado: se cae, se levanta y vuelve a intentarlo.</p>
+ <ul><li><b>Los nervios no son tu enemigo:</b> son la prueba de que eso te importa. El problema no es sentir miedo, es obedecerlo.</li>
+ <li><b>La timidez no es una condena,</b> es un punto de partida. No necesitas cambiar tu personalidad, solo entrenar tu valentía.</li>
+ <li><b>El cerebro aprende por repetición.</b> Cada vez que hablas y no pasa la tragedia que imaginabas, tu cuerpo deja de verlo como un peligro.</li>
+ <li><b>Un mal momento no es una sentencia.</b> Todos los grandes comunicadores tuvieron días malos; la diferencia es que nunca dejaron de hablar.</li></ul>
+ <div class="coach"><b>Empieza donde estás</b><p>Da tu opinión en una reunión donde normalmente callarías. Haz la llamada que postergas. Conversa con alguien en una fila. Participa más en la mesa familiar. Son escenarios pequeños que preparan los grandes.</p></div>`},
+ {t:"Escuchar para entender", b:`<p>Los mejores comunicadores no son los que más hablan, son los que mejor escuchan. Muchas veces, mientras el otro habla, ya estamos preparando la respuesta: parecen dos monólogos esperando turno.</p>
+ <ul><li><b>Regala toda tu atención:</b> sin mirar el teléfono ni pensar en lo siguiente.</li>
+ <li><b>Escucha para entender,</b> no para responder, corregir o demostrar que sabes más.</li>
+ <li><b>Haz la pregunta correcta:</b> «¿Cómo te sentiste?», «¿Qué fue lo más difícil para ti?», «¿Qué aprendiste de eso?».</li>
+ <li><b>Escuchar también mejora cómo hablas:</b> aprendes nuevas formas de explicar, nuevas palabras e historias. Es como llenar un pozo antes de sacar agua.</li></ul>
+ <div class="coach"><b>Reto de esta semana</b><p>En lugar de contar una historia más, escucha una historia más. Cuando alguien termine de hablar, no respondas enseguida: haz una pregunta de seguimiento.</p></div>`},
+ {t:"Ponle nombre a lo que sientes", b:`<p>Tu vocabulario refleja el tamaño de tu mundo. Cuando tienes pocas palabras, todo termina siendo "bien", "mal", "bonito" o "difícil". Pero la vida no funciona con tan pocas categorías.</p>
+ <ul><li>No es lo mismo estar <b>cansado</b> que <b>frustrado</b>.</li><li>No es lo mismo sentir <b>miedo</b> que <b>incertidumbre</b>.</li>
+ <li>No es lo mismo <b>falta de motivación</b> que <b>decepción</b>, ni <b>miedo al fracaso</b> que <b>miedo al rechazo</b>.</li>
+ <li>No es lo mismo <b>admirar</b> a alguien que <b>depender</b> de esa persona.</li></ul>
+ <p>Cuando puedes nombrar un problema con precisión, también puedes empezar a resolverlo. Y cuando nombras bien lo que sientes al contar una historia, el público lo siente contigo.</p>
+ <p>Es como un carpintero: si solo tiene un martillo, todo lo resuelve a golpes. Con un taller lleno de herramientas, elige la adecuada.</p>
+ <a class="btn btn-accent" href="#palabras" style="align-self:flex-start">Ir a Palabras exactas</a>`},
+ {t:"Palabras precisas, no difíciles", b:`<p>No se trata de usar palabras complicadas para impresionar: muchas veces eso es inseguridad disfrazada. <b>Comunicar no es parecer brillante, es ser claro.</b> Las palabras difíciles no acercan a las personas; las precisas, sí.</p>
+ <ul><li><b>Cuando leas una palabra que dice algo mejor</b> que las que sueles usar, detente. Piensa por qué el autor eligió esa y no otra.</li>
+ <li><b>Úsala de forma natural</b> en una conversación ese mismo día. El objetivo no es que digan "qué vocabulario", es pensar mejor.</li>
+ <li><b>Lee autores que piensen distinto a ti,</b> escucha a personas con otras experiencias. Las palabras que salen de tu boca son el reflejo de lo que entra en tu mente.</li>
+ <li><b>Revisa tus palabras generales:</b> "bonito", "malo", "cosa", "increíble". La app te las marca al calificarte y te propone otras.</li></ul>`},
+ {t:"Tu banco de historias", b:`<p>Las historias convencen donde los argumentos fallan. La gente olvida los datos, pero rara vez olvida cómo la hiciste sentir. Y no hace falta haber recorrido el mundo: <b>las historias más poderosas suelen ser las más sencillas</b>. Una conversación que te cambió, un error, una derrota que te enseñó algo.</p>
+ <p>Muchas veces el protagonista de una buena historia no sabe que está viviendo una. Por eso conviene <b>anotarlas</b>: así, cuando te toque hablar, ya tienes cuál contar.</p>
+ <div class="struct">
+  <div><b>¿Qué pasó?</b><br>El momento exacto: cuándo, dónde, quién.</div>
+  <div><b>¿Qué cambió en ti?</b><br>Qué descubriste, con la palabra exacta de lo que sentiste.</div>
+  <div><b>¿Qué error no repetirías o qué decisión marcó un antes y un después?</b></div>
+  <div><b>¿Qué quieres que aprenda quien te escuche?</b><br>Sin enseñanza, solo hay entretenimiento.</div></div>
+ <p>No las inventes ni las exageres. Cuéntalas con humildad: la gente deja de admirarte de lejos y empieza a identificarse contigo. Y nunca desperdicies una dificultad: lo que hoy es un obstáculo mañana puede ser la historia que ayude a alguien.</p>
+ <a class="btn btn-accent" href="#historia-nueva" style="align-self:flex-start">Anotar una historia</a>`},
+ {t:"Tu propia voz: aprende de otros, no los copies", b:`<p>Es fácil admirar a un gran conferencista y querer ser como él: su tono, sus gestos, sus pausas. Pero <b>la gente no conecta con una copia, conecta con alguien auténtico</b>. Aprender de otros es humildad; copiarlos es inseguridad.</p>
+ <ul><li><b>Mejora sin dejar de ser tú.</b> Si hablas rápido, corrígelo; si usas muletillas, trabájalas. Pero no conviertas un roble en un bambú: cuídalo para que sea el mejor roble.</li>
+ <li><b>Descubre tu estilo:</b> unos conectan con humor, otros con reflexión, otros con historias o con ejemplos prácticos. Ninguno es mejor.</li>
+ <li><b>Grábate para conocerte, no para criticarte.</b> La primera vez incomoda, y esa incomodidad enseña: verás qué palabras repites, cuándo aceleras y cuándo bajas la mirada.</li></ul>
+ <p>Cuando dejas de actuar, también dejas de cansarte.</p>`},
+ {t:"Habla con propósito", b:`<p>Puedes dominar las pausas, el tono y la mirada, pero si detrás de tus palabras no hay una vida coherente, la gente lo nota. <b>Las palabras tienen fuerza cuando las respalda tu manera de vivir.</b></p>
+ <ul><li><b>No busques tener siempre algo interesante que decir.</b> Busca tener una vida de la que puedas aprender: lee, observa, conversa con personas distintas, equivócate y reflexiona.</li>
+ <li><b>Pregúntate qué piensas tú</b> sobre las cosas importantes, no lo que está de moda o lo que repiten las redes.</li>
+ <li><b>Las palabras más poderosas no son las más elegantes,</b> muchas veces son las más sinceras.</li></ul>
+ <div class="coach"><b>Pequeños hábitos</b><p>Lee 10 minutos en voz alta. Escucha antes de responder. Haz una pausa antes de hablar. Atrévete a dar tu idea. Grábate, corrige una muletilla, aprende una palabra nueva y cuenta una historia que deje una enseñanza.</p></div>
+ <p class="muted">Las personas olvidarán muchas de tus palabras, pero nunca cómo las hiciste sentir.</p>`}
+);
+MODULOS.push(
+ {k:"habito",t:"Hablar mejor cada día",d:"Disciplina, respirar antes de hablar, pensar claro, el miedo, escuchar, tu propia voz y hablar con propósito.",l:["La voz se entrena: disciplina, no talento","Antes de hablar: respira y haz una pausa","Piensa claro: una idea y tres puntos","El miedo se quita hablando","Escuchar para entender","Tu propia voz: aprende de otros, no los copies","Habla con propósito"],ir:["Hacer el ejercicio de 3 ideas","location.hash='tres-ideas'"]},
+ {k:"palabras",t:"Palabras exactas",d:"Ponle nombre a lo que sientes y cambia las palabras generales por precisas.",l:["Ponle nombre a lo que sientes","Palabras precisas, no difíciles"],ir:["Practicar con palabras","location.hash='palabras'"]});
+MODULOS.find(m=>m.k==="historias").l.push("Tu banco de historias");
 // Lecciones que no estén en ningún módulo (si se agregan después) van a "Más lecciones".
 function modulos(){
   const usados=new Set(MODULOS.flatMap(m=>m.l||[])),resto=LESSONS.filter(l=>!usados.has(l.t)).map(l=>l.t);
   return resto.length?[...MODULOS,{k:"mas",t:"Más lecciones",d:"Otras lecciones.",l:resto}]:MODULOS;
 }
-const leccion=t=>LESSONS.find(l=>l.t===t);
+const leccion=t=>LESSONS.find(l=>l&&l.t===t);
 function viewAprender(){
   const leidas=new Set(store.get("leidas",[]));
   return `<div class="stack-lg">
@@ -966,8 +1045,9 @@ function viewDiscursos(){
     cuerpo=`<div class="stack">${lista.map(tarjeta).join("")}</div>`;
   }
   // Dos pestañas para no mezclar: los niveles (con su selector compacto) y los discursos que creaste.
-  const pest=store.get("nivTab","niveles")==="mios"?"mios":"niveles",mis=mine();
-  const tabs=`<div class="pestanas tres" role="tablist"><button role="tab" aria-selected="${pest==="niveles"}" onclick="store.set('nivTab','niveles');render()">Niveles</button><button role="tab" aria-selected="${pest==="mios"}" onclick="store.set('nivTab','mios');render()">Mis discursos${mis.length?` (${mis.length})`:""}</button><button role="tab" aria-selected="false" class="crear-tab" onclick="store.set('crearModo','flujo');location.hash='crear'">+ Crear</button></div>`;
+  const pest=["mios","historias"].includes(store.get("nivTab","niveles"))?store.get("nivTab"):"niveles",mis=mine();
+  const tabs=`<div class="pestanas cuatro" role="tablist"><button role="tab" aria-selected="${pest==="niveles"}" onclick="store.set('nivTab','niveles');render()">Niveles</button><button role="tab" aria-selected="${pest==="mios"}" onclick="store.set('nivTab','mios');render()">Mis discursos${mis.length?` (${mis.length})`:""}</button><button role="tab" aria-selected="${pest==="historias"}" onclick="store.set('nivTab','historias');render()">Historias</button><button role="tab" aria-selected="false" class="crear-tab" onclick="store.set('crearModo','flujo');location.hash='crear'">+ Crear</button></div>`;
+  if(pest==="historias")return viewHistorias(tabs);
   if(pest==="mios")return `<div class="stack-lg">
   <div class="section-title"><p class="eyebrow">Practicar</p><h1>Mis discursos</h1></div>
   ${tabs}
@@ -1289,6 +1369,7 @@ function calcStreak(){
 function viewProgreso(){
   const h=store.get("hist",[]);
   if(!h.length)return `<div class="stack-lg"><div class="section-title"><p class="eyebrow">Progreso</p><h1>Tu avance</h1></div>
+   ${habitosHtml()}
    <div class="card stack"><h3>Aún no hay prácticas guardadas</h3><p class="muted">Practica un discurso, califícate y aquí verás tu promedio, tu racha de días y en qué criterio mejoras más. Todo se guarda solo en este teléfono.</p><a class="btn btn-primary" href="#d-${todaySpeech().id}" style="align-self:flex-start">Practicar el discurso del día</a></div></div>`;
   const last=h.slice(0,14).reverse();
   const acc={};h.slice(0,5).forEach(x=>{const m=x.kind==="ai"?x.crit:Object.fromEntries(CRITERIA.map((c,i)=>[c[0],x.scores[i]]));for(const k in m)(acc[k]=acc[k]||[]).push(m[k])});
@@ -1297,6 +1378,7 @@ function viewProgreso(){
   <div class="section-title"><p class="eyebrow">Progreso</p><h1>Tu avance</h1></div>
   ${rutinaAviso()}
   ${rachaHtml()}
+  ${habitosHtml()}
   ${escalera(0)}
   <section class="card stats"><div><b>${h.length}</b><span>prácticas</span></div><div><b>${calcStreak()}</b><span>días seguidos</span></div><div><b>${avg(h.slice(0,5)).toFixed(1)}</b><span>promedio reciente /5</span></div></section>
   <section class="card stack"><h3>Últimas ${last.length} calificaciones</h3><div class="bars" role="img" aria-label="Calificaciones recientes">${last.map(x=>`<i style="height:${x.score/5*100}%" title="${x.score.toFixed(1)}"></i>`).join("")}</div></section>
@@ -1312,7 +1394,7 @@ function histFila(x){
   return `<details class="h"><summary><span class="d">${d.toLocaleDateString("es-MX",{day:"numeric",month:"short"})}<br>${d.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"})}</span><div class="t"><div>${esc(x.titulo||(sp?sp.titulo:x.id))}${x.video?' <span class="chip">Video</span>':x.kind==="ai"?' <span class="chip">Elokua</span>':""}</div>${x.note?`<small class="muted">${esc(x.note)}</small>`:""}</div><span class="s">${x.score.toFixed(1)}</span></summary>
    <div class="h-det">${x.nw||x.secs?`<p class="muted" style="font-size:.88rem">${x.nw?x.nw+" palabras":""}${x.secs?` · ${x.secs} s`:""}${x.ppm?` · ${x.ppm} ppm`:""}</p>`:""}
     ${Object.keys(crit).map(k=>`<div class="pt"><span>${esc(k)}</span><b>${crit[k]}/5</b></div>`).join("")}
-    ${r.muletillas&&sinCeros(r.muletillas).length?`<p><b>Muletillas${r.mulApp?" según Elokua":""}:</b> ${esc(sinCeros(r.muletillas).join(", "))}</p>`:""}${r.mulApp?`<p><b>Muletillas contadas por la app:</b> ${r.mulApp.length?esc(r.mulApp.join(", ")):"ninguna"}</p>`:""}${r.voz?`<p><b>Tu voz:</b> ${esc(r.voz)}</p>`:""}${r.cuerpo?`<p><b>Tu cuerpo:</b> ${esc(r.cuerpo)}</p>`:""}
+    ${r.muletillas&&sinCeros(r.muletillas).length?`<p><b>Muletillas${r.mulApp?" según Elokua":""}:</b> ${esc(sinCeros(r.muletillas).join(", "))}</p>`:""}${r.mulApp?`<p><b>Muletillas contadas por la app:</b> ${r.mulApp.length?esc(r.mulApp.join(", ")):"ninguna"}</p>`:""}${r.genericas?`<p><b>Palabras generales:</b> ${esc(r.genericas.join(", "))}</p>`:""}${r.voz?`<p><b>Tu voz:</b> ${esc(r.voz)}</p>`:""}${r.cuerpo?`<p><b>Tu cuerpo:</b> ${esc(r.cuerpo)}</p>`:""}
     ${r.fortaleza?`<p><b>Lo que hiciste bien:</b> ${esc(r.fortaleza)}</p>`:""}${r.mejorar?`<p><b>A mejorar:</b> ${esc(r.mejorar)}</p>`:""}
     ${x.note?`<div class="coach"><b>Para tu próximo ensayo</b><p>${esc(x.note)}</p></div>`:""}
     ${r.transcripcion?`<details class="trans"><summary><b>Lo que dijiste</b> (transcripción literal)</summary><p>${esc(r.transcripcion)}</p></details>`:""}</div></details>`;
@@ -1341,6 +1423,7 @@ function viewCrear(){
   ${tabs}
   ${modo==="ocasion"&&!g.turns.length?`<div class="stack" style="gap:8px"><p class="eyebrow">¿Para qué ocasión?</p><div class="ocasiones">${OCASIONES.map(o=>`<button type="button" aria-pressed="false" onclick="elegirOcasion('${o}')">${o}</button>`).join("")}</div></div>`:""}
   <section class="chat" id="chat">${chatHtml(g)}</section>
+  ${modo==="historia"&&!g.turns.length?bancoElegirHtml("gen-text"):""}
   <section class="card stack">
     ${dictBox("gen-text",g.turns.length?"Tu respuesta…":M.ph,4)}
     <div class="row"><button class="btn-primary" id="gen-send" onclick="genSend()">Enviar</button>
@@ -1545,7 +1628,10 @@ const CALENTAR_CORTO=["Respiración diafragmática","Cara de león y cara de lim
 function calentarAzar(n=4){
   const todos=WARMUP.flatMap(g=>g.items).map((x,i)=>i);
   for(let i=todos.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[todos[i],todos[j]]=[todos[j],todos[i]]}
-  return todos.slice(0,n).sort((a,b)=>a-b);
+  // Siempre incluye un minuto de respiración (fer, 2026-11-12: «antes de hablar, respira un minuto»).
+  const r=WARMUP.flatMap(g=>g.items).findIndex(x=>x.t==="Respiración diafragmática"),sel=todos.slice(0,n);
+  if(r>=0&&!sel.includes(r))sel[n-1]=r;
+  return sel.sort((a,b)=>a-b);
 }
 function rutinaHoy(){
   let r=store.get("hoy",null);
@@ -1808,7 +1894,7 @@ function calificarVideo(id,blob,secs,btn){
   if(!IA.conf().url){out.innerHTML=`<p class="hint" style="color:var(--bad)">Para calificar videos hace falta tu servidor de la IA (Ajustes → Conectar la IA).</p>`;return}
   if(blob.size>34e6){out.innerHTML=`<p class="hint" style="color:var(--bad)">El video es muy largo para calificarlo (máximo unos 8 minutos).</p>`;return}
   // La app cuenta las muletillas con su propia lista sobre la transcripción literal de Gemini (igual que en el dictado).
-  const m=r=>{const t=String(r.transcripcion||""),nw=t.trim()?t.trim().split(/\s+/).length:0;return {nw,secs,ppm:nw&&secs?Math.round(nw/secs*60):null,trans:t,mu:t.trim()?contarMuletillas(t):null}};
+  const m=r=>{const t=String(r.transcripcion||""),nw=t.trim()?t.trim().split(/\s+/).length:0;return {nw,secs,ppm:nw&&secs?Math.round(nw/secs*60):null,trans:t,mu:t.trim()?contarMuletillas(t):null,gen:t.trim()?palabrasGenerales(t):null}};
   out.scrollIntoView({block:"start"});
   servidor.ultimo=null;
   // Debajo de la nota, en chiquito: cuánto tardó cada paso en el servidor (para medir la velocidad).
@@ -1965,8 +2051,8 @@ ${JSON.stringify({puntos:ej,muletillas:["<muletilla que dijo> (<veces>)"],fortal
 }
 function medir(texto,t0){
   const nw=texto.split(/\s+/).filter(Boolean).length, secs=t0?Math.round((Date.now()-t0)/1000):null;
-  const mu=contarMuletillas(texto),lista=mu.lista.map(([w,n])=>`"${w}" ${n}`).join(", ");
-  return {nw,secs,ppm:secs?Math.round(nw/secs*60):null,txt:`${nw} palabras${secs?`, ${secs} segundos, ${Math.round(nw/secs*60)} palabras por minuto`:", sin tiempo medido"}; muletillas contadas por la app: ${mu.total}${lista?" ("+lista+")":""}`};
+  const mu=contarMuletillas(texto),lista=mu.lista.map(([w,n])=>`"${w}" ${n}`).join(", "),gen=palabrasGenerales(texto);
+  return {nw,secs,gen,ppm:secs?Math.round(nw/secs*60):null,txt:`${nw} palabras${secs?`, ${secs} segundos, ${Math.round(nw/secs*60)} palabras por minuto`:", sin tiempo medido"}; muletillas contadas por la app: ${mu.total}${lista?" ("+lista+")":""}${gen.total?`; palabras generales: ${gen.lista.map(([w,n])=>`"${w}" ${n}`).join(", ")}`:""}`};
 }
 // entrada: {id, titulo, nivel, extra: {criterio: nota}} — guarda la práctica y avisa si subiste de nivel
 async function calificar(out,go,prompt,m,entrada){
@@ -1986,7 +2072,7 @@ async function calificar(out,go,prompt,m,entrada){
     // Se guarda la calificación completa para volver a leerla en Progreso → Historial.
     if(Array.isArray(r.muletillas))r.muletillas=sinCeros(r.muletillas);
     const res={};["voz","cuerpo","fortaleza","mejorar"].forEach(k=>{if(r[k])res[k]=String(r[k])});if(Array.isArray(r.muletillas)&&r.muletillas.length)res.muletillas=r.muletillas.map(String);
-    if(m.trans)res.transcripcion=m.trans.slice(0,6000);if(m.mu)res.mulApp=m.mu.lista.map(([w,n])=>`${w} ×${n}`);
+    if(m.trans)res.transcripcion=m.trans.slice(0,6000);if(m.mu)res.mulApp=m.mu.lista.map(([w,n])=>`${w} ×${n}`);if(m.gen&&m.gen.total)res.genericas=m.gen.lista.map(([w,n])=>`${w} ×${n}`);
     h.unshift({id:entrada.id,titulo:entrada.titulo,nivel:entrada.nivel,date:new Date().toISOString(),kind:"ai",video:!!entrada.pedir,crit,score,secs:m.secs,nw:m.nw,ppm:m.ppm,note:String(r.consejo||""),res});
     store.set("hist",h.slice(0,200));marcarPractica();if(entrada.id&&findSp(entrada.id))practMarcar(entrada.id,5);
     const despues=nivelActual();
@@ -1996,13 +2082,14 @@ async function calificar(out,go,prompt,m,entrada){
       <div>${ks.map(k=>`<div class="pt"><span>${esc(k)}</span><b>${crit[k]}/5</b></div>`).join("")}</div>
       ${Array.isArray(r.muletillas)&&r.muletillas.length?`<p><b>Muletillas${m.mu?" según Elokua":""}:</b> ${esc(r.muletillas.join(", "))}</p>`:m.mu?`<p><b>Muletillas según Elokua:</b> ninguna</p>`:""}
       ${m.mu?`<p><b>Muletillas contadas por la app:</b> ${m.mu.total?esc(m.mu.lista.map(([w,n])=>`${w} ×${n}`).join(", ")):"ninguna"}</p>`:""}
+      ${genHtml(m.gen)}
       ${m.trans?`<details class="trans"><summary><b>Lo que dijiste</b> (transcripción literal)</summary><p>${esc(m.trans)}</p></details>`:""}
       ${r.voz?`<p><b>Tu voz:</b> ${esc(r.voz)}</p>`:""}${r.cuerpo?`<p><b>Tu cuerpo:</b> ${esc(r.cuerpo)}</p>`:""}
       <p><b>Lo que hiciste bien:</b> ${esc(r.fortaleza||"")}</p>
       <p><b>A mejorar:</b> ${esc(r.mejorar||"")}</p>
       <div class="coach"><b>Para tu próximo ensayo</b><p>${esc(r.consejo||"")}</p></div>
       ${actualTrasNota(entrada.id,score,String(r.mejorar||""))}
-      <p class="muted" style="font-size:.88rem">Guardado en tu progreso.${despues>antes||n<antes?"":score>=APRUEBA?` Te ${faltan===1?"falta 1 práctica":`faltan ${faltan} prácticas`} de ${APRUEBA} o más para subir de nivel.`:` Necesitas ${APRUEBA} o más para que cuente para subir de nivel.`}</p>`;
+      <p class="muted" style="font-size:.88rem">Guardado en tu progreso.${despues>antes||n<antes||typeof n!=="number"?"":score>=APRUEBA?` Te ${faltan===1?"falta 1 práctica":`faltan ${faltan} prácticas`} de ${APRUEBA} o más para subir de nivel.`:` Necesitas ${APRUEBA} o más para que cuente para subir de nivel.`}</p>`;
   }catch(e){out.innerHTML=`<p class="hint" style="color:var(--bad)">${esc(aiErr(e))}</p>`}
   finally{go.disabled=false}
 }
@@ -2074,14 +2161,14 @@ function viewPreguntas(){
   const lista=allSpeeches().filter(s=>s.kind!=="historia"),sel=store.get("qaSp",lista[0].id);
   return `<div class="stack-lg">
   <button class="back" onclick="location.hash='discursos'">← Niveles</button>
-  <div class="section-title"><p class="eyebrow">Nivel 5 · Preguntas del público</p><h1>Responde en voz alta</h1><p class="muted">Elige el discurso que acabas de dar. Elokua te hará una pregunta difícil como alguien del público, y tú respondes de pie.</p></div>
+  <div class="section-title"><p class="eyebrow">Nivel 5 · Preguntas del público</p><h1>Responde en voz alta</h1><p class="muted">Elige el discurso que acabas de dar. Elokua te hará una pregunta difícil como alguien del público, y tú respondes de pie. Al tocar Responder tienes 3 segundos de pausa: respira y piensa tu idea antes de hablar.</p></div>
   <section class="card stack">
     <label for="qa-sp"><h3>Tu discurso</h3></label>
     <select id="qa-sp" onchange="store.set('qaSp',this.value)">${lista.map(s=>`<option value="${s.id}" ${s.id===sel?"selected":""}>${esc(s.titulo)}</option>`).join("")}</select>
     <button class="btn-primary" id="qa-ask" style="align-self:flex-start" onclick="qaPreguntar()">Hazme una pregunta</button>
     <div id="qa-q" hidden class="coach"><b>Pregunta del público</b><p id="qa-qt" class="tema"></p></div>
     <div id="qa-resp" hidden class="stack">
-      <div class="row"><button class="btn-primary" onclick="qaT0=Date.now();cronoIniciar('qa-clock',0);startRec('qa-text')">${ICON.mic}Responder</button><span class="live" id="qa-clock">0:00</span></div>
+      <div class="row"><button class="btn-primary" id="qa-go" onclick="qaResponder()">${ICON.mic}Responder</button><span class="live" id="qa-clock">0:00</span></div>
       ${dictBox("qa-text","Aquí aparecerá tu respuesta…",4)}
       <button class="btn-accent" id="qa-cal" style="align-self:flex-start" onclick="qaCalificar()">${ICON.check}Terminar y calificar</button>
     </div>
@@ -2105,6 +2192,15 @@ ${sp.partes.map(p=>plain(p[1])).join("\n")}`,{rapido:true,tarea:"pregunta"});
     decir(qaPregunta);
   }catch(x){e.hidden=false;e.textContent=aiErr(x)}
   finally{b.disabled=false;b.textContent="Otra pregunta"}
+}
+// Pausa antes de responder (video: «la seguridad estaba en la pausa»): 3 s para respirar y ordenar la idea.
+function qaResponder(){
+  const b=document.getElementById("qa-go"),c=document.getElementById("qa-clock");
+  if(rec||dictId){qaT0=qaT0||Date.now();startRec('qa-text');return}
+  b.disabled=true;let n=3;c.textContent="Respira · "+n;
+  const t=setInterval(()=>{n--;if(!document.getElementById("qa-go")){clearInterval(t);return}
+    if(n>0){c.textContent="Respira · "+n;return}
+    clearInterval(t);b.disabled=false;qaT0=Date.now();cronoIniciar('qa-clock',0);startRec('qa-text')},1000);
 }
 function qaCalificar(){
   stopRec();cronoParar();
@@ -2461,6 +2557,7 @@ function viewFlujo(){
     const saludo=p===1?MODOS.discurso.saludo:(f.recs?textoRecs(f.recs):"Cuéntame una historia de tu vida que tenga que ver con tu discurso.");
     cuerpo=`${p===3&&f.recs?`<div class="coach"><b>${FIRMA} te recomienda</b><p>${esc(f.recs.map(r=>`${r.tipo}, en ${r.donde}: ${r.por_que}`).join(" "))}</p></div>`:""}
     <section class="chat" id="chat">${chatDe(turns,saludo)}</section>
+    ${p===3&&!turns.length?bancoElegirHtml("gen-text"):""}
     <section class="card stack">
       ${dictBox("gen-text",turns.length?"Tu respuesta…":(p===1?MODOS.discurso.ph:"Ej. Una vez, cuando tenía 20 años…"),4)}
       <div class="row">
@@ -2572,6 +2669,256 @@ function flujoGuardar(cual){
   flujoSet(flujoVacio());toast(cual==="final"?"Guardados tu discurso y tu historia":"Discurso guardado");location.hash="d-"+nuevos[0].id;
 }
 
+/* ================= IDEAS DEL VIDEO "CÓMO MEJORAR TU FORMA DE HABLAR" (fer, 2026-11-12) =================
+   Banco de historias (ed_banco), palabras exactas (#palabras), 3 ideas en 2 minutos (#tres-ideas)
+   y hábitos de hoy. Todo es nuevo y aparte: no cambia lo que ya existía. */
+
+/* ---------- Banco de historias ---------- */
+const ETIQUETAS=["Familia","Trabajo","Fracaso","Superación","Decisión","Miedo","Amistad","Humor","Aprendizaje"];
+const DISPARADORES=["Un error que cometiste y no volverías a cometer","Una derrota que te enseñó algo que ningún éxito te habría enseñado","Una conversación que cambió tu forma de pensar","Algo que lograste porque «no tenías otra opción»","Una persona que te ayudó cuando no lo esperabas","La primera vez que hiciste algo que te daba miedo","Un momento difícil de esta semana","Una decisión que marcó un antes y un después","Algo que aprendiste de tus papás o abuelos","Un día en que te sentiste orgulloso de ti"];
+const PREG_BANCO=[
+ ["que","1. ¿Qué pasó?","Cuenta el momento exacto: cuándo, dónde, quién estaba, qué se dijo."],
+ ["cambio","2. ¿Qué cambió en ti?","¿Qué descubriste o qué sentiste? Usa la palabra exacta: no es lo mismo triste que decepcionado."],
+ ["decision","3. ¿Qué error no repetirías o qué decisión marcó un antes y un después?",""],
+ ["ensenanza","4. ¿Qué quieres que aprenda quien te escuche?","Una frase corta. Sin enseñanza, la historia solo entretiene."]];
+const banco=()=>store.get("banco",[]);
+const bancoDe=id=>banco().find(b=>b.id===id);
+function bancoTexto(b){return PREG_BANCO.map(([k,t])=>b[k]?t.replace(/^\d\. /,"")+" "+b[k]:"").filter(Boolean).join("\n")}
+function viewHistorias(tabs){
+  const lista=banco(),fil=store.get("bancoFiltro",""),ver=fil?lista.filter(b=>(b.etiquetas||[]).includes(fil)):lista;
+  const armadas=mine().filter(s=>s.kind==="historia");
+  const usadas=[...new Set(lista.flatMap(b=>b.etiquetas||[]))];
+  return `<div class="stack-lg">
+  <div class="section-title"><p class="eyebrow">Practicar</p><h1>Mis historias</h1><p class="muted">Tu banco de historias. Todos tenemos una historia para cada cosa: anótalas cuando las recuerdes y así, cuando te toque hablar, ya tendrás cuál contar.</p></div>
+  ${tabs}
+  <div class="row"><a class="btn btn-accent" href="#historia-nueva">+ Anotar una historia</a>${lista.length?`<button onclick="historiaAzar()">${ICON.play}Historia al azar</button>`:""}</div>
+  ${usadas.length>1?`<div class="ocasiones">${["",...usadas].map(e=>`<button aria-pressed="${fil===e}" onclick="store.set('bancoFiltro','${e}');render()">${e||"Todas"}</button>`).join("")}</div>`:""}
+  ${lista.length?`<div class="stack">${ver.map(bancoFila).join("")}</div>`:`<div class="card stack"><h3>Tu banco está vacío</h3><p class="muted">Muchas personas creen que su vida no tiene historias interesantes, pero a veces basta con una lección que otra persona todavía necesita descubrir. Empieza con una pequeña.</p><ul class="muted" style="margin:0;padding-left:18px">${DISPARADORES.slice(0,4).map(d=>`<li>${esc(d)}</li>`).join("")}</ul></div>`}
+  ${armadas.length?`<section class="stack"><p class="eyebrow">Historias que armaste con Elokua</p>${armadas.map(s=>`<button class="speech-card card" onclick="location.hash='d-${s.id}'"><div class="meta"><span class="chip">${esc(s.tipo||"Historia")}</span><span>${s.min} min</span></div><h3>${esc(s.titulo)}</h3><p>${esc(s.resumen)}</p></button>`).join("")}</section>`:""}
+  </div>`;
+}
+function bancoFila(b){
+  return `<details class="card lesson banco"><summary><span><b>${esc(b.titulo)}</b><br><small class="muted">${new Date(b.fecha).toLocaleDateString("es-MX",{day:"numeric",month:"short",year:"numeric"})}${b.contada?` · contada ${b.contada} ${b.contada===1?"vez":"veces"}`:""}</small></span>${(b.etiquetas||[]).map(e=>`<span class="chip">${esc(e)}</span>`).join("")}</summary>
+   <div class="lesson-body">${PREG_BANCO.map(([k,t])=>b[k]?`<p><b>${esc(t.replace(/^\d\. /,""))}</b><br>${esc(b[k])}</p>`:"").join("")}
+   <div class="row"><button class="btn-primary" onclick="location.hash='contar-${b.id}'">${ICON.mic}Contarla</button><button onclick="location.hash='historia-${b.id}'">Editar</button>
+   ${b.armada&&findSp(b.armada)?`<button onclick="location.hash='d-${b.armada}'">Ver la historia armada</button>`:`<button id="arm-${b.id}" onclick="bancoArmar('${b.id}')">Pulir con Elokua</button>`}
+   <button onclick="bancoBorrar('${b.id}',this)">Borrar</button></div>
+   <p class="hint" id="arm-err-${b.id}" hidden></p></div></details>`;
+}
+function viewHistoriaNueva(id){
+  const b=id?bancoDe(id):null,et=new Set(b?b.etiquetas||[]:[]);
+  return `<div class="stack-lg">
+  <button class="back" onclick="store.set('nivTab','historias');location.hash='discursos'">← Mis historias</button>
+  <div class="section-title"><p class="eyebrow">Banco de historias</p><h1>${b?"Editar historia":"Anota una historia"}</h1><p class="muted">No tiene que ser perfecta: habla como te salga. Las cuatro preguntas le dan dirección, porque una buena historia siempre deja una enseñanza.</p></div>
+  ${b?"":`<details class="card lesson"><summary><h3>¿No se te ocurre ninguna?</h3></summary><div class="lesson-body"><p class="muted">Toca una idea y piensa en tu vida:</p><div class="ocasiones">${DISPARADORES.map(d=>`<button type="button" onclick="document.getElementById('hb-que').placeholder=${esc(JSON.stringify(d+": cuéntalo…"))};document.getElementById('hb-que').focus()">${esc(d)}</button>`).join("")}</div></div></details>`}
+  <section class="card stack">
+    <label><b>Título</b> <span class="muted">(opcional)</span><input id="hb-titulo" maxlength="60" value="${b?esc(b.titulo):""}" placeholder="Ej. El día que me quedé sin trabajo"></label>
+    <div class="stack" style="gap:6px"><b>Etiquetas</b><div class="ocasiones" id="hb-et">${ETIQUETAS.map(e=>`<button type="button" aria-pressed="${et.has(e)}" onclick="this.setAttribute('aria-pressed',this.getAttribute('aria-pressed')!=='true')">${e}</button>`).join("")}</div></div>
+  </section>
+  ${PREG_BANCO.map(([k,t,a])=>`<section class="card stack"><h3>${esc(t)}</h3>${a?`<p class="muted" style="font-size:.9rem">${esc(a)}</p>`:""}${dictBox("hb-"+k,k==="que"?"Era un martes en la mañana y yo…":"",k==="que"?5:3)}</section>`).join("")}
+  <p class="hint" id="hb-err" hidden></p>
+  <div class="row"><button class="btn-accent" onclick="bancoGuardar('${b?b.id:""}')">${ICON.check}Guardar en mi banco</button></div>
+  </div>`;
+}
+function bancoLlenar(id){const b=bancoDe(id);if(!b)return;PREG_BANCO.forEach(([k])=>{const t=document.getElementById("hb-"+k);if(t)t.value=b[k]||""})}
+function bancoGuardar(id){
+  stopRec();
+  const v=k=>(document.getElementById("hb-"+k)?.value||"").trim(),e=document.getElementById("hb-err");
+  if(v("que").split(/\s+/).filter(Boolean).length<5){e.hidden=false;e.textContent="Cuenta al menos qué pasó (la primera pregunta).";return}
+  const etiquetas=[...document.querySelectorAll("#hb-et button[aria-pressed=true]")].map(x=>x.textContent);
+  const titulo=(document.getElementById("hb-titulo").value.trim()||v("que").split(/\s+/).slice(0,6).join(" ").replace(/[,.;:]+$/,"")+"…");
+  const l=banco(),viejo=id?l.find(x=>x.id===id):null;
+  const item=Object.assign(viejo||{id:"b"+Date.now(),fecha:new Date().toISOString(),dia:diaLocal(),contada:0},{titulo,etiquetas});
+  PREG_BANCO.forEach(([k])=>item[k]=v(k));
+  store.set("banco",viejo?l:[item,...l]);
+  PREG_BANCO.forEach(([k])=>vaciarDict("hb-"+k));
+  if(!viejo){marcarPractica();toast("Guardada en tu banco de historias")}else toast("Historia actualizada");
+  store.set("nivTab","historias");location.hash="discursos";
+}
+function bancoBorrar(id,b){if(!b.dataset.c){b.dataset.c=1;b.textContent="¿Seguro? Toca otra vez";return}store.set("banco",banco().filter(x=>x.id!==id));toast("Borrada");render()}
+function historiaAzar(){const l=banco();if(!l.length)return;const ult=store.get("bancoUlt","");let b;do{b=l[Math.floor(Math.random()*l.length)]}while(l.length>1&&b.id===ult);store.set("bancoUlt",b.id);if(location.hash==="#contar-"+b.id)render();else location.hash="contar-"+b.id}
+// Convierte las notas en una historia de 5 partes para practicarla como discurso (queda en Mis discursos).
+async function bancoArmar(id){
+  const b=bancoDe(id),btn=document.getElementById("arm-"+id),e=document.getElementById("arm-err-"+id);
+  if(!IA.listo()){e.hidden=false;e.textContent=aiErr({code:"sin_config"});return}
+  btn.disabled=true;btn.textContent="Elokua la está escribiendo…";e.hidden=true;
+  try{
+    const d=await IA.json(promptHistoria("PERSONA: "+bancoTexto(b),""),{tarea:"historia"});
+    const sp=limpiarBorrador(d,{kind:"historia",tipo:String(d.tipo||"Historia"),tema:"Historia",cierre:"Storytelling",nivel:2});
+    sp.id="m"+Date.now();sp.mio=true;
+    store.set("mine",[sp,...store.get("mine",[])]);
+    const l=banco();const x=l.find(y=>y.id===id);if(x)x.armada=sp.id;store.set("banco",l);
+    toast("Lista: está en Mis discursos");location.hash="d-"+sp.id;
+  }catch(x){btn.disabled=false;btn.textContent="Pulir con Elokua";e.hidden=false;e.textContent=aiErr(x)}
+}
+// Botones con tus historias del banco para usarlas al crear (rellenan la caja de texto).
+function bancoElegirHtml(caja){
+  const l=banco().slice(0,8);if(!l.length)return "";
+  return `<div class="card stack" style="gap:8px"><p class="eyebrow">De tu banco de historias</p><p class="muted" style="font-size:.9rem">Toca una para contársela a Elokua.</p><div class="ocasiones">${l.map(b=>`<button type="button" onclick="bancoUsar('${b.id}','${caja}')">${esc(b.titulo)}</button>`).join("")}</div></div>`;
+}
+function bancoUsar(id,caja){const b=bancoDe(id),ta=document.getElementById(caja);if(!b||!ta)return;ta.value="Quiero usar esta historia mía. "+bancoTexto(b).replace(/\n/g," ");ta.focus();toast("Toca Enviar a Elokua")}
+
+const CRIT_BANCO=[
+ ["Momento concreto","¿empezó en un momento exacto (cuándo, dónde, quién) en vez de resumir?"],
+ ["Dirección","¿quedó claro qué cambió en la persona y qué debe aprender quien escucha?"],
+ ["Palabras exactas","¿nombró con palabras precisas lo que sintió (decepcionado, frustrado, aliviado…) en vez de solo bien, mal, triste o bonito?"],
+ ["Brevedad","¿la contó en 60 a 90 segundos, sin dar vueltas ni explicaciones de más?"],
+ CRIT_DISCURSO[4]];
+let contT0=0;
+function viewContar(id){
+  const b=bancoDe(id);if(!b)return viewHistorias("");
+  contT0=0;
+  return `<div class="stack-lg">
+  <button class="back" onclick="store.set('nivTab','historias');location.hash='discursos'">← Mis historias</button>
+  <div class="section-title"><p class="eyebrow">Cuéntala en voz alta</p><h1>${esc(b.titulo)}</h1><p class="muted">Ponte de pie y cuéntala como si alguien te escuchara: el momento, lo que cambió en ti y la enseñanza. Busca durar de 60 a 90 segundos.</p></div>
+  <details class="card lesson"><summary><h3>Tus notas</h3></summary><div class="lesson-body">${PREG_BANCO.map(([k,t])=>b[k]?`<p><b>${esc(t.replace(/^\d\. /,""))}</b><br>${esc(b[k])}</p>`:"").join("")}</div></details>
+  <section class="card stack">
+    <div class="row"><button class="btn-primary" onclick="contEmpezar()">${ICON.mic}Empezar a contar</button><span class="live" id="cont-clock">0:00</span></div>
+    ${dictBox("cont-text","Aquí aparecerá lo que digas…",5)}
+    <div class="row"><button class="btn-accent" id="cont-cal" onclick="contCalificar('${b.id}')">${ICON.check}Terminar y calificar</button>${banco().length>1?`<button onclick="historiaAzar()">Otra al azar</button>`:""}</div>
+    <div class="ai-res" id="cont-res" aria-live="polite"></div>
+  </section></div>`;
+}
+function contEmpezar(){vaciarDict("cont-text");contT0=Date.now();cronoIniciar("cont-clock",0);startRec("cont-text")}
+function contCalificar(id){
+  stopRec();cronoParar();
+  const b=bancoDe(id),dijo=document.getElementById("cont-text").value.trim(),out=document.getElementById("cont-res");
+  if(dijo.split(/\s+/).length<15){out.innerHTML='<p class="hint" style="color:var(--bad)">Necesito al menos unas frases de tu historia.</p>';return}
+  const m=medir(dijo,contT0);
+  const l=banco(),x=l.find(y=>y.id===id);if(x){x.contada=(x.contada||0)+1;store.set("banco",l)}
+  const p=promptCalificar(`La persona contó en voz alta una historia de su banco de historias personales, titulada "${b.titulo}". Sus notas eran:\n${bancoTexto(b)}\nEvalúa cómo la CONTÓ, no si repitió las notas. Una buena historia es sencilla, real, empieza en un momento concreto y deja una enseñanza clara.`,dijo,m.txt,CRIT_BANCO);
+  calificar(out,document.getElementById("cont-cal"),p,m,{id:"banco-"+id,titulo:"Historia: "+b.titulo,nivel:"libre"});
+}
+
+/* ---------- Palabras exactas ---------- */
+// [palabra, significado, ejemplo]. Las familias van de lo general a lo preciso.
+const FAMILIAS=[
+ {f:"Tristeza",g:"triste",p:[["decepcionado","Esperabas algo y no pasó.","Me sentí decepcionado cuando no llegó a la cita."],["desanimado","Perdiste las ganas de seguir intentando.","Después del tercer rechazo estaba desanimado."],["nostálgico","Extrañas algo bueno que ya pasó.","Ver esa foto me puso nostálgico."],["dolido","Alguien te hirió con lo que hizo o dijo.","Me quedé dolido por su comentario."],["desconsolado","Una tristeza tan honda que nada te consuela.","Estaba desconsolado cuando murió mi abuelo."],["melancólico","Una tristeza suave y larga, sin causa clara.","Los domingos en la tarde me pongo melancólico."]]},
+ {f:"Enojo",g:"enojado",p:[["frustrado","Te esforzaste y algo te impide lograrlo.","Estoy frustrado: estudio cada día y no avanzo."],["irritado","Una molestia pequeña que se va acumulando.","El ruido me tenía irritado."],["indignado","Ves algo injusto, sobre todo con otros.","Me indignó que le cobraran de más a la señora."],["resentido","Guardas un enojo de algo que pasó hace tiempo.","Seguía resentido por lo de la empresa."],["impaciente","Quieres que algo pase ya y no pasa.","Estaba impaciente esperando la respuesta."]]},
+ {f:"Miedo",g:"miedo",p:[["incertidumbre","No sabes qué va a pasar.","Más que miedo, siento incertidumbre por el cambio."],["inseguro","Dudas de ti o de lo que vales.","Me sentía inseguro al hablar frente a ellos."],["ansioso","Tu mente se adelanta a todo lo que puede salir mal.","La noche antes estaba ansioso."],["intimidado","Alguien o algo te hace sentir pequeño.","Me sentí intimidado frente al director."],["vulnerable","Te sientes expuesto, sin protección.","Contar mi historia me hizo sentir vulnerable."],["miedo al rechazo","Temes que no te acepten o te digan que no.","No era miedo a fracasar, era miedo al rechazo."]]},
+ {f:"Cansancio",g:"cansado",p:[["agotado","Ya no te queda energía.","Llegué agotado después de doce horas."],["abrumado","Son demasiadas cosas a la vez.","Con cinco pendientes urgentes me sentí abrumado."],["saturado","Ya no te cabe nada más: información, ruido, gente.","Estoy saturado de mensajes."],["harto","Ya no aguantas lo mismo de siempre.","Estoy harto de llegar tarde por el tráfico."],["desgastado","Te fuiste cansando poco a poco, por mucho tiempo.","La relación me tenía desgastado."]]},
+ {f:"Alegría",g:"feliz / contento",p:[["satisfecho","Lograste lo que buscabas.","Terminé el proyecto y me siento satisfecho."],["orgulloso","Valoras algo que hiciste tú o alguien cercano.","Estoy orgulloso de mi hija."],["aliviado","Pasó o se resolvió algo que temías.","Me sentí aliviado cuando salieron bien los análisis."],["entusiasmado","Tienes muchas ganas de lo que viene.","Estoy entusiasmado con el viaje."],["agradecido","Reconoces lo que alguien hizo por ti.","Estoy agradecido con quien me dio la oportunidad."],["sereno","Estás en calma, aunque haya problemas.","Antes de hablar respiré y me sentí sereno."]]},
+ {f:"Sorpresa y confusión",g:"sorprendido",p:[["desconcertado","No entiendes lo que pasó y no sabes cómo reaccionar.","Su respuesta me dejó desconcertado."],["asombrado","Algo te sorprende para bien, te deja admirado.","Quedé asombrado de lo que logró."],["confundido","Tienes ideas mezcladas y no sabes cuál es la buena.","Estoy confundido entre las dos ofertas."]]},
+ {f:"Cariño y admiración",g:"me cae bien",p:[["admiración","Valoras mucho lo que alguien es o hace.","Siento admiración por cómo crió a sus hijos."],["dependencia","Sientes que no puedes estar bien sin esa persona.","No es admiración, es dependencia: no decido nada sin él."],["confianza","Sabes que esa persona no te va a fallar.","Le tengo confianza: siempre cumple."],["ternura","Cariño suave ante alguien frágil o pequeño.","Me dio ternura ver a mi papá aprendiendo a usar el celular."]]}];
+// Palabras generales que dicen poco, con opciones más precisas.
+const GENERICAS={bonito:"hermoso, agradable, conmovedor, acogedor",bonita:"hermosa, agradable, conmovedora, acogedora",feo:"desagradable, incómodo, injusto, descuidado",fea:"desagradable, incómoda, injusta, descuidada",malo:"dañino, injusto, deficiente, doloroso",mala:"dañina, injusta, deficiente, dolorosa",cosa:"di qué es: una idea, un problema, un detalle, una herramienta",cosas:"di qué son: ideas, problemas, detalles, tareas",triste:"decepcionado, desanimado, nostálgico, dolido",difícil:"complicado, exigente, doloroso, arriesgado",increíble:"sorprendente, admirable, extraordinario",genial:"valioso, brillante, útil",horrible:"doloroso, angustiante, injusto, desagradable",interesante:"revelador, útil, curioso, inesperado",normal:"común, cotidiano, esperado"};
+function palabrasGenerales(texto){
+  const t=" "+String(texto).toLowerCase().replace(/[.,;:!¡?¿"«»()]/g," ").replace(/\s+/g," ")+" ";
+  const lista=[];Object.keys(GENERICAS).forEach(w=>{const n=(t.match(new RegExp(" "+w+"(?= )","g"))||[]).length;if(n)lista.push([w,n])});
+  lista.sort((a,b)=>b[1]-a[1]);return {total:lista.reduce((a,b)=>a+b[1],0),lista};
+}
+const genHtml=g=>g&&g.total?`<p><b>Palabras generales:</b> ${g.lista.map(([w,n])=>`${esc(w)} ×${n} <span class="muted">(prueba: ${esc(GENERICAS[w])})</span>`).join("; ")}</p>`:"";
+const TODAS_PALABRAS=FAMILIAS.flatMap(f=>f.p.map(p=>({p:p[0],d:p[1],e:p[2],f:f.f})));
+function palabraHoy(){const d=new Date(),n=Math.floor(new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime()/864e5);return TODAS_PALABRAS[((n*7)%TODAS_PALABRAS.length+TODAS_PALABRAS.length)%TODAS_PALABRAS.length]}
+const palabraUsadaHoy=()=>store.get("palabraUsada","")===diaLocal();
+const SITUACIONES=["Estudiaste semanas para un examen y lo reprobaste por un punto.","Tu jefe presentó tu idea en la reunión como si fuera suya.","Te cancelan a última hora un viaje que esperabas desde hace meses.","Tienes cinco pendientes para hoy y te llega uno más, urgente.","Por fin terminaste de pagar una deuda grande.","Un amigo cercano hizo una fiesta y no te invitó.","Mañana te dan los resultados de un examen médico.","Encuentras una foto de cuando vivías con tus abuelos.","Alguien se rió de ti mientras exponías.","Tu hijo te agradece algo que hiciste por él hace años.","Llevas tres meses aprendiendo algo y sientes que no avanzas.","Te ofrecen un trabajo mejor, pero en otra ciudad.","Hablaste en público y te salió mejor de lo que pensabas.","Un desconocido te ayudó a cambiar la llanta en plena lluvia.","Ves que en la tienda le cobran de más a una señora mayor.","Tu mejor amigo se va a vivir a otro país."];
+let palSit="";
+function viewPalabras(){
+  const w=palabraHoy();palSit=palSit||SITUACIONES[Math.floor(Math.random()*SITUACIONES.length)];
+  return `<div class="stack-lg">
+  <button class="back" onclick="location.hash='aprender'">← Aprender</button>
+  <div class="section-title"><p class="eyebrow">Palabras exactas</p><h1>Di lo que sientes con precisión</h1><p class="muted">No es lo mismo estar cansado que frustrado, ni sentir miedo que incertidumbre. Las palabras precisas (no las difíciles) te ayudan a entenderte y a que te entiendan.</p></div>
+  <section class="card stack" style="gap:8px"><p class="eyebrow">Palabra de hoy · ${esc(w.f)}</p><h2>${esc(w.p)}</h2><p>${esc(w.d)}</p><p class="muted"><i>«${esc(w.e)}»</i></p>
+   <p class="muted" style="font-size:.9rem">Úsala hoy en una conversación, de forma natural. No para impresionar: para pensar mejor.</p>
+   ${palabraUsadaHoy()?`<p class="done-mark">${ICON.check} Ya la usaste hoy</p>`:`<button class="btn-primary" style="align-self:flex-start" onclick="store.set('palabraUsada',diaLocal());marcarPractica();toast('¡Bien! Una palabra más para tu taller');render()">${ICON.check}La usé hoy</button>`}</section>
+  <section class="card stack"><p class="eyebrow">Ejercicio · Dilo exacto</p><h2 class="tema" id="pal-sit">${esc(palSit)}</h2>
+   <p class="muted" style="font-size:.9rem">¿Cómo te sentirías? Dilo en voz alta, en 2 o 3 frases, sin usar "bien", "mal", "triste" ni "bonito".</p>
+   ${dictBox("pal-text","Me sentiría…",3)}
+   <div class="row"><button class="btn-accent" id="pal-go" onclick="palRevisar()">${ICON.check}Que Elokua lo revise</button><button onclick="palSit=SITUACIONES[Math.floor(Math.random()*SITUACIONES.length)];document.getElementById('pal-sit').textContent=palSit;vaciarDict('pal-text');document.getElementById('pal-res').innerHTML=''">Otra situación</button></div>
+   <div class="ai-res" id="pal-res" aria-live="polite"></div></section>
+  <section class="stack"><p class="eyebrow">Tu taller de palabras</p>
+   ${FAMILIAS.map(f=>`<details class="card lesson"><summary><h3>${esc(f.f)}</h3><span class="chip">en vez de "${esc(f.g)}"</span></summary><div class="lesson-body"><ul>${f.p.map(p=>`<li><b>${esc(p[0])}</b>: ${esc(p[1])} <span class="muted"><i>«${esc(p[2])}»</i></span></li>`).join("")}</ul></div></details>`).join("")}
+  </section>
+  </div>`;
+}
+async function palRevisar(){
+  stopRec();
+  const dijo=document.getElementById("pal-text").value.trim(),out=document.getElementById("pal-res"),b=document.getElementById("pal-go");
+  if(dijo.split(/\s+/).length<3){out.innerHTML='<p class="hint" style="color:var(--bad)">Primero di cómo te sentirías.</p>';return}
+  const g=palabrasGenerales(dijo);
+  if(!IA.listo()){out.innerHTML=genHtml(g)+'<p class="hint">Para que Elokua lo revise, falta conectar la IA. <a href="#ajustes">Ve a Ajustes</a>.</p>';return}
+  b.disabled=true;out.innerHTML='<p class="muted">Elokua está leyendo…</p>';
+  try{
+    const r=await IA.json(`Eres un coach de oratoria que ayuda a una persona a ampliar su vocabulario emocional, en español de México, cálido y breve. La idea: no es lo mismo cansado que frustrado, miedo que incertidumbre, falta de motivación que decepción, miedo al fracaso que miedo al rechazo. Se buscan palabras PRECISAS, no rebuscadas.
+
+SITUACIÓN: ${palSit}
+LO QUE DIJO LA PERSONA (dictado, sin puntuación confiable): ${dijo.slice(0,1500)}
+
+Responde solo con JSON con esta forma:
+{"precisas":["palabras precisas que sí usó"],"generales":["palabras vagas que usó"],"sugerencias":[{"palabra":"","diferencia":"en qué se distingue, una frase corta"}],"frase":"su misma idea dicha con palabras más exactas, en primera persona, máximo 30 palabras","animo":"una frase corta de ánimo"}
+Da 3 sugerencias que de verdad encajen con la situación.`,{tarea:"palabras"});
+    const L=a=>Array.isArray(a)?a.map(String).filter(Boolean):[];
+    out.innerHTML=`${L(r.precisas).length?`<p><b>Palabras precisas que usaste:</b> ${esc(L(r.precisas).join(", "))}</p>`:""}
+     ${L(r.generales).length?`<p><b>Palabras generales:</b> ${esc(L(r.generales).join(", "))}</p>`:""}
+     ${Array.isArray(r.sugerencias)&&r.sugerencias.length?`<div><b>Prueba con:</b><ul>${r.sugerencias.map(s=>`<li><b>${esc(s.palabra||"")}</b>: ${esc(s.diferencia||"")}</li>`).join("")}</ul></div>`:""}
+     ${r.frase?`<div class="coach"><b>Dicho con más precisión</b><p>${esc(r.frase)}</p></div>`:""}${r.animo?`<p class="muted">${esc(r.animo)}</p>`:""}`;
+    marcarPractica();
+  }catch(e){out.innerHTML=genHtml(g)+`<p class="hint" style="color:var(--bad)">${esc(aiErr(e))}</p>`}
+  finally{b.disabled=false}
+}
+
+/* ---------- 3 ideas en 2 minutos ---------- */
+const TEMAS_TRES=["El libro que estás leyendo (o el último que leíste)","Una experiencia que viviste esta semana","Una lección que aprendiste hace poco","Tu trabajo, explicado a un niño de diez años","Una decisión que tomaste este mes","Algo que cambiarías de tu barrio","Una persona que admiras y por qué","Una película o serie que te hizo pensar","Un error reciente y lo que aprendiste","Lo que harías con un día libre de verdad","Un consejo que le darías a tu yo de hace diez años","Por qué vale la pena aprender algo nuevo cada año"];
+const CRIT_TRES=[
+ ["Mensaje principal","¿se entiende una sola idea principal que el público recordaría al salir?"],
+ ["Tres ideas","¿usó tres ideas principales claras y en orden, ni más ni menos?"],
+ ["Claridad","¿fue directo, sin dar vueltas, abandonar ideas ni dar explicaciones de más?"],
+ CRIT_DISCURSO[3],CRIT_DISCURSO[4],
+ ["Palabras exactas","¿usó palabras concretas y precisas en vez de generales como bonito, malo o cosa?"]];
+let tresTema="",tresFase="",tresT0=0,tresT=0;
+function viewTres(){
+  tresTema=tresTema||TEMAS_TRES[Math.floor(Math.random()*TEMAS_TRES.length)];tresFase="";
+  return `<div class="stack-lg">
+  <button class="back" onclick="location.hash='aprender'">← Aprender</button>
+  <div class="section-title"><p class="eyebrow">Pensar claro</p><h1>3 ideas en 2 minutos</h1><p class="muted">Explica el tema con solo tres ideas principales. No cinco, no diez: tres. Es más difícil simplificar que complicar, y por eso entrena tu mente para ordenar antes de hablar. Tienes 20 segundos para pensar y 2 minutos para hablar.</p></div>
+  <section class="card stack">
+    <p class="eyebrow">Tu tema</p><h2 id="tres-tema" class="tema">${esc(tresTema)}</h2>
+    <div class="row"><button class="btn-primary" id="tres-go" onclick="tresEmpezar()">${ICON.play}Empezar</button><button id="tres-otro" onclick="tresTema=TEMAS_TRES[Math.floor(Math.random()*TEMAS_TRES.length)];document.getElementById('tres-tema').textContent=tresTema">Otro tema</button><span class="live" id="tres-clock">0:20</span></div>
+    <p class="muted" id="tres-fase">Pregúntate primero: si solo recordaran una idea, ¿cuál sería?</p>
+    ${dictBox("tres-text","Aquí aparecerá lo que digas…",5)}
+    <button class="btn-accent" id="tres-cal" style="align-self:flex-start" onclick="tresCalificar()">${ICON.check}Terminar y calificar</button>
+    <div class="ai-res" id="tres-res" aria-live="polite"></div>
+  </section></div>`;
+}
+function tresEmpezar(){
+  const f=document.getElementById("tres-fase");
+  vaciarDict("tres-text");tresFase="pensar";tresT=0;tresT0=0;document.getElementById("tres-otro").disabled=true;
+  f.textContent="Piensa: ¿cuál es tu mensaje principal? ¿Cuáles son tus 3 ideas?";
+  decir("Tu tema es: "+tresTema+". Tienes veinte segundos para pensar tus tres ideas.");
+  cronoIniciar("tres-clock",20,()=>{
+    if(tresFase!=="pensar")return;
+    tresFase="hablar";f.textContent="¡Habla! Tienes dos minutos.";
+    try{navigator.vibrate?.([200,100,200])}catch(e){}
+    startRec("tres-text");tresT0=Date.now();
+    cronoIniciar("tres-clock",120,()=>{if(tresFase==="hablar"){stopRec();tresFase="fin";f.textContent="Tiempo. Toca Terminar y calificar.";tresT=Date.now()}});
+  });
+}
+function tresCalificar(){
+  stopRec();cronoParar();
+  const dijo=document.getElementById("tres-text").value.trim(),out=document.getElementById("tres-res");
+  if(dijo.split(/\s+/).length<15){out.innerHTML='<p class="hint" style="color:var(--bad)">Necesito al menos unas frases para calificarte.</p>';return}
+  const m=medir(dijo,tresT0);if(tresT&&tresT0)m.secs=Math.round((tresT-tresT0)/1000);
+  tresFase="fin";document.getElementById("tres-otro").disabled=false;
+  const p=promptCalificar(`Ejercicio "3 ideas en 2 minutos": la persona recibió el tema "${tresTema}", tuvo 20 segundos para pensar y 2 minutos para explicarlo usando SOLO tres ideas principales. No hay guion. Si usó más o menos de tres ideas, dilo en "mejorar" y nombra cuáles fueron.`,dijo,m.txt+" (ideal 130 a 150 palabras por minuto)",CRIT_TRES);
+  calificar(out,document.getElementById("tres-cal"),p,m,{id:"tres",titulo:"3 ideas: "+tresTema,nivel:"libre"});
+}
+
+/* ---------- Pequeños hábitos de hoy ---------- */
+const MINI_RETOS=["Da tu opinión en una reunión o conversación donde normalmente te quedarías callado.","Haz esa llamada que llevas días postergando.","Inicia una conversación con alguien mientras haces una fila.","Cuando alguien termine de contarte algo, no respondas de inmediato: hazle una pregunta de seguimiento.","Participa más en la conversación de la familia en la comida o la cena.","Antes de una conversación importante, detente un minuto y respira lento con el abdomen.","Lee 10 minutos en voz alta un libro que te guste.","Escucha una historia completa de alguien sin interrumpir ni preparar tu respuesta.","Pregúntale a alguien: «¿Qué fue lo más difícil para ti?» y escúchalo de verdad.","Antes de responder una pregunta difícil, haz una pausa de tres segundos."];
+function miniRetoHoy(){const d=new Date(),n=Math.floor(new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime()/864e5);return MINI_RETOS[n%MINI_RETOS.length]}
+function habitosHtml(){
+  const hoy=diaLocal(),h=store.get("hist",[]);
+  const items=[
+   ["Anota una historia en tu banco",banco().some(b=>b.dia===hoy),"store.set('nivTab','historias');location.hash='historia-nueva'"],
+   [`Usa la palabra de hoy: «${palabraHoy().p}»`,palabraUsadaHoy(),"location.hash='palabras'"],
+   ["Explica algo en 3 ideas y 2 minutos",h.some(x=>x.id==="tres"&&diaLocal(new Date(x.date))===hoy),"location.hash='tres-ideas'"],
+   ["Mini reto: "+miniRetoHoy(),store.get("miniReto","")===hoy,"store.set('miniReto',diaLocal());marcarPractica();toast('¡Mini reto cumplido!');render()"]];
+  const n=items.filter(x=>x[1]).length;
+  return `<section class="card stack habitos" style="gap:8px"><p class="eyebrow">Pequeños hábitos de hoy · ${n} de ${items.length}</p>
+   <p class="muted" style="font-size:.88rem;margin:0">Hablar bien no depende de un día de inspiración: son cosas pequeñas, repetidas cada día.</p>
+   ${items.map(([t,ok,go])=>`<button class="habito ${ok?"ok":""}" ${ok?"disabled":`onclick="${go}"`}><span class="hb-c">${ok?ICON.check:""}</span><span>${esc(t)}</span></button>`).join("")}</section>`;
+}
+
 /* ================= ROUTER ================= */
 function render(){
   stopSpeech(); stopRec(true); clearInterval(aiInt); cronoParar(); guiaCerrar(); cerrarEnsayo(); impFase="";
@@ -2583,9 +2930,15 @@ function render(){
   else if(h.startsWith("evaluar-")){html=viewEvaluar(h.slice(8));tab="discursos"}
   else if(h.startsWith("editar-")){html=viewEditar(h.slice(7));tab="discursos"}
   else if(h.startsWith("aprender-")){html=viewModulo(h.slice(9));tab="aprender"}
+  else if(h==="historia-nueva"){html=viewHistoriaNueva();tab="discursos"}
+  else if(h.startsWith("historia-")){html=viewHistoriaNueva(h.slice(9));tab="discursos"}
+  else if(h.startsWith("contar-")){html=viewContar(h.slice(7));tab="discursos"}
+  else if(h==="palabras"){html=viewPalabras();tab="aprender"}
+  else if(h==="tres-ideas"){html=viewTres();tab="aprender"}
   else html=({inicio:viewInicio,hoy:viewHoy,aprender:viewAprender,discursos:viewDiscursos,crear:viewCrear,ajustes:viewAjustes,improvisar:viewImprovisar,preguntas:viewPreguntas,calentar:viewCalentar,progreso:viewProgreso,nervios:viewNervios}[h]||viewInicio)();
   if(h==="nervios"||h==="calentar")tab="aprender"; if(h==="crear")tab="discursos"; if(h==="hoy")tab="inicio"; if(h==="improvisar"||h==="preguntas")tab="discursos";
   app.innerHTML=html;
+  if(h.startsWith("historia-")&&h!=="historia-nueva")bancoLlenar(h.slice(9));
   document.querySelectorAll("nav.tabs a").forEach(a=>{if(a.dataset.tab===tab)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
   window.scrollTo(0,0);
 }
